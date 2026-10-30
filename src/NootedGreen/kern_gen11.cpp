@@ -466,6 +466,7 @@ static void xeDispStamp(void *that, int idx, uint32_t stamp) {
 // push (entrada na fila), notify, submitExecList (escrita no hardware), pause/resume.
 static mach_vm_address_t gOrgS5Push = 0, gOrgS5Notify = 0, gOrgCs5Submit = 0, gOrgS5Pause = 0, gOrgS5Resume = 0;
 static volatile uint32_t gS5PushN = 0, gS5NotifyN = 0, gCs5SubmitN = 0, gS5PauseN = 0, gS5ResumeN = 0;
+static volatile uint32_t gBlitScratchN = 0, gBlitScratchOkN = 0;
 static uint32_t gThrtN = 0, gThrtSimN = 0;
 static volatile uint32_t gCsbResyncN = 0;  // 21/10: active->idle salvos pelo xeCsbResync (CSBR)
 static volatile uint32_t gCsbSkipN = 0;  // 19/10: eventos active->idle descartados pelo xeCsbA2I
@@ -526,10 +527,24 @@ static void xeCsStateWorker(thread_call_param_t, thread_call_param_t) {
 			  *reinterpret_cast<void *volatile *>(c + 0x40) != nullptr, *reinterpret_cast<void *volatile *>(c + 0x48) != nullptr,
 			  c[0x1c00], *reinterpret_cast<volatile uint32_t *>(c + 0x1c38), c[0x1c3c]);
 	}
-	if (gAccelObj && tick % 8 == 0)
+	if (gAccelObj && tick % 8 == 0) {
+		auto *svc = OSDynamicCast(IOService, reinterpret_cast<OSObject *>(gAccelObj));
+		int v130 = -1;
+		PE_parse_boot_argn("ngreenV130", &v130, sizeof(v130));
+		if (svc) {
+			svc->setProperty("xe-cs-push", gS5PushN, 32);
+			svc->setProperty("xe-cs-submit", gCs5SubmitN, 32);
+			svc->setProperty("xe-v130-mode", static_cast<uint32_t>(v130), 32);
+			svc->setProperty("xe-blitscratch-calls", gBlitScratchN, 32);
+			svc->setProperty("xe-blitscratch-ok", gBlitScratchOkN, 32);
+			svc->setProperty("xe-lock-routed", gXeLockRouted ? 1U : 0U, 32);
+			svc->setProperty("xe-dpsm1458", *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1458), 32);
+			svc->setProperty("xe-cfg1190", *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1190), 32);
+		}
 		IOLog("XeNG CS t=%u dpsm1458=0x%x cfg1190=0x%x (push %u exec %u) thrt=%u thrtSim=%u csbx=%u csbr=%u idlw=%u/%llums max=%uus to=%u pgoff=%u pgon=%u pgfix=%u stail=%u resfix=%u orf=%u dpms=%u fbdpms=%u gtf=%u/0x%x bl hw=%u apple=%u fw=%u duty=%u max=%u out=%u rc1474=%u\n", tick, *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1458),
 			  *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1190), gS5PushN, gCs5SubmitN, gThrtN, gThrtSimN, gCsbSkipN, gCsbResyncN, gIdlwN, (unsigned long long)(gIdlwUs / 1000), gIdlwMax, gIdlwTimeout, gPageoffN, gPageonN, gPageonFix, gSameTailForced, gXeResFreeFix, gXeOrphanMiss, gXeDpmsBlocked, gXeFbDpmsN, gXeGtFreqN, gXeGtFreqApple, gBlHwFreq, gBlAppleFreq, gBlFreqWrites, gBlLastDuty, gBlMaxDuty, gBlLastOut,
 			  (unsigned)*reinterpret_cast<volatile uint8_t *>(gAccelObj + 0x1474));
+	}
 	if (tick < 2400 && gCsStateTc) {  // a cada 250 ms por ~10 min
 		uint64_t deadline;
 		clock_interval_to_deadline(250, kMillisecondScale, &deadline);
@@ -7276,6 +7291,7 @@ void Gen11::IGHardwareBlit3DContextinitialize(void *that)
 	static int blitScratch = -1;
 	if (blitScratch < 0) blitScratch = (checkKernelArgument("-ngreenxefix") && !checkKernelArgument("-ngreennoblitscratch")) ? 1 : 0;
 	if (blitScratch == 1 && callback->oIGMappedBuffergetMemory) {
+		gBlitScratchN++;
 		// 19/10 (BLITSCRATCH2): o wrapper V181 abortava (resolução de lock/unlock comentada em kern_green). Agora
 		// chama o original com lockForCPUAccess redirecionado para a CPU VA do IGSharedMappedBuffer (ver wrapLockCpu).
 		void *mem = FunctionCast(IGMappedBuffergetMemory, callback->oIGMappedBuffergetMemory)(mappedBufPtr);
@@ -7288,6 +7304,7 @@ void Gen11::IGHardwareBlit3DContextinitialize(void *that)
 		// ficam abaixo de 0xd000; perdem-se os estados de sampler/blend em 0xd000..0xd210).
 		void *tmp = ok ? IOMallocZero(0xe000) : nullptr;
 		if (ok && tmp) {
+			gBlitScratchOkN++;
 			gXeBlitCpu = tmp;
 			gXeBlitMem = mem;
 			FunctionCast(blit3d_initialize_scratch_space, callback->oblit3d_initialize_scratch_space)(mem);
