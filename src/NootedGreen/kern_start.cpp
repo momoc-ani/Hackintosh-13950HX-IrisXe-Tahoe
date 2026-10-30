@@ -13,7 +13,9 @@ static const char *bootargDebug = "-NGreenDebug";
 PluginConfiguration ADDPR(config) {
     xStringify(PRODUCT_NAME),
     parseModuleVersion(xStringify(MODULE_VERSION)),
-    LiluAPI::AllowNormal | LiluAPI::AllowInstallerRecovery | LiluAPI::AllowSafeMode,
+	// Keep the plugin out of macOS safe mode so the recovery EFI can boot without
+	// the experimental GPU hooks or the 9A49 spoof being active.
+    LiluAPI::AllowNormal | LiluAPI::AllowInstallerRecovery,
 	nullptr,
 	0,
 	&bootargDebug,

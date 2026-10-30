@@ -1896,6 +1896,12 @@ private:
 	static bool AppleIntelBaseControllerstart(AppleIntel::AppleIntelBaseController *that, IOService *param_1);
 	mach_vm_address_t oAppleIntelBaseControllerstart {};
 
+	// dGPU-display/headless-iGPU mode: refuse the TGL framebuffer controller probe so
+	// the integrated GPU remains available to accelerator/VA clients without becoming
+	// a Metal display device. Normal iGPU-display mode leaves this route untouched.
+	static IOService *headlessFramebufferProbe(IOService *that, IOService *provider, SInt32 *score);
+	mach_vm_address_t oHeadlessFramebufferProbe {};
+
 	// V201 diagnostic: read first bytes of the scanout buffer right after hwSetupMemory
 	// returns. Tells us whether something filled the buffer (wallpaper) or it's still
 	// zeros from the IOBufferMemoryDescriptor allocation.

@@ -67,6 +67,17 @@ static bool seedIGPUPropertiesOnEntry(IORegistryEntry *entry) {
 
 	bool changed = false;
 
+	// In dGPU-display/headless-iGPU mode, IONDRVSupport matches the device-tree
+	// "name" property (OSData) equal to "display" before the TGL framebuffer
+	// personality can be rejected. Change that matching property early while
+	// retaining PCI identity/compatible values for IntelAccelerator and VideoToolbox.
+	if (checkKernelArgument("-ngreenheadless")) {
+		static uint8_t headlessDeviceName[] = {'I', 'G', 'P', 'U'};
+		entry->setProperty("name", headlessDeviceName, arrsize(headlessDeviceName));
+		entry->setProperty("IOName", "IGPU");
+		changed = true;
+	}
+
 	// Default fallback platform-id for RPL/TGL spoof bring-up. Only inject when missing.
 	if (!entry->getProperty("AAPL,ig-platform-id")) {
 		entry->setProperty("AAPL,ig-platform-id", builtin2, arrsize(builtin2));
@@ -117,6 +128,8 @@ static bool seedIGPUPropertiesOnEntry(IORegistryEntry *entry) {
 static void seedIGPUPropertiesEarly() {
 	// Try common ACPI namespace variants used by laptop firmware before DeviceInfo scans.
 	const char *paths[] = {
+		"IOService:/AppleACPIPlatformExpert/PC00@0/AppleACPIPCI/IGPU@2",
+		"IOService:/AppleACPIPlatformExpert/PC00@0/AppleACPIPCI/GFX0@2",
 		"IOService:/AppleACPIPlatformExpert/PC00@0/IGPU@2",
 		"IOService:/AppleACPIPlatformExpert/PC00@0/GFX0@2",
 		"IOService:/AppleACPIPlatformExpert/PCI0@0/IGPU@2",
@@ -146,6 +159,11 @@ static void seedIGPUPropertiesEarly() {
 
 void NGreen::init() {
     callback = this;
+	// Headless mode must rename IGPU before any forced framebuffer/accelerator
+	// kext registration can trigger IONDRVSupport matching.
+	if (checkKernelArgument("-ngreenheadless")) {
+		seedIGPUPropertiesEarly();
+	}
 	
 	lilu.onKextLoadForce(&kextAGDP);
 	/*lilu.onKextLoadForce(&kextBacklight);
@@ -182,8 +200,9 @@ void NGreen::processPatcher(KernelPatcher &patcher) {
 		DBGLOG("ngreen", "DYLD patches disabled by boot argument -nbdyldoff");
 	}
 
-	// Compatibility-first default: do not force-inject IGPU properties unless explicitly requested.
-	if (isLegacyIGPUPropSeedingEnabled()) {
+	// Headless dGPU-display mode must rename IGPU before IONDRVSupport starts
+	// matching; the normal compatibility path keeps legacy seeding opt-in.
+	if (isLegacyIGPUPropSeedingEnabled() || checkKernelArgument("-ngreenheadless")) {
 		seedIGPUPropertiesEarly();
 	} else {
 		SYSLOG("ngreen", "compat mode: legacy IGPU property seeding disabled (use -ngreenforceprops to enable)");
@@ -207,6 +226,12 @@ void NGreen::processPatcher(KernelPatcher &patcher) {
 		static uint8_t builtin[] = {0x00};
 
 		WIOKit::renameDevice(this->iGPU, "IGPU");
+		if (checkKernelArgument("-ngreenheadless")) {
+			// IONDRVSupport matches IOName="display" directly on IOPCIDevice;
+			// change only the registry name so the AMD device remains the display GPU.
+			this->iGPU->setProperty("IOName", "IGPU");
+			this->iGPU->setProperty("XeNG-Headless-IONDRV", "blocked");
+		}
 		WIOKit::awaitPublishing(this->iGPU);
 
 		if (isLegacyIGPUPropSeedingEnabled()) {

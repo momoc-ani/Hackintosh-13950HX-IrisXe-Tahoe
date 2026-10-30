@@ -22,7 +22,7 @@ extern bool gXeLockRouted;
 
 // ─── xe/topo4/5 (24/10): topologia escolhida por boot-arg, sem ler fusíveis ──────────────────────────────────────
 // topo/topo2/topo3 liam os fusíveis no boot e todos travaram o boot (23/10), mesmo calculando 96 EU aqui. Agora o
-// layout só muda com ngreen-eu=80 (ou 64/48) e, opcional, ngreen-l3=N. Sem os args: 12 SS × 8 EU, L3 8, como antes.
+// layout só muda com ngreen-eu=80 (ou 64/48/32) e, opcional, ngreen-l3=N. Sem os args: 12 SS × 8 EU, L3 8, como antes.
 // Dados de 80 EU (Linux, issue #3): i5-1340P = 5 DSS × 16 EU (máscara 0x1f, DSS0 presente) -> 10 SS × 8 EU.
 // O steering MCR continua no DSS0 (presente nos chips de 80 EU vistos). ioreg: xe-topo = eu<<8 | l3 (no acelerador).
 static uint32_t gTopoSs = 12, gTopoL3 = 8;
@@ -31,7 +31,8 @@ static void xeTopoArgs() {
 	if (gTopoParsed) return;
 	gTopoParsed = true;
 	uint32_t eu = 0, l3 = 0;
-	if (PE_parse_boot_argn("ngreen-eu", &eu, sizeof(eu)) && (eu == 48 || eu == 64 || eu == 80 || eu == 96)) gTopoSs = eu / 8;
+	// 32 EU is the RPL-S GT1 case: 2 DSS × 16 EU = 4 traditional SS × 8 EU.
+	if (PE_parse_boot_argn("ngreen-eu", &eu, sizeof(eu)) && (eu == 32 || eu == 48 || eu == 64 || eu == 80 || eu == 96)) gTopoSs = eu / 8;
 	if (PE_parse_boot_argn("ngreen-l3", &l3, sizeof(l3)) && l3 >= 2 && l3 <= 16 && !(l3 & 1)) gTopoL3 = l3;
 }
 static void *volatile gTopoAcc = nullptr;
@@ -134,22 +135,45 @@ static volatile uint32_t gFbModeArgSeen = 0;
 static volatile uint32_t gTglFbBlockRuns = 0, gTglFbRoutesDone = 0, gIcLFbBlockRuns = 0;
 static volatile uint64_t gOrgGcdm = 0, gOrgGpi = 0, gOrgVdm = 0;
 
+// 将关键启动状态写入 IGPU registry，作为 IOLog/dmesg 不可用时的持久诊断通道。
+static void xeTraceGPUString(const char *key, const char *value, IORegistryEntry *direct = nullptr) {
+	const char *path = "IOService:/AppleACPIPlatformExpert/PC00@0/AppleACPIPCI/IGPU@2";
+	bool owned = false;
+	auto *entry = direct;
+	if (!entry) {
+		entry = IORegistryEntry::fromPath(path, gIOServicePlane);
+		owned = true;
+	}
+	if (!entry) return;
+	auto *str = OSString::withCString(value ? value : "");
+	if (str) {
+		entry->setProperty(key, str);
+		str->release();
+	}
+	if (owned) entry->release();
+}
+
+// 登记所选驱动的补丁回调；accelerator 模式也要处理系统自动匹配的 TGL framebuffer。
 void Gen11::init() {
 	callback = this;
 
-	if (checkKernelArgument("-ngreentglfb") || checkKernelArgument("-ngreentglwithgfx")) {
+	const bool useTglGraphics = checkKernelArgument("-ngreentglwithgfx") || checkKernelArgument("-ngreentglgfx");
+	xeTraceGPUString("XeNG-Trace-Init", useTglGraphics ? "TGL-GFX" : (checkKernelArgument("-ngreentglfb") ? "TGL-FB" : "OTHER"));
+	IOLog("XeNG TRACE init: tglfb=%d tglgfx=%d tglwithgfx=%d gt1=%d eu=%d l3=%d\n",
+	       checkKernelArgument("-ngreentglfb"), checkKernelArgument("-ngreentglgfx"),
+	       checkKernelArgument("-ngreentglwithgfx"), checkKernelArgument("-ngreengt1"),
+	       gTopoSs * 8, gTopoL3);
+	// -ngreentglgfx 不会阻止 macOS 按 9A49 加载 framebuffer。遗漏监听会使其
+	// 绕过现有 power-well 等兼容补丁，在 WindowServer 打开 framebuffer 时 panic。
+	if (checkKernelArgument("-ngreentglfb") || useTglGraphics) {
 		SYSLOG("ngreen", "Gen11::init: FB tier → TGL (ICL FB skipped)");
 		lilu.onKextLoadForce(&kextG11FBT);
 		lilu.onKextLoadForce(&kextG11FBTA);
-		if (checkKernelArgument("-ngreentglwithgfx")) {
+		if (useTglGraphics) {
 			SYSLOG("ngreen", "Gen11::init: HW tier → TGL (ICL HW skipped)");
 			lilu.onKextLoadForce(&kextG11HWT);
 			lilu.onKextLoadForce(&kextG11HWTA);
 		}
-	} else if (checkKernelArgument("-ngreentglgfx")) {
-		SYSLOG("ngreen", "Gen11::init: HW tier → TGL (ICL HW skipped)");
-		lilu.onKextLoadForce(&kextG11HWT);
-		lilu.onKextLoadForce(&kextG11HWTA);
 	} else if (checkKernelArgument("-ngreenicl")) {
 		SYSLOG("ngreen", "Gen11::init: FB tier → ICL fallback");
 		lilu.onKextLoadForce(&kextG11FB);
@@ -219,6 +243,16 @@ static bool isDisplayPipeForceDisabled() {
 	if (checkKernelArgument("-ngreendp1")) {
 		SYSLOG("ngreen", "V78A: detected -ngreendp1");
 		return false;
+	}
+
+	// In dGPU-display/headless-iGPU mode the Intel accelerator must not advertise
+	// a display pipe. Keeping this capability enabled makes Metal classify the
+	// emulated TGL device as a display GPU, so IconServices and other system
+	// services can select it for composition even though RX 6750 XT owns scanout.
+	// An explicit -ngreendp1 remains the escape hatch for controlled comparison.
+	if (checkKernelArgument("-ngreenheadless")) {
+		SYSLOG("ngreen", "V78A: headless mode disables Intel DisplayPipe capabilities");
+		return true;
 	}
 
 	int enabled = 0;
@@ -1228,6 +1262,9 @@ bool Gen11::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t 
 		gTglFbBlockRuns++;
 		this->tglFBLoaded = true;
 		auto *activeKext = (kextG11FBTA.loadIndex == index) ? &kextG11FBTA : &kextG11FBT;
+		IOLog("XeNG TRACE fb-kext: index=%lu active=%s addr=0x%llx size=0x%zx\n",
+		      (unsigned long)index, activeKext->id, (unsigned long long)address, size);
+		xeTraceGPUString("XeNG-Trace-FB-Kext", activeKext->id, NGreen::callback ? NGreen::callback->iGPU : nullptr);
 		NGreen::callback->setRMMIOIfNecessary();
 		SYSLOG("ngreen", "init AppleIntelTGLGraphicsFramebuffer");
 		
@@ -1406,6 +1443,7 @@ bool Gen11::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t 
 				{"__ZN31AppleIntelFramebufferController20hwConfigureCustomAUXEb",hwConfigureCustomAUX, this->ohwConfigureCustomAUX},
 				{"__ZN19AppleIntelPowerWell4initEP31AppleIntelFramebufferController",AppleIntelPowerWellinit, this->oAppleIntelPowerWellinit},
 				{"__ZN31AppleIntelFramebufferController5startEP9IOService",AppleIntelBaseControllerstart, this->oAppleIntelBaseControllerstart},
+				{"__ZN31AppleIntelFramebufferController5probeEP9IOServicePi",headlessFramebufferProbe, this->oHeadlessFramebufferProbe},
 				{"__ZN31AppleIntelFramebufferController21probeCDClockFrequencyEv",wrapProbeCDClockFrequency,	this->orgProbeCDClockFrequency},
 				{"__ZN31AppleIntelFramebufferController11initCDClockEv",initCDClock, this->oinitCDClock},
 				{"__ZN31AppleIntelFramebufferController28setCDClockFrequencyOnHotplugEv",setCDClockFrequencyOnHotplug, this->osetCDClockFrequencyOnHotplug},
@@ -1425,6 +1463,7 @@ bool Gen11::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t 
 				{"__ZN24AppleIntelBaseController20hwConfigureCustomAUXEb",hwConfigureCustomAUX, this->ohwConfigureCustomAUX},
 				{"__ZN19AppleIntelPowerWell4initEP24AppleIntelBaseController",AppleIntelPowerWellinit, this->oAppleIntelPowerWellinit},
 				{"__ZN24AppleIntelBaseController5startEP9IOService",AppleIntelBaseControllerstart, this->oAppleIntelBaseControllerstart},
+				{"__ZN24AppleIntelBaseController5probeEP9IOServicePi",headlessFramebufferProbe, this->oHeadlessFramebufferProbe},
 				{"__ZN24AppleIntelBaseController21probeCDClockFrequencyEv",wrapProbeCDClockFrequency,	this->orgProbeCDClockFrequency},
 				{"__ZN24AppleIntelBaseController11initCDClockEv",initCDClock, this->oinitCDClock},
 				{"__ZN24AppleIntelBaseController28setCDClockFrequencyOnHotplugEv",setCDClockFrequencyOnHotplug, this->osetCDClockFrequencyOnHotplug},
@@ -1854,6 +1893,9 @@ bool Gen11::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t 
 	} else if (kextG11HWT.loadIndex == index || kextG11HWTA.loadIndex == index) {
 		this->tglHWLoaded = true;
 		auto *activeKext = (kextG11HWTA.loadIndex == index) ? &kextG11HWTA : &kextG11HWT;
+		IOLog("XeNG TRACE hw-kext: index=%lu active=%s addr=0x%llx size=0x%zx\n",
+		      (unsigned long)index, activeKext->id, (unsigned long long)address, size);
+		xeTraceGPUString("XeNG-Trace-HW-Kext", activeKext->id, NGreen::callback ? NGreen::callback->iGPU : nullptr);
 		SYSLOG("ngreen", "init AppleIntelTGLGraphics (HW accelerator)");
 		injectAcceleratorPersonality(true);
 		NGreen::callback->setRMMIOIfNecessary();
@@ -2355,6 +2397,23 @@ bool Gen11::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t 
 				};
 				PANIC_COND(!LookupPatchPlus::applyAll(patcher, patchesRPL, address, size), "ngreen",
 					"kextG11HWT Failed to apply RPL-specific patches!");
+
+				// RPL-S GT1 (A788, 32 EU): the stock path stores GT2 (0x2) at
+				// IGAccelDevice+0x1120. Enable the existing GT1 patch explicitly,
+				// otherwise the accelerator keeps GT2 caps for a GT1 slice.
+				if (checkKernelArgument("-ngreengt1")) {
+					LookupPatchPlus const gt1Patch[] = {
+						{activeKext, f3a, r3a, arrsize(f3a), 1},
+					};
+					if (LookupPatchPlus::applyAll(patcher, gt1Patch, address, size)) {
+						SYSLOG("ngreen", "GT1: IGAccelDevice+0x1120 forced to 1");
+					} else {
+						// This opt-in patch is non-fatal; clear Lilu's sticky lookup error
+						// so later independent accelerator patches are not reported as failed.
+						patcher.clearError();
+						SYSLOG("ngreen", "GT1: patch pattern not found; continuing without it");
+					}
+				}
 
 				// xe/noccs3 (19/10): o XE-NOCCS2 (cortar enableRenderCompressionWithAccelTask inteira) deixava o driver Metal
 				// usando fast clear / stencil comprimido SEM mapeamento AUX -> hang do RCS no PIPE_CONTROL após o fast clear.
@@ -5177,6 +5236,18 @@ bool Gen11::AppleIntelBaseControllerstart(AppleIntel::AppleIntelBaseController *
 	return ret;
 }
 
+// Refuse only the framebuffer-controller probe in dGPU-display/headless-iGPU mode.
+// The accelerator personality still matches the IGPU PCI provider, so VA/compute
+// clients can use the integrated GPU while WindowServer keeps the RX 6750 XT device.
+IOService *Gen11::headlessFramebufferProbe(IOService *that, IOService *provider, SInt32 *score)
+{
+	if (checkKernelArgument("-ngreenheadless")) {
+		IOLog("XeNG TRACE headless: refusing TGL framebuffer probe\n");
+		return nullptr;
+	}
+	return FunctionCast(headlessFramebufferProbe, callback->oHeadlessFramebufferProbe)(that, provider, score);
+}
+
 uint32_t Gen11::wrapProbeCDClockFrequency(AppleIntel::AppleIntelBaseController *that) {
 
 	// Sonoma probeCDClockFrequency checks reg 0x46070 (BXT_DE_PLL_ENABLE) bit 31 first.
@@ -5422,6 +5493,8 @@ static void v45ScheduleDelayedCheck(void *accelInstance, unsigned delayMs);
 
 unsigned long Gen11::start(void *that,void  *param_1)
 {
+	IOLog("XeNG TRACE accelerator-start: enter that=%p param=%p\n", that, param_1);
+	xeTraceGPUString("XeNG-Trace-AcceleratorStart", "entered", NGreen::callback ? NGreen::callback->iGPU : nullptr);
 	// V44: Configurable scheduler type.
 	// populateAccelConfig reads "GraphicsSchedulerSelect" from the IORegistry.
 	// Types: 3=IGGuC (firmware), 4=IGScheduler4, 5=IGScheduler5 (host preemptive).
@@ -6421,6 +6494,9 @@ uint8_t Gen11::deviceStart(void *that)
 	// ring programming). We allow the original to run and then force success if it
 	// returned false, preventing CoreDisplay from seeing a null accelerator device.
 	auto ret = FunctionCast(deviceStart, callback->odeviceStart)(that);
+	IOLog("XeNG TRACE accelerator-deviceStart: original=%d realTGL=%d\n",
+	      ret, NGreen::callback && NGreen::callback->isRealTGL);
+	xeTraceGPUString("XeNG-Trace-DeviceStart", ret ? "original-success" : "original-failure", NGreen::callback ? NGreen::callback->iGPU : nullptr);
 	const bool isRealTGL = NGreen::callback && NGreen::callback->isRealTGL;
 	if (!isRealTGL && !ret) {
 		SYSLOG("ngreen", "V111: IGAccelDevice::deviceStart returned false on RPL — forcing true");
@@ -11293,6 +11369,45 @@ bool Gen11::wrapAppleIntelFramebufferStart(void *that, void *provider)
 	return ret;
 }
 
+// 返回动态 accelerator personality 应匹配的伪装/原生 PCI ID。
+static const char *getAcceleratorPrimaryMatch(bool useTglNames) {
+	// Match both the OpenCore-spoofed TGL ID and the real RPL-S A788 ID.
+	// IOPCI matching may run before config-space spoofing is visible.
+	return useTglNames ? "0x9a498086 0xa7888086" : "0xff208086";
+}
+
+// 让已发布的 IGPU 立即重新匹配刚加入 IOCatalogue 的 accelerator personality。
+static bool rematchAcceleratorPersonality(IOCatalogue *catalogue, IOService *provider, const char *bundleId) {
+	if (!catalogue || !bundleId) return false;
+	IOLog("XeNG TRACE rematch: catalogue=%p provider=%p bundle=%s\n", catalogue, provider, bundleId);
+	xeTraceGPUString("XeNG-Trace-Rematch", "begin", provider);
+	auto *identifier = OSSymbol::withCString(bundleId);
+	if (!identifier) return false;
+	bool matched = catalogue->startMatching(identifier);
+	identifier->release();
+	// The symbol overload filters by publisher. The provider overload rescans
+	// already-published PCI services, which is required when IGPU registered
+	// before NootedGreen added the dynamic personality.
+	auto *matching = OSDictionary::withCapacity(1);
+	bool providerMatch = false;
+	if (matching) {
+		auto *providerClass = OSString::withCString("IOPCIDevice");
+		if (providerClass) {
+			matching->setObject("IOProviderClass", providerClass);
+			providerClass->release();
+			providerMatch = catalogue->startMatching(matching);
+		}
+		matching->release();
+	}
+	xeTraceGPUString("XeNG-Trace-ProviderMatching", providerMatch ? "success" : "failure", provider);
+	if (provider) {
+		provider->registerService(kIOServiceAsynchronous);
+		IOLog("XeNG TRACE rematch: provider registerService submitted\n");
+		xeTraceGPUString("XeNG-Trace-Rematch", "provider-register-submitted", provider);
+	}
+	return matched && providerMatch;
+}
+
 void Gen11::injectAcceleratorPersonality(bool useTglNames)
 {
 	if (this->acceleratorPersonalityInjected) {
@@ -11302,6 +11417,9 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 
 	SYSLOG("ngreen", "injectAcceleratorPersonality: registering IntelAccelerator (%s) into IOCatalogue",
 	       useTglNames ? "TGL" : "ICL");
+	xeTraceGPUString("XeNG-Trace-Personality", "begin", NGreen::callback ? NGreen::callback->iGPU : nullptr);
+	IOLog("XeNG TRACE personality: begin tgl=%d primary=%s provider=%p\n",
+	      useTglNames, getAcceleratorPrimaryMatch(useTglNames), NGreen::callback ? NGreen::callback->iGPU : nullptr);
 
 	auto *dict = OSDictionary::withCapacity(24);
 	if (!dict) return;
@@ -11317,6 +11435,7 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 	auto *mc  = OSString::withCString("IOAccelerator");
 	auto *pv  = OSString::withCString("IOPCIDevice");
 	auto *pcm = OSString::withCString("0x03000000&0xff000000");
+	auto *ppm = OSString::withCString(getAcceleratorPrimaryMatch(useTglNames));
 	auto *ps  = OSNumber::withNumber(static_cast<unsigned long long>(1000), 32);
 
 	dict->setObject("CFBundleIdentifier", bi);
@@ -11324,6 +11443,7 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 	dict->setObject("IOMatchCategory", mc);
 	dict->setObject("IOProviderClass", pv);
 	dict->setObject("IOPCIClassMatch", pcm);
+	dict->setObject("IOPCIPrimaryMatch", ppm);
 	dict->setObject("IOProbeScore", ps);
 
 	OSSafeReleaseNULL(bi);
@@ -11331,6 +11451,7 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 	OSSafeReleaseNULL(mc);
 	OSSafeReleaseNULL(pv);
 	OSSafeReleaseNULL(pcm);
+	OSSafeReleaseNULL(ppm);
 	OSSafeReleaseNULL(ps);
 
 	// V44: GPU driver bundle names — required by IOAcceleratorFamily2 and WindowServer
@@ -11383,6 +11504,11 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 		dpCaps->setObject("TransactionsSupported", dpOff ? kOSBooleanFalse : kOSBooleanTrue);
 		dict->setObject("IOAccelDisplayPipeCapabilities", dpCaps);
 		dpCaps->release();
+		auto *dpTrace = OSString::withCString(dpOff ? "disabled" : "enabled");
+		if (dpTrace) {
+			dict->setObject("XeNG-DisplayPipe", dpTrace);
+			dpTrace->release();
+		}
 		SYSLOG("ngreen", "XE-DPCAPS: DisplayPipeSupported=%d TransactionsSupported=%d", !dpOff, !dpOff);
 	}
 
@@ -11394,6 +11520,14 @@ void Gen11::injectAcceleratorPersonality(bool useTglNames)
 		if (gIOCatalogue) {
 			bool ok = gIOCatalogue->addDrivers(array, true);
 			SYSLOG("ngreen", "injectAcceleratorPersonality: addDrivers returned %d", ok);
+			IOLog("XeNG TRACE personality: addDrivers=%d\n", ok);
+			xeTraceGPUString("XeNG-Trace-Personality", ok ? "addDrivers-success" : "addDrivers-failure", NGreen::callback ? NGreen::callback->iGPU : nullptr);
+			if (ok) {
+				bool rematched = rematchAcceleratorPersonality(gIOCatalogue, NGreen::callback ? NGreen::callback->iGPU : nullptr, bundleId);
+				SYSLOG("ngreen", "injectAcceleratorPersonality: startMatching(%s) returned %d", bundleId, rematched);
+				IOLog("XeNG TRACE personality: startMatching=%d\n", rematched);
+				xeTraceGPUString("XeNG-Trace-Personality", rematched ? "startMatching-success" : "startMatching-failure", NGreen::callback ? NGreen::callback->iGPU : nullptr);
+			}
 			this->acceleratorPersonalityInjected = ok;
 		} else {
 			SYSLOG("ngreen", "injectAcceleratorPersonality: gIOCatalogue is null!");
