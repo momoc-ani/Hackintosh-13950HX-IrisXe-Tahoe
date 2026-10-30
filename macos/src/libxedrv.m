@@ -45,6 +45,18 @@ static void xe_log(const char* fmt, ...) {
 static const void* g_drv_base;   // base do AppleIntelTGLGraphicsMTLDriver (para reconhecer chamadas vindas dele)
 static int g_layout_ok;
 
+// 仅把 AppleIntelTGLGraphics 的 Metal 设备标记为无头，保留其 3D、VA 和编解码能力。
+// AMD Metal 类不经过此方法，因此独显仍作为桌面显示 GPU。
+static int should_report_tgl_headless(const char *class_name) {
+  return class_name && !strcmp(class_name, "MTLIGAccelDevice");
+}
+
+// Metal 查询 MTLDevice.isHeadless 时返回真实的独显/核显角色。
+static BOOL tgl_is_headless(id self, SEL selector) {
+  (void)selector;
+  return should_report_tgl_headless(class_getName(object_getClass(self))) ? YES : NO;
+}
+
 // 独显显示模式的可回退隔离开关：只阻止 IconServices 创建 Intel TGL Metal 设备。
 // 删除 ICONSERVICES_FLAG 后恢复原始 TGL 初始化路径，不影响其他进程或编解码服务。
 static int should_block_iconservices_device(const char *program, int flag_present) {
@@ -198,6 +210,8 @@ static id initport_wrapper(id self, SEL c, unsigned int port) {
 static BOOL install_entries(void) {
   Class dev = objc_getClass("MTLIGAccelDevice"), buf = objc_getClass("MTLIGAccelBuffer"), tex = objc_getClass("MTLIGAccelTexture");
   if (!dev || !buf || !tex) return NO;
+  class_replaceMethod(dev, sel_registerName("isHeadless"), (IMP)tgl_is_headless, "c16@0:8");
+  LOG("TGL Metal headless state forced to YES");
   Method anchor = class_getInstanceMethod(dev, sel_registerName("initWithAcceleratorPort:"));
   Dl_info di;
   if (!anchor || !dladdr((void*)method_getImplementation(anchor), &di)) { LOG("initWithAcceleratorPort: ausente"); return NO; }
