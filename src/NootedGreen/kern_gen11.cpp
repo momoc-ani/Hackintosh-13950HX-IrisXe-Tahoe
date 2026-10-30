@@ -467,6 +467,21 @@ static void xeDispStamp(void *that, int idx, uint32_t stamp) {
 static mach_vm_address_t gOrgS5Push = 0, gOrgS5Notify = 0, gOrgCs5Submit = 0, gOrgS5Pause = 0, gOrgS5Resume = 0;
 static volatile uint32_t gS5PushN = 0, gS5NotifyN = 0, gCs5SubmitN = 0, gS5PauseN = 0, gS5ResumeN = 0;
 static volatile uint32_t gBlitScratchN = 0, gBlitScratchOkN = 0;
+
+// 在 headless 模式没有显示 stamp 时，直接从 accelerator start 绑定诊断对象。
+static void xeBindAccelDiagnostics(void *that) {
+	gAccelObj = static_cast<uint8_t *>(that);
+	auto *svc = OSDynamicCast(IOService, reinterpret_cast<OSObject *>(that));
+	if (!svc) return;
+	int v130 = -1;
+	PE_parse_boot_argn("ngreenV130", &v130, sizeof(v130));
+	svc->setProperty("xe-cs-push", gS5PushN, 32);
+	svc->setProperty("xe-cs-submit", gCs5SubmitN, 32);
+	svc->setProperty("xe-v130-mode", static_cast<uint32_t>(v130), 32);
+	svc->setProperty("xe-blitscratch-calls", gBlitScratchN, 32);
+	svc->setProperty("xe-blitscratch-ok", gBlitScratchOkN, 32);
+	svc->setProperty("xe-lock-routed", gXeLockRouted ? 1U : 0U, 32);
+}
 static uint32_t gThrtN = 0, gThrtSimN = 0;
 static volatile uint32_t gCsbResyncN = 0;  // 21/10: active->idle salvos pelo xeCsbResync (CSBR)
 static volatile uint32_t gCsbSkipN = 0;  // 19/10: eventos active->idle descartados pelo xeCsbA2I
@@ -5508,6 +5523,7 @@ static void v45ScheduleDelayedCheck(void *accelInstance, unsigned delayMs);
 
 unsigned long Gen11::start(void *that,void  *param_1)
 {
+	xeBindAccelDiagnostics(that);
 	IOLog("XeNG TRACE accelerator-start: enter that=%p param=%p\n", that, param_1);
 	xeTraceGPUString("XeNG-Trace-AcceleratorStart", "entered", NGreen::callback ? NGreen::callback->iGPU : nullptr);
 	// V44: Configurable scheduler type.
