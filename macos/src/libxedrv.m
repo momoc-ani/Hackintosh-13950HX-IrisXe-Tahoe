@@ -40,9 +40,21 @@ static void xe_log(const char* fmt, ...) {
 #define LOG(...) xe_log(__VA_ARGS__)
 #define PRIV_SZ 0x2e0
 #define LAB_FLAG "/Library/GPUBundles/xe-lab"
+#define ICONSERVICES_FLAG "/Library/GPUBundles/xe-iconservices-disable"
 
 static const void* g_drv_base;   // base do AppleIntelTGLGraphicsMTLDriver (para reconhecer chamadas vindas dele)
 static int g_layout_ok;
+
+// 独显显示模式的可回退隔离开关：只阻止 IconServices 创建 Intel TGL Metal 设备。
+// 删除 ICONSERVICES_FLAG 后恢复原始 TGL 初始化路径，不影响其他进程或编解码服务。
+static int should_block_iconservices_device(const char *program, int flag_present) {
+  return flag_present && program && !strcmp(program, "iconservicesagent");
+}
+
+// 根据进程名和回退文件判断是否跳过 IconServices 的 TGL 设备初始化。
+static int iconservices_device_is_blocked(void) {
+  return should_block_iconservices_device(getprogname(), access(ICONSERVICES_FLAG, F_OK) == 0);
+}
 
 // ---- campo de bits "misc" (union em 0xe0 no Tahoe, 0xd0 no antigo): {pos_antiga, larg_antiga, pos_nova, larg_nova} ----
 static const struct { int op, ow, np, nw; } MISC[21] = {
@@ -172,6 +184,10 @@ static id buf_desc(id self, SEL c, id d) {
 // modo laboratório: o WindowServer não recebe device da GPU (fica em software); programas de teste continuam recebendo
 static IMP g_orig_initport;
 static id initport_wrapper(id self, SEL c, unsigned int port) {
+  if (iconservices_device_is_blocked()) {
+    static int logged; if (!logged) { logged = 1; LOG("IconServices TGL device disabled by %s", ICONSERVICES_FLAG); }
+    [self release]; return nil;
+  }
   if (!strcmp(getprogname(), "WindowServer") && access(LAB_FLAG, F_OK) == 0) {
     static int logged; if (!logged) { logged = 1; LOG("modo laboratório: WindowServer sem MTLDevice da Iris Xe"); }
     [self release]; return nil;
