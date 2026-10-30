@@ -3,6 +3,9 @@
 // Compilar: clang -fobjc-arc -o ~/xe/build/xe-vttest ~/xe/tools/xe-vttest.m -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework Foundation
 #import <VideoToolbox/VideoToolbox.h>
 #include <stdio.h>
+// 使用 CoreVideo 定义的完整 FourCC，避免多字符常量被压缩为单字节。
+static const OSType kPixelFormat420v = 0x34323076;
+static const OSType kPixelFormatBGRA = 0x42475241;
 static NSMutableArray *amostras;
 static void enc_cb(void *r, void *s, OSStatus st, VTEncodeInfoFlags f, CMSampleBufferRef sb) {
     if (st == noErr && sb) [amostras addObject:(__bridge id)sb];
@@ -30,7 +33,7 @@ static void decodifica(CMFormatDescriptionRef fd, int hw, int nativo) {
     ndec = nerr = 0; lastErr = 0;
     NSDictionary *spec = @{(id)(hw ? kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder
                                      : kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder): hw ? @YES : @NO};
-    NSDictionary *out = nativo ? nil : @{(id)kCVPixelBufferPixelFormatTypeKey: @('420v'), (id)kCVPixelBufferIOSurfacePropertiesKey: @{}};
+    NSDictionary *out = nativo ? nil : @{(id)kCVPixelBufferPixelFormatTypeKey: @(kPixelFormat420v), (id)kCVPixelBufferIOSurfacePropertiesKey: @{}};
     VTDecompressionOutputCallbackRecord cb = {dec_cb, NULL};
     VTDecompressionSessionRef ds = NULL;
     OSStatus st = VTDecompressionSessionCreate(NULL, fd, (__bridge CFDictionaryRef)spec, (__bridge CFDictionaryRef)out, &cb, &ds);
@@ -62,12 +65,12 @@ int main() { @autoreleasepool {
     printf("codificados: %lu quadros\n", (unsigned long)amostras.count);
     if (!amostras.count) return 1;
     CMFormatDescriptionRef fd = CMSampleBufferGetFormatDescription((__bridge CMSampleBufferRef)amostras[0]);
-    if (getenv("SOFMT")) { decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @('BGRA')}, "só formato BGRA"); return 0; }
+    if (getenv("SOFMT")) { decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @(kPixelFormatBGRA)}, "só formato BGRA"); return 0; }
     decodifica(fd, 1, 0);
     decodifica(fd, 0, 0);
     decodifica(fd, 0, 1);
-    decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @('420v')}, "só formato 420v");
-    decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @('BGRA')}, "só formato BGRA");
+    decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @(kPixelFormat420v)}, "só formato 420v");
+    decodifica2(fd, 0, @{(id)kCVPixelBufferPixelFormatTypeKey: @(kPixelFormatBGRA)}, "só formato BGRA");
     decodifica2(fd, 0, @{(id)kCVPixelBufferIOSurfacePropertiesKey: @{}}, "só IOSurface");
     decodifica2(fd, 0, @{(id)kCVPixelBufferMetalCompatibilityKey: @YES}, "só Metal");
     decodifica2(fd, 0, @{(id)kCVPixelBufferWidthKey: @640, (id)kCVPixelBufferHeightKey: @480}, "só tamanho");

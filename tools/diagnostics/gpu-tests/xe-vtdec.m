@@ -3,6 +3,8 @@
 #import <VideoToolbox/VideoToolbox.h>
 #import <CoreVideo/CoreVideo.h>
 #include <stdio.h>
+// 使用 CoreVideo 定义的完整 FourCC，避免多字符常量被压缩为单字节。
+static const OSType kPixelFormatBGRA = 0x42475241;
 static NSMutableArray *quadros;
 static void codifica(CMVideoCodecType codec) {
   quadros = [NSMutableArray array]; VTCompressionSessionRef cs; int w = 1280, h = 720;
@@ -41,7 +43,7 @@ int main(void) { @autoreleasepool {
   for (int i = 0; i < 2; i++) {
     printf("%s:\n", nm[i]); codifica(cs[i]);
     decodifica("hardware obrigatório", @{(id)kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder:@YES}, nil);
-    decodifica("hardware obrig. + BGRA", @{(id)kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder:@YES}, @{(id)kCVPixelBufferPixelFormatTypeKey:@('BGRA')});
+    decodifica("hardware obrig. + BGRA", @{(id)kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder:@YES}, @{(id)kCVPixelBufferPixelFormatTypeKey:@(kPixelFormatBGRA)});
     decodifica("padrão", @{}, nil);
     decodifica("software", @{(id)kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder:@NO}, nil);
   }
