@@ -555,6 +555,14 @@ static void xeCsStateWorker(thread_call_param_t, thread_call_param_t) {
 			svc->setProperty("xe-lock-routed", gXeLockRouted ? 1U : 0U, 32);
 			svc->setProperty("xe-dpsm1458", *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1458), 32);
 			svc->setProperty("xe-cfg1190", *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1190), 32);
+			if (NGreen::callback) {
+				svc->setProperty("xe-rcs-status", NGreen::callback->readReg32(RENDER_RING_BASE + 0x234), 32);
+				svc->setProperty("xe-rcs-head", NGreen::callback->readReg32(RENDER_RING_BASE + 0x034), 32);
+				svc->setProperty("xe-rcs-tail", NGreen::callback->readReg32(RENDER_RING_BASE + 0x030), 32);
+				svc->setProperty("xe-bcs-status", NGreen::callback->readReg32(BLT_RING_BASE + 0x234), 32);
+				svc->setProperty("xe-bcs-head", NGreen::callback->readReg32(BLT_RING_BASE + 0x034), 32);
+				svc->setProperty("xe-bcs-tail", NGreen::callback->readReg32(BLT_RING_BASE + 0x030), 32);
+			}
 		}
 		IOLog("XeNG CS t=%u dpsm1458=0x%x cfg1190=0x%x (push %u exec %u) thrt=%u thrtSim=%u csbx=%u csbr=%u idlw=%u/%llums max=%uus to=%u pgoff=%u pgon=%u pgfix=%u stail=%u resfix=%u orf=%u dpms=%u fbdpms=%u gtf=%u/0x%x bl hw=%u apple=%u fw=%u duty=%u max=%u out=%u rc1474=%u\n", tick, *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1458),
 			  *reinterpret_cast<volatile uint32_t *>(gAccelObj + 0x1190), gS5PushN, gCs5SubmitN, gThrtN, gThrtSimN, gCsbSkipN, gCsbResyncN, gIdlwN, (unsigned long long)(gIdlwUs / 1000), gIdlwMax, gIdlwTimeout, gPageoffN, gPageonN, gPageonFix, gSameTailForced, gXeResFreeFix, gXeOrphanMiss, gXeDpmsBlocked, gXeFbDpmsN, gXeGtFreqN, gXeGtFreqApple, gBlHwFreq, gBlAppleFreq, gBlFreqWrites, gBlLastDuty, gBlMaxDuty, gBlLastOut,
