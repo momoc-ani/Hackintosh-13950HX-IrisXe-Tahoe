@@ -133,3 +133,52 @@ python3 tools/diagnostics/gpu-tests/verify-h264-encode.py \
 ## 变更管理与审查限制
 
 本轮诊断工具和 VPHAL 分流补丁分别提交，未混入既有 `20261030-render-and-codec-validation.md` 的未提交内容。已执行实际构建、机器码测试、码流与像素回归。尝试安排独立审查时，审查代理未执行文件读取或实际审查，因此本记录**不宣称独立代码审查通过**。
+
+## 2026-11-02 16:35 重启后的参考资源绑定排查
+
+本阶段启动时间为 **2026-11-02 16:35:45 CST**。Intel registryID 已变为 `4294968951`；不能复用重启前的 registryID 或稳定性观察窗口。系统驱动、EFI 和 NVRAM 未在本阶段修改。仍使用进程内 VA 候选，通用 P 帧编码尚未通过。
+
+新增 [xe-vdenc-binding-capture.c](../../tools/diagnostics/gpu-tests/xe-vdenc-binding-capture.c) 采集三个阶段：用户态提交前、内核提交返回后，以及首帧 fence 完成后。REA 对当前 VA 的 `0xa893`、`0xa9dc`、`0x226e6`、`0x22708` 和 `0x27724` 的读取确认：提交后 VA 会重新选择数据缓冲区，必须在此之前保存原缓冲区，不能只在下一帧观察资源表残留值。
+
+默认采集在第二帧提交前退出。显式 `XE_BINDING_SECOND_END=1` 则在第二批次开头写 `MI_BATCH_BUFFER_END`，让内核回填资源地址，GPU 不执行后续 P 帧命令；提交返回即退出。首帧仍执行 I 帧编码。CPU 测试直接运行采集核心及 dyld 拦截器，验证截停、阶段数据独立和重叠复制。
+
+[实际绑定与校验](20261102-kext-icons-and-encode/postbind-reference-validation.json) 显示：
+
+| 资源 | 首帧写入的 GPU 地址 | 第二帧参考地址 | GPU pitch |
+|---|---|---|---:|
+| 完整重建图 Y | `0x40020000` | `0x40020000` | 1280 |
+| 4 倍缩小图 Y | `0x4017e000` | `0x4017e000` | 384 |
+
+第二帧三个完整参考槽均引用首帧完整重建图，两个缩小参考槽均引用首帧缩小图；句柄与最终 GPU 地址匹配。完整图 UV 与 Y 的地址差除以 pitch 为 736，缩小图为 192，与内核写入的表面 chroma 行偏移对应。CPU IOSurface 的 pitch 与 GPU 资源 pitch 是两种布局，不能用 320 与 384 的差异直接判定故障。
+
+首帧 `submit status=0 flags=0 fault=0`、`finish status=0 fence=1`，提交后与完成后的 token、batch 内容一致。第二帧仅做绑定也返回成功。两次原始布局采集没有新增 GPU reset。原始 token、batch 与事件日志保存在 [vdenc-binding](20261102-kext-icons-and-encode/vdenc-binding)；测试使用这些小型采集文件，无需依赖被忽略的 build 目录。
+
+此结果排除了本次样本中“P 帧引用了错误句柄或错误 GPU 地址”的假设，**没有证明所有参考读取状态和同步机制都正确**。
+
+### 地址命令扩展实验与失败结论
+
+当前 VA 的 `VDENC_PIPE_BUF_ADDR_STATE` 长 37 DWORD，与 Intel 官方 `intel-vaapi-driver/src/gen9_vdenc.c` 中的短格式一致；官方 `media-driver` Gen12 定义为 71 DWORD。前 37 DWORD 中本次使用的地址槽位置一致。仅补齐尾部未使用字段、修改长度，并移动后续命令，属于独立实验；没有合并进 VA 安装补丁。
+
+新增 [命令布局转换](../../tools/diagnostics/gpu-tests/xe-vdenc-command-layout.h)、[CPU 字节校验](../../tools/diagnostics/gpu-tests/test-vdenc-command-layout.py) 与 [进程内实验库](../../tools/diagnostics/gpu-tests/xe-vdenc-address-lab.c)。校验覆盖真实 I/P 批次、原资源内容、后续命令、slice 偏移、容量和 VA 原有长度预估差值。VA token 中的长度来自预估函数，部分帧比实际已构建命令多一 DWORD，扩展保留这个差值。
+
+第一次硬件实验暴露了自有诊断代码的错误：macOS 的 `memmove` 可与 `memcpy` 共用导出入口，原拦截器只正向复制，导致重叠移动反复复制 QPT 命令，在提交前就已破坏 batch。该实验于 **17:11:10** 产生 VCS0 reset（IPEHR=`0x404c3008`）。这不是 Gen12 长命令本身的有效反证。新增实际加载 dylib 的 CPU 测试先复现退出 99，再修正为按重叠方向复制。两个实验库均通过此测试。
+
+修正后重新采集，[提交前字节验证](20261102-kext-icons-and-encode/gen12-address-preflight-validation.json) 确认前缀、地址 payload 和完整后续命令保留，QPT 只出现一次；总长度和偏移同步更新，另行扩大预留区。随后硬件结果为：
+
+| 实验 | 结果 | 结论 |
+|---|---|---|
+| 71 DWORD，首帧执行、第二帧仅绑定 | 提交/完成/绑定返回 0，无新增 reset | 内核接受此布局，资源回填可采集 |
+| 71 DWORD，全 I 四帧 | 4/4，软件解码均为 I，PSNR 53.04 dB | 短回归通过 |
+| 71 DWORD，真实 I+P 两帧 | 仅首帧有效，第二帧无有效样本 | P 帧失败，不能安装 |
+
+最后一项于 **17:31:24** 产生 VCS0 reset，仍停在 `MI_FLUSH_DW`（IPEHR=`0x13000003`，INSTDONE=`0x3bffffff`，VIN/VCS/GAC 未完成），与原 P 帧挂起一致。因此**单独补齐地址命令长度没有解决根因**，与此前“单独补齐模式命令”的失败结论并列；不能把两项各自失败当作同时修改后的结果。
+
+[全 I 画质结果](20261102-kext-icons-and-encode/gen12-address-intra-quality.json)、[真实帧间输出清单](20261102-kext-icons-and-encode/gen12-address-inter-manifest.json)、[阶段与 reset 分类](20261102-kext-icons-and-encode/vdenc-postbind-stage-summary.json) 均保留。报告落盘有延迟，实验进程刚退出时的 `new_gpu_reports=[]` 不能替代稍后生成的 GPU restart 报告。本阶段系统已有上述两次 reset，不能声称当前启动保持稳定。
+
+### 本阶段交付范围与后续边界
+
+已取得首帧与第二帧内核回填后的实际绑定，并修正可复现的诊断器重叠复制问题。4 项采集/布局 CPU 测试、原有 8 项 VPHAL 机器码测试及 6 项编码报告验收测试均通过；这些测试通过不代表 P 帧编码已修好。
+
+当前仍不能发布系统 Intel 通用编码能力，没有可要求用户重启安装的编码版 EFI。后续根因调查应继续核对 P 帧独有参考状态、缩小参考状态、图像状态与同步要求；本阶段没有增加新的猜测性 VA 或内核修补。普通 Usage=0、HEVC 编码、系统 XPC 调用、并发和长期稳定性仍未验收。
+
+本阶段没有完成独立代理审查，不宣称独立代码审查通过。

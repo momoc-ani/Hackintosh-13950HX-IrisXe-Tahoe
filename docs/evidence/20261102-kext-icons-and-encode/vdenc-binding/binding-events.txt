@@ -1,0 +1,8 @@
+image=/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver
+ready frame=0 batch_bytes=2704
+submit status=0 flags=0 fault=0
+finish status=0 fence=1
+ready frame=1 batch_bytes=2824
+guard second batch with MI_BATCH_BUFFER_END
+bind-only submit status=0 flags=0 fault=0
+stop after second frame binding

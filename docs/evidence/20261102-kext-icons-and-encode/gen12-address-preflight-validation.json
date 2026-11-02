@@ -1,0 +1,11 @@
+{
+  "exit_before_submission": true,
+  "prefix_unchanged": true,
+  "address_payload_unchanged": true,
+  "suffix_unchanged": true,
+  "suffix_zeroed": true,
+  "len_correct": true,
+  "header_correct": true,
+  "qpt_count": 1,
+  "recorded_slice_start": "0x8a4"
+}

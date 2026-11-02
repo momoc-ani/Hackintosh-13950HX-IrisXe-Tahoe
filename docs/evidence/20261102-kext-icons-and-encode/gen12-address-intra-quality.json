@@ -1,0 +1,16 @@
+{
+  "prefix": "build/validation-encode-and-kext-icons-20261102/gen12-address-hardware-fixed/intra-acceptance",
+  "width": 1280,
+  "height": 720,
+  "frames": 4,
+  "intra_only": true,
+  "minimum_psnr_db": 35.0,
+  "target_gpu_registry_id": 4294968951,
+  "samples": 5529600,
+  "different_samples": 1123996,
+  "max_abs_difference": 10,
+  "mean_abs_difference": 0.22764973958333334,
+  "psnr_db": 53.0355718327001,
+  "pixel_exact": false,
+  "pass": true
+}

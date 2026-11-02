@@ -1,0 +1,21 @@
+{
+  "exit": 77,
+  "elapsed_seconds": 0.187,
+  "new_gpu_reports": [],
+  "files": {
+    "frame-1-before-token.bin": 3304,
+    "frame-1-before-batch.bin": 2824,
+    "run.log": 1071,
+    "frame-0-before-token.bin": 3304,
+    "frame-1-submitted-batch.bin": 2824,
+    "binding-events.txt": 402,
+    "frame-0-submitted-batch.bin": 2704,
+    "frame-0-submitted-token.bin": 3304,
+    "frame-1-submitted-token.bin": 3304,
+    "frame-0-before-batch.bin": 2704,
+    "frame-0-finished-batch.bin": 2704,
+    "frame-1-guarded-batch.bin": 2824,
+    "frame-1-guarded-token.bin": 3304,
+    "frame-0-finished-token.bin": 3304
+  }
+}

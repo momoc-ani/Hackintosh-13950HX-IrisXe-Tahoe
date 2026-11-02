@@ -1,0 +1,498 @@
+{
+  "capture": "p-postbind-endguard-1635boot",
+  "stages": {
+    "0": {
+      "resources": [
+        {
+          "index": 0,
+          "handle": 0,
+          "gpu_address": "0x0",
+          "pitch_or_buffer_size": 0,
+          "flags": 0
+        },
+        {
+          "index": 1,
+          "handle": 107,
+          "gpu_address": "0x40106000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 1
+        },
+        {
+          "index": 2,
+          "handle": 106,
+          "gpu_address": "0x40020000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 1
+        },
+        {
+          "index": 3,
+          "handle": 109,
+          "gpu_address": "0x40190000",
+          "pitch_or_buffer_size": 384,
+          "flags": 1
+        },
+        {
+          "index": 4,
+          "handle": 108,
+          "gpu_address": "0x4017e000",
+          "pitch_or_buffer_size": 384,
+          "flags": 1
+        },
+        {
+          "index": 5,
+          "handle": 102,
+          "gpu_address": "0x40199000",
+          "pitch_or_buffer_size": 233472,
+          "flags": 1
+        },
+        {
+          "index": 6,
+          "handle": 48,
+          "gpu_address": "0x40004000",
+          "pitch_or_buffer_size": 8192,
+          "flags": 1
+        },
+        {
+          "index": 7,
+          "handle": 47,
+          "gpu_address": "0x401d2000",
+          "pitch_or_buffer_size": 20480,
+          "flags": 1
+        },
+        {
+          "index": 8,
+          "handle": 49,
+          "gpu_address": "0x40006000",
+          "pitch_or_buffer_size": 8192,
+          "flags": 1
+        },
+        {
+          "index": 9,
+          "handle": 101,
+          "gpu_address": "0x401d7000",
+          "pitch_or_buffer_size": 233472,
+          "flags": 0
+        },
+        {
+          "index": 10,
+          "handle": 103,
+          "gpu_address": "0x40210000",
+          "pitch_or_buffer_size": 1384448,
+          "flags": 1
+        },
+        {
+          "index": 11,
+          "handle": 46,
+          "gpu_address": "0x40362000",
+          "pitch_or_buffer_size": 12288,
+          "flags": 1
+        },
+        {
+          "index": 12,
+          "handle": 104,
+          "gpu_address": "0x40365000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 13,
+          "handle": 105,
+          "gpu_address": "0x4044b000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 14,
+          "handle": 44,
+          "gpu_address": "0x404c3000",
+          "pitch_or_buffer_size": 4096,
+          "flags": 1
+        }
+      ],
+      "batch_bytes": 2704,
+      "batch_first_dword": "0x13000083",
+      "roles": {
+        "raw_y": 12,
+        "raw_uv": 13,
+        "recon_y": 2,
+        "recon_uv": 1,
+        "ds_y": 4,
+        "ds_uv": 3,
+        "ref0": 0,
+        "ref1": 0,
+        "ref2": 0,
+        "ds_ref0": 0,
+        "ds_ref1": 0
+      },
+      "surface_words": {
+        "0x3c": [
+          "0x70010004",
+          "0x00000004",
+          "0x0b3c4ff0",
+          "0x480027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x54": [
+          "0x70010004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x480027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x6c": [
+          "0x70010004",
+          "0x00000005",
+          "0x02fc13f0",
+          "0x48000bfb",
+          "0x000000c0",
+          "0x000000c0"
+        ],
+        "0x22c": [
+          "0x70810004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x200027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x244": [
+          "0x70820004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x200027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x25c": [
+          "0x70830004",
+          "0x00000000",
+          "0x02fc13f0",
+          "0x20000bfb",
+          "0x000000c0",
+          "0x000000c0"
+        ]
+      }
+    },
+    "1": {
+      "resources": [
+        {
+          "index": 0,
+          "handle": 0,
+          "gpu_address": "0x0",
+          "pitch_or_buffer_size": 0,
+          "flags": 0
+        },
+        {
+          "index": 1,
+          "handle": 114,
+          "gpu_address": "0x405ba000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 1
+        },
+        {
+          "index": 2,
+          "handle": 113,
+          "gpu_address": "0x404d4000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 1
+        },
+        {
+          "index": 3,
+          "handle": 116,
+          "gpu_address": "0x40644000",
+          "pitch_or_buffer_size": 384,
+          "flags": 1
+        },
+        {
+          "index": 4,
+          "handle": 115,
+          "gpu_address": "0x40632000",
+          "pitch_or_buffer_size": 384,
+          "flags": 1
+        },
+        {
+          "index": 5,
+          "handle": 102,
+          "gpu_address": "0x40199000",
+          "pitch_or_buffer_size": 233472,
+          "flags": 1
+        },
+        {
+          "index": 6,
+          "handle": 48,
+          "gpu_address": "0x40004000",
+          "pitch_or_buffer_size": 8192,
+          "flags": 1
+        },
+        {
+          "index": 7,
+          "handle": 47,
+          "gpu_address": "0x401d2000",
+          "pitch_or_buffer_size": 20480,
+          "flags": 1
+        },
+        {
+          "index": 8,
+          "handle": 106,
+          "gpu_address": "0x40020000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 9,
+          "handle": 107,
+          "gpu_address": "0x40106000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 10,
+          "handle": 108,
+          "gpu_address": "0x4017e000",
+          "pitch_or_buffer_size": 384,
+          "flags": 0
+        },
+        {
+          "index": 11,
+          "handle": 49,
+          "gpu_address": "0x40006000",
+          "pitch_or_buffer_size": 8192,
+          "flags": 1
+        },
+        {
+          "index": 12,
+          "handle": 101,
+          "gpu_address": "0x401d7000",
+          "pitch_or_buffer_size": 233472,
+          "flags": 0
+        },
+        {
+          "index": 13,
+          "handle": 103,
+          "gpu_address": "0x40210000",
+          "pitch_or_buffer_size": 1384448,
+          "flags": 1
+        },
+        {
+          "index": 14,
+          "handle": 46,
+          "gpu_address": "0x40362000",
+          "pitch_or_buffer_size": 12288,
+          "flags": 1
+        },
+        {
+          "index": 15,
+          "handle": 111,
+          "gpu_address": "0x4064d000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 16,
+          "handle": 112,
+          "gpu_address": "0x40733000",
+          "pitch_or_buffer_size": 1280,
+          "flags": 0
+        },
+        {
+          "index": 17,
+          "handle": 44,
+          "gpu_address": "0x404c3000",
+          "pitch_or_buffer_size": 4096,
+          "flags": 1
+        }
+      ],
+      "batch_bytes": 2824,
+      "batch_first_dword": "0x05000000",
+      "roles": {
+        "raw_y": 15,
+        "raw_uv": 16,
+        "recon_y": 2,
+        "recon_uv": 1,
+        "ds_y": 4,
+        "ds_uv": 3,
+        "ref0": 8,
+        "ref1": 8,
+        "ref2": 8,
+        "ds_ref0": 10,
+        "ds_ref1": 10
+      },
+      "surface_words": {
+        "0x3c": [
+          "0x70010004",
+          "0x00000004",
+          "0x0b3c4ff0",
+          "0x480027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x54": [
+          "0x70010004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x480027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x6c": [
+          "0x70010004",
+          "0x00000005",
+          "0x02fc13f0",
+          "0x48000bfb",
+          "0x000000c0",
+          "0x000000c0"
+        ],
+        "0x22c": [
+          "0x70810004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x200027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x244": [
+          "0x70820004",
+          "0x00000000",
+          "0x0b3c4ff0",
+          "0x200027fb",
+          "0x000002e0",
+          "0x000002e0"
+        ],
+        "0x25c": [
+          "0x70830004",
+          "0x00000000",
+          "0x02fc13f0",
+          "0x20000bfb",
+          "0x000000c0",
+          "0x000000c0"
+        ]
+      }
+    }
+  },
+  "references": {
+    "ref0": {
+      "first_frame_resource": {
+        "index": 2,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 1
+      },
+      "second_frame_resource": {
+        "index": 8,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 0
+      },
+      "same_handle_and_gpu_address": true
+    },
+    "ref1": {
+      "first_frame_resource": {
+        "index": 2,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 1
+      },
+      "second_frame_resource": {
+        "index": 8,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 0
+      },
+      "same_handle_and_gpu_address": true
+    },
+    "ref2": {
+      "first_frame_resource": {
+        "index": 2,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 1
+      },
+      "second_frame_resource": {
+        "index": 8,
+        "handle": 106,
+        "gpu_address": "0x40020000",
+        "pitch_or_buffer_size": 1280,
+        "flags": 0
+      },
+      "same_handle_and_gpu_address": true
+    },
+    "ds_ref0": {
+      "first_frame_resource": {
+        "index": 4,
+        "handle": 108,
+        "gpu_address": "0x4017e000",
+        "pitch_or_buffer_size": 384,
+        "flags": 1
+      },
+      "second_frame_resource": {
+        "index": 10,
+        "handle": 108,
+        "gpu_address": "0x4017e000",
+        "pitch_or_buffer_size": 384,
+        "flags": 0
+      },
+      "same_handle_and_gpu_address": true
+    },
+    "ds_ref1": {
+      "first_frame_resource": {
+        "index": 4,
+        "handle": 108,
+        "gpu_address": "0x4017e000",
+        "pitch_or_buffer_size": 384,
+        "flags": 1
+      },
+      "second_frame_resource": {
+        "index": 10,
+        "handle": 108,
+        "gpu_address": "0x4017e000",
+        "pitch_or_buffer_size": 384,
+        "flags": 0
+      },
+      "same_handle_and_gpu_address": true
+    }
+  },
+  "checks": {
+    "first_frame_submitted_equals_finished_token": true,
+    "first_frame_submitted_equals_finished_batch": true,
+    "second_batch_starts_with_end": true,
+    "all_reference_handles_and_addresses_match": true
+  },
+  "events": [
+    "image=/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver",
+    "ready frame=0 batch_bytes=2704",
+    "submit status=0 flags=0 fault=0",
+    "finish status=0 fence=1",
+    "ready frame=1 batch_bytes=2824",
+    "guard second batch with MI_BATCH_BUFFER_END",
+    "bind-only submit status=0 flags=0 fault=0",
+    "stop after second frame binding"
+  ],
+  "run_status": {
+    "exit": 77,
+    "elapsed_seconds": 0.187,
+    "new_gpu_reports": [],
+    "files": {
+      "frame-1-before-token.bin": 3304,
+      "frame-1-before-batch.bin": 2824,
+      "run.log": 1071,
+      "frame-0-before-token.bin": 3304,
+      "frame-1-submitted-batch.bin": 2824,
+      "binding-events.txt": 402,
+      "frame-0-submitted-batch.bin": 2704,
+      "frame-0-submitted-token.bin": 3304,
+      "frame-1-submitted-token.bin": 3304,
+      "frame-0-before-batch.bin": 2704,
+      "frame-0-finished-batch.bin": 2704,
+      "frame-1-guarded-batch.bin": 2824,
+      "frame-1-guarded-token.bin": 3304,
+      "frame-0-finished-token.bin": 3304
+    }
+  }
+}

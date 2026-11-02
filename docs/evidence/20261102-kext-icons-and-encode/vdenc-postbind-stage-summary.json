@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-02",
+  "boot_time": "2026-11-02 16:35:45 CST",
+  "intel_registry_id": 4294968951,
+  "hardware_tests": {
+    "reference_binding": {
+      "first_frame_submitted_and_finished": true,
+      "second_frame_gpu_execution_blocked": true,
+      "reference_handles_and_addresses_match": true,
+      "new_gpu_reset": false
+    },
+    "gen12_address_binding_after_overlap_fix": {
+      "exit": 77,
+      "elapsed_seconds": 0.358,
+      "new_gpu_reports": [],
+      "files": {
+        "frame-1-before-token.bin": 3304,
+        "frame-1-before-batch.bin": 2960,
+        "run.log": 1071,
+        "frame-0-before-token.bin": 3304,
+        "frame-1-submitted-batch.bin": 2960,
+        "binding-events.txt": 528,
+        "frame-0-submitted-batch.bin": 2840,
+        "frame-0-submitted-token.bin": 3304,
+        "frame-1-submitted-token.bin": 3304,
+        "frame-0-before-batch.bin": 2840,
+        "frame-0-finished-batch.bin": 2840,
+        "frame-1-guarded-batch.bin": 2960,
+        "frame-1-guarded-token.bin": 3304,
+        "frame-0-finished-token.bin": 3304
+      }
+    },
+    "gen12_address_four_intra_frames": {
+      "prefix": "build/validation-encode-and-kext-icons-20261102/gen12-address-hardware-fixed/intra-acceptance",
+      "width": 1280,
+      "height": 720,
+      "frames": 4,
+      "intra_only": true,
+      "minimum_psnr_db": 35.0,
+      "target_gpu_registry_id": 4294968951,
+      "samples": 5529600,
+      "different_samples": 1123996,
+      "max_abs_difference": 10,
+      "mean_abs_difference": 0.22764973958333334,
+      "psnr_db": 53.0355718327001,
+      "pixel_exact": false,
+      "pass": true
+    },
+    "gen12_address_real_inter": {
+      "requested_frames": 2,
+      "valid_frames": 1,
+      "second_frame_valid": false,
+      "gpu_reset_report": "Kernel_2026-11-02-173124_Mac-Pro.gpuRestart"
+    }
+  },
+  "gpu_restarts_this_phase": [
+    {
+      "report": "Kernel_2026-11-02-171110_Mac-Pro.gpuRestart",
+      "application": "Application:         xe-intel-encode",
+      "reason": "自有 memcpy/memmove 拦截器的重叠复制错误，实验命令在提交前已损坏；不能据此判定 Gen12 命令格式",
+      "last_instruction": "Last instruction header executed: 0x404c3008  (IPEHR=0x404c3008)",
+      "instdone": "INSTDONE (=0x3fffffff): Not done= VCS, GAC,"
+    },
+    {
+      "report": "Kernel_2026-11-02-173124_Mac-Pro.gpuRestart",
+      "application": "Application:         xe-intel-encode",
+      "reason": "重叠复制已修正；完整 71 DWORD 地址命令的真实 P 帧仍挂起",
+      "last_instruction": "Last instruction header executed: 0x13000003  (IPEHR=0x13000003)",
+      "instdone": "INSTDONE (=0x3bffffff): Not done= VIN, VCS, GAC,"
+    }
+  ],
+  "production_driver_installed": false,
+  "efi_modified": false,
+  "p_frame_encode_pass": false
+}
