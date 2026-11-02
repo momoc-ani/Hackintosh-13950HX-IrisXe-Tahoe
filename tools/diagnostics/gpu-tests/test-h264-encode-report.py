@@ -118,6 +118,33 @@ class EncodeEvidenceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.verify_frame_quality(decoded, reference, 16, 16, 1, 35.0)
 
+    def test_create_only_is_never_an_encoded_frame_pass(self):
+        """即使保留了旧样本字段，仅创建会话的报告也必须被拒绝。"""
+        report = self.report()
+        report["phase"] = "created-only"
+        with self.assertRaises(ValueError):
+            module.verify_manifest(report)
+
+    def test_requested_usage_must_match_the_tested_mode(self):
+        """固定 Usage=1 的旧结果不能贴上普通导出模式的标签。"""
+        report = {"requested_usage": 1, "requested_bitrate_bps": 2000000,
+                  "configured_average_bitrate_bps": 2000000, "settings_status": 0}
+        with self.assertRaises(ValueError):
+            module.verify_settings(report, 0, 2000000)
+        report["requested_usage"] = 0
+        module.verify_settings(report, 0, 2000000)
+
+    def test_bitrate_requires_successful_settings_and_readback(self):
+        """请求值与配置读回必须吻合，不能只记录命令行的期望码率。"""
+        report = {"requested_usage": 1, "requested_bitrate_bps": 2000000,
+                  "configured_average_bitrate_bps": 1000000, "settings_status": 0}
+        with self.assertRaises(ValueError):
+            module.verify_settings(report, 1, 2000000)
+        report["configured_average_bitrate_bps"] = 2000000
+        report["settings_status"] = -12902
+        with self.assertRaises(ValueError):
+            module.verify_settings(report, 1, 2000000)
+
 
 if __name__ == "__main__":
     unittest.main()

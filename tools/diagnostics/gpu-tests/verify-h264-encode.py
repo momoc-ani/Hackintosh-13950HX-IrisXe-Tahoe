@@ -16,6 +16,8 @@ spec.loader.exec_module(pixels)
 
 def verify_manifest(report: dict, inter: bool = False) -> tuple[int, int, int]:
     """要求硬件状态、完整回调和连续 PTS；P 帧验收须显式启用。"""
+    if report.get("phase", "encoded") != "encoded":
+        raise ValueError("该报告未完成帧编码，不能作为编码通过证据")
     width, height, count = report["width"], report["height"], report["requested_frames"]
     if min(width, height, count) <= 0 or width % 2 or height % 2:
         raise ValueError("NV12 尺寸或帧数不合法")
@@ -35,6 +37,18 @@ def verify_manifest(report: dict, inter: bool = False) -> tuple[int, int, int]:
     if inter and not any(not frame["keyframe"] for frame in report["frames"]):
         raise ValueError("帧间测试没有产生非关键帧")
     return width, height, count
+
+
+def verify_settings(report: dict, expected_usage=None, expected_bitrate=None) -> None:
+    """用途须符合本组要求，码率还必须经过设置成功与属性读回确认。"""
+    if expected_usage is not None and report.get("requested_usage") != expected_usage:
+        raise ValueError("会话用途与本组验收要求不匹配")
+    if expected_bitrate is not None and (
+        report.get("requested_bitrate_bps") != expected_bitrate or
+        report.get("configured_average_bitrate_bps") != expected_bitrate or
+        report.get("settings_status") != 0
+    ):
+        raise ValueError("请求码率、配置读回或设置状态与要求不匹配")
 
 
 def verify_quality(result: dict, minimum_psnr: float) -> None:
@@ -71,10 +85,12 @@ def verify_frame_quality(decoded: Path, reference: Path, width: int, height: int
     return {"frame_psnr_db": scores, "minimum_frame_psnr_db": worst, "worst_frame_index": index}
 
 
-def verify_prefix(prefix: Path, minimum_psnr: float, inter: bool = False) -> dict:
+def verify_prefix(prefix: Path, minimum_psnr: float, inter: bool = False,
+                  expected_usage=None, expected_bitrate=None) -> dict:
     """用 ffmpeg 的软件解码器还原所有帧，独立检查实际码流和输入参考。"""
     report = json.loads(Path(str(prefix) + ".json").read_text())
     width, height, count = verify_manifest(report, inter)
+    verify_settings(report, expected_usage, expected_bitrate)
     encoded = Path(str(prefix) + ".h264")
     reference = Path(str(prefix) + ".nv12")
     decoded = prefix.with_name(prefix.name + "-verified.nv12")
@@ -105,6 +121,12 @@ def verify_prefix(prefix: Path, minimum_psnr: float, inter: bool = False) -> dic
         "prefix": str(prefix), "width": width, "height": height, "frames": count,
         "intra_only": not inter, "frame_types": [frame["pict_type"] for frame in frames],
         "minimum_psnr_db": minimum_psnr,
+        "requested_usage": report.get("requested_usage"),
+        "requested_bitrate_bps": report.get("requested_bitrate_bps"),
+        "configured_average_bitrate_bps": report.get("configured_average_bitrate_bps"),
+        "actual_bitrate_bps": encoded.stat().st_size * 8 * 30 / count,
+        "bitrate_control_pass": None,
+        "low_latency_rate_control_requested": report.get("low_latency_rate_control_requested"),
         "target_gpu_registry_id": report["target_gpu_registry_id"], **quality, **frame_quality, "pass": True,
     }
     prefix.with_name(prefix.name + "-quality.json").write_text(json.dumps(result, indent=2) + "\n")
@@ -117,9 +139,12 @@ def main() -> None:
     parser.add_argument("prefix", type=Path)
     parser.add_argument("--minimum-psnr", type=float, default=35.0)
     parser.add_argument("--inter", action="store_true", help="要求真实 I/P 码流及非关键帧")
+    parser.add_argument("--usage", choices=("0", "1", "default"), help="要求记录的用途与本组模式一致")
+    parser.add_argument("--bitrate", type=int, help="要求码率设置成功且读回值一致；实际输出另行记录")
     args = parser.parse_args()
     try:
-        result = verify_prefix(args.prefix, args.minimum_psnr, args.inter)
+        usage = int(args.usage) if args.usage in ("0", "1") else args.usage
+        result = verify_prefix(args.prefix, args.minimum_psnr, args.inter, usage, args.bitrate)
     except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
         args.prefix.with_name(args.prefix.name + "-quality.json").write_text(
             json.dumps({"prefix": str(args.prefix), "pass": False, "error": str(error)}, ensure_ascii=False, indent=2) + "\n"
