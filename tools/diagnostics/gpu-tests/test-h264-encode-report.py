@@ -140,6 +140,20 @@ class EncodeEvidenceTests(unittest.TestCase):
                   "configured_average_bitrate_bps": 1000000, "settings_status": 0}
         with self.assertRaises(ValueError):
             module.verify_settings(report, 1, 2000000)
+
+    def test_hard_rate_limit_requires_success_and_exact_readback(self):
+        """提交硬上限测试时，必须验证 VideoToolbox 接受并原值读回数组。"""
+        report = {"requested_data_rate_limit": {"bytes": 250000, "seconds": 1},
+                  "configured_data_rate_limits": [250000, 1], "settings_status": 0,
+                  "data_rate_limit_readback_status": 0}
+        module.verify_settings(report, data_rate_limit=(250000, 1))
+        report["configured_data_rate_limits"] = [500000, 1]
+        with self.assertRaises(ValueError):
+            module.verify_settings(report, data_rate_limit=(250000, 1))
+        report["configured_data_rate_limits"] = [250000, 1]
+        report["data_rate_limit_readback_status"] = -12902
+        with self.assertRaises(ValueError):
+            module.verify_settings(report, data_rate_limit=(250000, 1))
         report["configured_average_bitrate_bps"] = 2000000
         report["settings_status"] = -12902
         with self.assertRaises(ValueError):

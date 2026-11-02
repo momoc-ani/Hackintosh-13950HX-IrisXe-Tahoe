@@ -81,6 +81,20 @@ class EncodeOptionTests(unittest.TestCase):
                                  "--describe-options", "--input-nv12", str(raw)], capture_output=True)
         self.assertEqual(result.returncode, 2)
 
+    def test_hard_data_rate_limit_requires_bytes_and_window(self):
+        """独立 hard-cap 参数需同时有正数字节数与秒数并完整进入报告。"""
+        result = self.describe("--data-rate-limit-bytes", "250000",
+                               "--data-rate-limit-seconds", "1")
+        self.assertEqual(result["data_rate_limit"], {"bytes": 250000, "seconds": 1})
+        for options in [("--data-rate-limit-bytes", "250000"),
+                        ("--data-rate-limit-seconds", "1"),
+                        ("--data-rate-limit-bytes", "0", "--data-rate-limit-seconds", "1"),
+                        ("--data-rate-limit-bytes", "250000", "--data-rate-limit-seconds", "0")]:
+            with self.subTest(options=options):
+                result = subprocess.run([str(self.program), "unused", "1280", "720", "2",
+                                         "--describe-options", *options], capture_output=True)
+                self.assertEqual(result.returncode, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -39,8 +39,8 @@ def verify_manifest(report: dict, inter: bool = False) -> tuple[int, int, int]:
     return width, height, count
 
 
-def verify_settings(report: dict, expected_usage=None, expected_bitrate=None) -> None:
-    """用途须符合本组要求，码率还必须经过设置成功与属性读回确认。"""
+def verify_settings(report: dict, expected_usage=None, expected_bitrate=None, data_rate_limit=None) -> None:
+    """用途和软目标须匹配；硬上限另须通过 VideoToolbox 精确属性读回。"""
     if expected_usage is not None and report.get("requested_usage") != expected_usage:
         raise ValueError("会话用途与本组验收要求不匹配")
     if expected_bitrate is not None and (
@@ -49,6 +49,12 @@ def verify_settings(report: dict, expected_usage=None, expected_bitrate=None) ->
         report.get("settings_status") != 0
     ):
         raise ValueError("请求码率、配置读回或设置状态与要求不匹配")
+    if data_rate_limit is not None:
+        observed = report.get("configured_data_rate_limits")
+        if (report.get("requested_data_rate_limit") != {"bytes": data_rate_limit[0], "seconds": data_rate_limit[1]} or
+            observed not in ([data_rate_limit[0], data_rate_limit[1]], (data_rate_limit[0], data_rate_limit[1])) or
+            report.get("data_rate_limit_readback_status") != 0 or report.get("settings_status") != 0):
+            raise ValueError("硬上限设置或属性读回与要求不匹配")
 
 
 def verify_quality(result: dict, minimum_psnr: float) -> None:
@@ -86,11 +92,11 @@ def verify_frame_quality(decoded: Path, reference: Path, width: int, height: int
 
 
 def verify_prefix(prefix: Path, minimum_psnr: float, inter: bool = False,
-                  expected_usage=None, expected_bitrate=None) -> dict:
+                  expected_usage=None, expected_bitrate=None, data_rate_limit=None) -> dict:
     """用 ffmpeg 的软件解码器还原所有帧，独立检查实际码流和输入参考。"""
     report = json.loads(Path(str(prefix) + ".json").read_text())
     width, height, count = verify_manifest(report, inter)
-    verify_settings(report, expected_usage, expected_bitrate)
+    verify_settings(report, expected_usage, expected_bitrate, data_rate_limit)
     encoded = Path(str(prefix) + ".h264")
     reference = Path(str(prefix) + ".nv12")
     decoded = prefix.with_name(prefix.name + "-verified.nv12")
@@ -127,6 +133,8 @@ def verify_prefix(prefix: Path, minimum_psnr: float, inter: bool = False,
         "actual_bitrate_bps": encoded.stat().st_size * 8 * 30 / count,
         "bitrate_control_pass": None,
         "low_latency_rate_control_requested": report.get("low_latency_rate_control_requested"),
+        "requested_data_rate_limit": report.get("requested_data_rate_limit"),
+        "data_rate_limit_readback_status": report.get("data_rate_limit_readback_status"),
         "target_gpu_registry_id": report["target_gpu_registry_id"], **quality, **frame_quality, "pass": True,
     }
     prefix.with_name(prefix.name + "-quality.json").write_text(json.dumps(result, indent=2) + "\n")
@@ -141,10 +149,16 @@ def main() -> None:
     parser.add_argument("--inter", action="store_true", help="要求真实 I/P 码流及非关键帧")
     parser.add_argument("--usage", choices=("0", "1", "default"), help="要求记录的用途与本组模式一致")
     parser.add_argument("--bitrate", type=int, help="要求码率设置成功且读回值一致；实际输出另行记录")
+    parser.add_argument("--data-rate-limit-bytes", type=int, help="要求硬数据率限制字节数被精确读回")
+    parser.add_argument("--data-rate-limit-seconds", type=int, help="要求硬数据率限制窗口秒数被精确读回")
     args = parser.parse_args()
     try:
         usage = int(args.usage) if args.usage in ("0", "1") else args.usage
-        result = verify_prefix(args.prefix, args.minimum_psnr, args.inter, usage, args.bitrate)
+        if (args.data_rate_limit_bytes is None) != (args.data_rate_limit_seconds is None):
+            raise ValueError("硬数据率限制须同时指定字节数和窗口秒数")
+        limit = ((args.data_rate_limit_bytes, args.data_rate_limit_seconds)
+                 if args.data_rate_limit_bytes is not None else None)
+        result = verify_prefix(args.prefix, args.minimum_psnr, args.inter, usage, args.bitrate, limit)
     except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
         args.prefix.with_name(args.prefix.name + "-quality.json").write_text(
             json.dumps({"prefix": str(args.prefix), "pass": False, "error": str(error)}, ensure_ascii=False, indent=2) + "\n"

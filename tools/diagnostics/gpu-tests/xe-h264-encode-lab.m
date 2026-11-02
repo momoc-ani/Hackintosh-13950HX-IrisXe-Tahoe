@@ -12,7 +12,7 @@
 #include <limits.h>
 
 typedef struct {
-  int usage,bitrate;
+  int usage,bitrate,limitBytes,limitSeconds;
   const char *inputPath;
   BOOL usePool,softwareTransfer,inter,bgra,lowLatency,createOnly,describe;
 } EncodeOptions;
@@ -30,6 +30,8 @@ static BOOL parseOptions(int argc,const char **argv,EncodeOptions *options){
     else if(!strcmp(arg,"--create-only"))options->createOnly=YES;
     else if(!strcmp(arg,"--describe-options"))options->describe=YES;
     else if(!strcmp(arg,"--input-nv12")&&i+1<argc)options->inputPath=argv[++i];
+    else if(!strcmp(arg,"--data-rate-limit-bytes")&&i+1<argc){const char *value=argv[++i];char *end=NULL;long parsed=strtol(value,&end,10);if(end==value||*end||parsed<=0||parsed>INT_MAX)return NO;options->limitBytes=(int)parsed;}
+    else if(!strcmp(arg,"--data-rate-limit-seconds")&&i+1<argc){const char *value=argv[++i];char *end=NULL;long parsed=strtol(value,&end,10);if(end==value||*end||parsed<=0||parsed>INT_MAX)return NO;options->limitSeconds=(int)parsed;}
     else if(!strcmp(arg,"--usage")&&i+1<argc){
       const char *usage=argv[++i];usageSpecified=YES;
       if(!strcmp(usage,"default"))options->usage=-1;
@@ -43,6 +45,7 @@ static BOOL parseOptions(int argc,const char **argv,EncodeOptions *options){
     }else return NO;
   }
   if(options->usePool&&options->bgra)return NO;
+  if((options->limitBytes==0)!=(options->limitSeconds==0))return NO;
   if(options->lowLatency){if(usageSpecified&&options->usage!=-1)return NO;options->usage=-1;}
   return YES;
 }
@@ -55,7 +58,8 @@ static NSDictionary *describeOptions(EncodeOptions options){
     @"intra_only":@(!options.inter),@"encoder_pool_input":@(options.usePool),
     @"software_pixel_transfer":@(options.softwareTransfer),@"input_format":options.bgra?@"BGRA":@"NV12",
     @"reference_includes_color_roundtrip":@(options.bgra),
-    @"input_nv12":options.inputPath?@(options.inputPath):@"generated"};
+    @"input_nv12":options.inputPath?@(options.inputPath):@"generated",
+    @"data_rate_limit":options.limitBytes?@{@"bytes":@(options.limitBytes),@"seconds":@(options.limitSeconds)}:[NSNull null]};
 }
 
 // 每个阶段写出独立报告，创建失败时也能保留模式与错误码，不伪造帧输出。
@@ -177,6 +181,7 @@ int main(int argc,const char **argv){@autoreleasepool{
   if(options.lowLatency)spec[(__bridge id)kVTVideoEncoderSpecification_EnableLowLatencyRateControl]=@YES;
   EncodeCapture *capture=[EncodeCapture new];capture.samples=[NSMutableArray array];
   NSMutableDictionary *report=[describeOptions(options) mutableCopy];
+  report[@"requested_data_rate_limit"]=report[@"data_rate_limit"];
   report[@"width"]=@(width);report[@"height"]=@(height);report[@"requested_frames"]=@(count);report[@"target_gpu_registry_id"]=@(gpu.registryID);
   VTCompressionSessionRef s=NULL;st=VTCompressionSessionCreate(NULL,(int32_t)width,(int32_t)height,kCMVideoCodecType_H264,(__bridge CFDictionaryRef)spec,NULL,NULL,encoded,(__bridge void *)capture,&s);printf("create=%d\n",(int)st);
   report[@"create_status"]=@(st);if(st){report[@"phase"]=@"create-failed";writeReport(report,prefix);return 1;}
@@ -186,10 +191,13 @@ int main(int argc,const char **argv){@autoreleasepool{
   }
   if(options.createOnly){report[@"phase"]=@"created-only";BOOL saved=writeReport(report,prefix);VTCompressionSessionInvalidate(s);CFRelease(s);return saved?0:2;}
   NSMutableDictionary *settings=[@{(__bridge id)kVTCompressionPropertyKey_RealTime:@(options.usage==1||options.lowLatency),(__bridge id)kVTCompressionPropertyKey_AllowFrameReordering:@NO,(__bridge id)kVTCompressionPropertyKey_MaxKeyFrameInterval:@(inter?30:1),(__bridge id)kVTCompressionPropertyKey_AverageBitRate:@(options.bitrate),(__bridge id)kVTCompressionPropertyKey_ExpectedFrameRate:@30} mutableCopy];
+  NSString *limitKey=nil;
+  if(options.limitBytes){limitKey=key(vt,"kVTCompressionPropertyKey_DataRateLimits");if(!limitKey){VTCompressionSessionInvalidate(s);CFRelease(s);return 2;}settings[limitKey]=@[@(options.limitBytes),@(options.limitSeconds)];}
   if(softwareTransfer){NSString *hardware=key(vt,"kVTPixelTransferPropertyKey_EnableHardwareAcceleratedTransfer");if(!hardware)return 2;settings[(__bridge id)kVTCompressionPropertyKey_PixelTransferProperties]=@{hardware:@NO};}
   st=VTSessionSetProperties(s,(__bridge CFDictionaryRef)settings);printf("settings=%d\n",(int)st);report[@"settings_status"]=@(st);if(st){report[@"phase"]=@"settings-failed";writeReport(report,prefix);VTCompressionSessionInvalidate(s);CFRelease(s);return 1;}
   CFTypeRef configured=NULL;OSStatus readback=VTSessionCopyProperty(s,kVTCompressionPropertyKey_AverageBitRate,NULL,&configured);
   report[@"bitrate_readback_status"]=@(readback);if(configured){report[@"configured_average_bitrate_bps"]=(__bridge id)configured;CFRelease(configured);}
+  if(limitKey){CFTypeRef configuredLimits=NULL;OSStatus limitStatus=VTSessionCopyProperty(s,(__bridge CFStringRef)limitKey,NULL,&configuredLimits);report[@"data_rate_limit_readback_status"]=@(limitStatus);if(configuredLimits){report[@"configured_data_rate_limits"]=(__bridge id)configuredLimits;CFRelease(configuredLimits);}}
   st=VTCompressionSessionPrepareToEncodeFrames(s);printf("prepare=%d\n",(int)st);report[@"prepare_status"]=@(st);if(st){report[@"phase"]=@"prepare-failed";writeReport(report,prefix);VTCompressionSessionInvalidate(s);CFRelease(s);return 1;}
   NSMutableData *input=[NSMutableData data];unsigned submitErrors=0;
   for(NSUInteger i=0;i<count;i++){
