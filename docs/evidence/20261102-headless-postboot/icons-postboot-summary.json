@@ -1,0 +1,18 @@
+{
+  "workspace": {
+    "samples": 360,
+    "intel_empty": 0,
+    "amd_empty": 0,
+    "pixel_exact": 3,
+    "max_channel_delta": 1,
+    "fail_above_one": []
+  },
+  "resources": {
+    "samples": 360,
+    "intel_empty": 6,
+    "amd_empty": 6,
+    "pixel_exact": 356,
+    "max_channel_delta": 1,
+    "fail_above_one": []
+  }
+}

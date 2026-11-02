@@ -1,0 +1,22 @@
+VTIsHardwareDecodeSupported(H264)=1 HEVC=1
+codificados: 8 quadros
+HARDWARE (saída 420v+IOSurface): criar sessão = 0
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+  decodificados=8 erros=0 (último erro 0)
+SOFTWARE (saída 420v+IOSurface): criar sessão = 0
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+  decodificados=8 erros=0 (último erro 0)
+SOFTWARE (saída nativa): criar sessão = 0
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+  decodificados=8 erros=0 (último erro 0)
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+[só formato 420v] decodificados=8 erros=0 (último 0)
+  1º quadro: 640x480 fmt 'BGRA' planos=0  IOSurface=sim
+[só formato BGRA] decodificados=8 erros=0 (último 0)
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+[só IOSurface] decodificados=8 erros=0 (último 0)
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+[só Metal] decodificados=8 erros=0 (último 0)
+  1º quadro: 640x480 fmt '420v' planos=2  Y=41 Cb=240 Cr=110 (azul ~ Y41 Cb240 Cr110)  IOSurface=sim
+[só tamanho] decodificados=8 erros=0 (último 0)
+exit=0

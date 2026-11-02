@@ -1,0 +1,68 @@
+[
+  {
+    "fixture": "h264-1080p",
+    "frames": 30,
+    "using_hardware": true,
+    "samples": 93312000,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  },
+  {
+    "fixture": "h264-1080p-replay",
+    "frames": 30,
+    "using_hardware": true,
+    "samples": 93312000,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  },
+  {
+    "fixture": "h264-4k",
+    "frames": 8,
+    "using_hardware": true,
+    "samples": 99532800,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  },
+  {
+    "fixture": "hevc-1080p",
+    "frames": 30,
+    "using_hardware": true,
+    "samples": 93312000,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  },
+  {
+    "fixture": "hevc-4k",
+    "frames": 8,
+    "using_hardware": true,
+    "samples": 99532800,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  },
+  {
+    "fixture": "hevc-main10-1080p",
+    "frames": 16,
+    "using_hardware": true,
+    "samples": 49766400,
+    "different_samples": 0,
+    "max_abs_difference": 0,
+    "mean_abs_difference": 0.0,
+    "psnr_db": null,
+    "pixel_exact": true
+  }
+]

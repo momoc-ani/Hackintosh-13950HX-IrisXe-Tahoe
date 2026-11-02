@@ -1,0 +1,2 @@
+GPU=Intel(R) TGL Unknown registryID=4294968956 codec=hevc create=-12908
+exit=1

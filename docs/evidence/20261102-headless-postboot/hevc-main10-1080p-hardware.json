@@ -1,0 +1,129 @@
+{
+  "callback_errors" : 0,
+  "frame_metadata" : [
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.033333333333333333,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.066666666666666666,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.10000000000000001,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.13333333333333333,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.16666666666666666,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.20000000000000001,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.23333333333333334,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.26666666666666666,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.29999999999999999,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.33333333333333331,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.36666666666666664,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.40000000000000002,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.43333333333333335,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.46666666666666667,
+      "width" : 1920
+    },
+    {
+      "bytes" : 6220800,
+      "format" : 2016686640,
+      "height" : 1080,
+      "pts" : 0.5,
+      "width" : 1920
+    }
+  ],
+  "frames" : 16,
+  "gpu_registry_id" : null,
+  "last_error" : 0,
+  "markers_skipped" : 4,
+  "requested_hardware" : true,
+  "seconds" : 0.095667004585266113,
+  "source" : "build\/validation-20261102-115041\/fixtures\/hevc-main10-1080p.mp4",
+  "submit_errors" : 0,
+  "submitted" : 16,
+  "transfer_ok" : true,
+  "using_hardware" : true,
+  "wait_status" : 0
+}
