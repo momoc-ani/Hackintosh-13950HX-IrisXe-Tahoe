@@ -1,0 +1,775 @@
+{
+  "recorded_at": "2026-11-02T19:22:40",
+  "boot_time": "2026-11-02 16:35:45 CST",
+  "system_install": false,
+  "efi_changed": false,
+  "global_encoder_published": false,
+  "candidate": "build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver",
+  "cpu_tests_passed": 35,
+  "native_preflight": {
+    "0": {
+      "bytes_equal_to_runtime_walker_experiment": true,
+      "batch_bytes": 3072,
+      "slice_words": 218,
+      "estimated_stream_words": 768
+    },
+    "1": {
+      "bytes_equal_to_runtime_walker_experiment": true,
+      "batch_bytes": 3192,
+      "slice_words": 248,
+      "estimated_stream_words": 798
+    }
+  },
+  "binding_events": [
+    "image=/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver",
+    "native candidate context relation verified frame=0",
+    "ready frame=0 batch_bytes=3072",
+    "submit status=0 flags=0 fault=0",
+    "finish status=0 fence=1",
+    "native candidate context relation verified frame=1",
+    "ready frame=1 batch_bytes=3192",
+    "guard second batch with MI_BATCH_BUFFER_END",
+    "bind-only submit status=0 flags=0 fault=0",
+    "stop after second frame binding"
+  ],
+  "encoding": [
+    {
+      "name": "inter-720p-2",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-720p-2",
+        "width": 1280,
+        "height": 720,
+        "frames": 2,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P"
+        ],
+        "minimum_psnr_db": 35.0,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 2764800,
+        "different_samples": 574524,
+        "max_abs_difference": 10,
+        "mean_abs_difference": 0.23354456018518518,
+        "psnr_db": 52.85267595980677,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.90280467079965,
+          52.00767232594334
+        ],
+        "minimum_frame_psnr_db": 52.00767232594334,
+        "worst_frame_index": 1,
+        "pass": true
+      }
+    },
+    {
+      "name": "inter-720p-60",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-720p-60",
+        "width": 1280,
+        "height": 720,
+        "frames": 60,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "minimum_psnr_db": 35,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 82944000,
+        "different_samples": 22612089,
+        "max_abs_difference": 10,
+        "mean_abs_difference": 0.2929848331404321,
+        "psnr_db": 52.49059902357213,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.90280467079965,
+          52.00767232594334,
+          52.32125207112203,
+          52.349218574989365,
+          52.34448279649956,
+          52.36664685318253,
+          52.36183378434195,
+          52.383233624319196,
+          52.37242457994493,
+          52.383200170022334,
+          52.369555598966045,
+          52.383308897429366,
+          52.37141521647172,
+          52.38441305296181,
+          54.909253988538616,
+          52.39046579869212,
+          52.38399477920115,
+          52.40344523791614,
+          52.39523524014304,
+          52.417491903068274,
+          52.41455930852881,
+          52.44018521470509,
+          52.43760988072999,
+          52.46196709698331,
+          52.45783850250379,
+          52.476452436755224,
+          52.4731979859434,
+          55.13892099578725,
+          52.49526664282933,
+          52.5162663981067,
+          53.863582988631094,
+          51.859854775102036,
+          52.08712724515294,
+          52.1431818480258,
+          52.116672347919305,
+          52.14485199376529,
+          52.12118173516256,
+          52.15696590351013,
+          52.13033293624301,
+          52.214369579502375,
+          54.65792706239025,
+          52.25150918994886,
+          52.24930281293272,
+          52.257590637966956,
+          52.24745421305353,
+          52.252523526027645,
+          52.2743280767882,
+          52.29204743457734,
+          52.29298936734422,
+          52.30328202241726,
+          52.29976091193406,
+          52.314570445123884,
+          52.31346744155708,
+          52.32223334775398,
+          54.82987618891748,
+          52.34268438812905,
+          52.35019789145156,
+          52.36783011926779,
+          52.3811014281733,
+          52.40602560882331
+        ],
+        "minimum_frame_psnr_db": 51.859854775102036,
+        "worst_frame_index": 31,
+        "pass": true
+      }
+    },
+    {
+      "name": "inter-1080p-30",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-1080p-30",
+        "width": 1920,
+        "height": 1080,
+        "frames": 30,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "minimum_psnr_db": 35,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 93312000,
+        "different_samples": 26676019,
+        "max_abs_difference": 12,
+        "mean_abs_difference": 0.3144594371570645,
+        "psnr_db": 51.95394086903803,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.213652403743296,
+          51.50781718319564,
+          51.684624152109784,
+          51.60400616397315,
+          51.629646089029606,
+          51.621996539396605,
+          51.634764756344566,
+          51.461655287214974,
+          51.50629208823631,
+          51.49875650620303,
+          51.60439140210709,
+          51.64320480375827,
+          51.672409285346305,
+          51.74685161419362,
+          53.86912182938179,
+          51.895705123843435,
+          51.84442145749568,
+          51.84549199276192,
+          51.883346604997655,
+          51.914767915507596,
+          51.92840117461182,
+          52.020716818977846,
+          52.03759733442717,
+          52.04787008851869,
+          52.09408235086037,
+          52.0968271475299,
+          52.09566152764768,
+          54.23645934465955,
+          52.012886446433136,
+          52.02073733587423
+        ],
+        "minimum_frame_psnr_db": 51.461655287214974,
+        "worst_frame_index": 7,
+        "pass": true
+      }
+    },
+    {
+      "name": "inter-4k-8",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-4k-8",
+        "width": 3840,
+        "height": 2160,
+        "frames": 8,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "minimum_psnr_db": 35,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 99532800,
+        "different_samples": 28775550,
+        "max_abs_difference": 12,
+        "mean_abs_difference": 0.31464572482638886,
+        "psnr_db": 51.968594488429616,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.3531114070947,
+          51.6460121299399,
+          51.92796601416027,
+          51.83077639330482,
+          51.92528822675126,
+          51.84175447683336,
+          51.74422862415205,
+          51.70918369488179
+        ],
+        "minimum_frame_psnr_db": 51.6460121299399,
+        "worst_frame_index": 1,
+        "pass": true
+      }
+    },
+    {
+      "name": "inter-pool-1080p-30",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-pool-1080p-30",
+        "width": 1920,
+        "height": 1080,
+        "frames": 30,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "minimum_psnr_db": 35,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 93312000,
+        "different_samples": 26676019,
+        "max_abs_difference": 12,
+        "mean_abs_difference": 0.3144594371570645,
+        "psnr_db": 51.95394086903803,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.213652403743296,
+          51.50781718319564,
+          51.684624152109784,
+          51.60400616397315,
+          51.629646089029606,
+          51.621996539396605,
+          51.634764756344566,
+          51.461655287214974,
+          51.50629208823631,
+          51.49875650620303,
+          51.60439140210709,
+          51.64320480375827,
+          51.672409285346305,
+          51.74685161419362,
+          53.86912182938179,
+          51.895705123843435,
+          51.84442145749568,
+          51.84549199276192,
+          51.883346604997655,
+          51.914767915507596,
+          51.92840117461182,
+          52.020716818977846,
+          52.03759733442717,
+          52.04787008851869,
+          52.09408235086037,
+          52.0968271475299,
+          52.09566152764768,
+          54.23645934465955,
+          52.012886446433136,
+          52.02073733587423
+        ],
+        "minimum_frame_psnr_db": 51.461655287214974,
+        "worst_frame_index": 7,
+        "pass": true
+      }
+    },
+    {
+      "name": "intra-720p-4",
+      "input_format": "NV12",
+      "reference_includes_color_roundtrip": false,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/intra-720p-4",
+        "width": 1280,
+        "height": 720,
+        "frames": 4,
+        "intra_only": true,
+        "frame_types": [
+          "I",
+          "I",
+          "I",
+          "I"
+        ],
+        "minimum_psnr_db": 35,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 5529600,
+        "different_samples": 1123996,
+        "max_abs_difference": 10,
+        "mean_abs_difference": 0.22764973958333334,
+        "psnr_db": 53.0355718327001,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          53.90280467079965,
+          52.3445408220737,
+          51.75451381004794,
+          54.80443222077663
+        ],
+        "minimum_frame_psnr_db": 51.75451381004794,
+        "worst_frame_index": 2,
+        "pass": true
+      }
+    },
+    {
+      "name": "inter-bgra-1080p-30",
+      "input_format": "BGRA",
+      "reference_includes_color_roundtrip": true,
+      "loaded_va": [
+        "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ],
+      "no_diagnostic_interpose": true,
+      "quality": {
+        "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/native-hardware/inter-bgra-1080p-30",
+        "width": 1920,
+        "height": 1080,
+        "frames": 30,
+        "intra_only": false,
+        "frame_types": [
+          "I",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P",
+          "P"
+        ],
+        "minimum_psnr_db": 35.0,
+        "target_gpu_registry_id": 4294968951,
+        "samples": 93312000,
+        "different_samples": 53449192,
+        "max_abs_difference": 26,
+        "mean_abs_difference": 0.8215116490912209,
+        "psnr_db": 44.823891216058996,
+        "pixel_exact": false,
+        "frame_psnr_db": [
+          39.50332415756448,
+          41.03354616585677,
+          42.5097609060408,
+          44.11790704385781,
+          45.576370019693584,
+          46.937733772128006,
+          47.86777705589265,
+          48.07698981571484,
+          48.262370918696284,
+          48.33166330236268,
+          48.456731173278584,
+          48.35589626934221,
+          48.436924346551045,
+          48.42848848846542,
+          41.19621441980202,
+          42.324250104511705,
+          43.82226118752725,
+          45.60539456704238,
+          46.76220291466727,
+          47.92637441655132,
+          48.41090021205588,
+          48.51607539382592,
+          48.531101416061176,
+          48.46425407612779,
+          48.52442033188289,
+          48.53681303601523,
+          48.55016379525295,
+          40.72321997654146,
+          41.82855073360959,
+          43.42760518454506
+        ],
+        "minimum_frame_psnr_db": 39.50332415756448,
+        "worst_frame_index": 0,
+        "pass": true
+      }
+    }
+  ],
+  "pixel_transfer": [
+    {
+      "bytes": 3110400,
+      "case": "nv12-copy",
+      "hardware_enabled_status": 0,
+      "nonzero_bytes": 3110400,
+      "pass": true,
+      "pixel_exact": true,
+      "software_status": 0
+    },
+    {
+      "bytes": 8294400,
+      "case": "nv12-bgra",
+      "hardware_enabled_status": 0,
+      "nonzero_bytes": 8230400,
+      "pass": true,
+      "pixel_exact": true,
+      "software_status": 0
+    },
+    {
+      "bytes": 3110400,
+      "case": "bgra-nv12",
+      "hardware_enabled_status": 0,
+      "nonzero_bytes": 3110400,
+      "pass": true,
+      "pixel_exact": true,
+      "software_status": 0
+    },
+    {
+      "bytes": 2073600,
+      "case": "bgra-scale",
+      "hardware_enabled_status": 0,
+      "nonzero_bytes": 2073600,
+      "pass": true,
+      "pixel_exact": true,
+      "software_status": 0
+    },
+    {
+      "bytes": 1382400,
+      "case": "nv12-scale",
+      "hardware_enabled_status": 0,
+      "nonzero_bytes": 1382400,
+      "pass": true,
+      "pixel_exact": true,
+      "software_status": 0
+    }
+  ],
+  "decode_selection": {
+    "h264-1080p-hardware": {
+      "selection": [
+        "selected_decoder=local.test.intel.decoder.avc1",
+        "hardware=1 propertyStatus=0 GPU=4294968951 gpuStatus=0"
+      ],
+      "loaded_va": [
+        "dyld[36846]: <2B208B8F-FEB0-34FB-8966-3B40C2476926> /Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ]
+    },
+    "h264-4k-hardware": {
+      "selection": [
+        "selected_decoder=local.test.intel.decoder.avc1",
+        "hardware=1 propertyStatus=0 GPU=4294968951 gpuStatus=0"
+      ],
+      "loaded_va": [
+        "dyld[36861]: <2B208B8F-FEB0-34FB-8966-3B40C2476926> /Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ]
+    },
+    "hevc-1080p-hardware": {
+      "selection": [
+        "selected_decoder=local.test.intel.decoder.hvc1",
+        "hardware=1 propertyStatus=0 GPU=4294968951 gpuStatus=0"
+      ],
+      "loaded_va": [
+        "dyld[36855]: <2B208B8F-FEB0-34FB-8966-3B40C2476926> /Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ]
+    },
+    "hevc-4k-hardware": {
+      "selection": [
+        "selected_decoder=local.test.intel.decoder.hvc1",
+        "hardware=1 propertyStatus=0 GPU=4294968951 gpuStatus=0"
+      ],
+      "loaded_va": [
+        "dyld[36864]: <2B208B8F-FEB0-34FB-8966-3B40C2476926> /Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ]
+    },
+    "hevc-main10-1080p-hardware": {
+      "selection": [
+        "selected_decoder=local.test.intel.decoder.hvc1",
+        "hardware=1 propertyStatus=0 GPU=4294968951 gpuStatus=0"
+      ],
+      "loaded_va": [
+        "dyld[36858]: <2B208B8F-FEB0-34FB-8966-3B40C2476926> /Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver"
+      ]
+    }
+  },
+  "decode_pixels": [
+    {
+      "fixture": "h264-1080p",
+      "frames": 30,
+      "using_hardware": true,
+      "samples": 93312000,
+      "different_samples": 0,
+      "max_abs_difference": 0,
+      "mean_abs_difference": 0.0,
+      "psnr_db": null,
+      "pixel_exact": true
+    },
+    {
+      "fixture": "h264-4k",
+      "frames": 8,
+      "using_hardware": true,
+      "samples": 99532800,
+      "different_samples": 0,
+      "max_abs_difference": 0,
+      "mean_abs_difference": 0.0,
+      "psnr_db": null,
+      "pixel_exact": true
+    },
+    {
+      "fixture": "hevc-1080p",
+      "frames": 30,
+      "using_hardware": true,
+      "samples": 93312000,
+      "different_samples": 0,
+      "max_abs_difference": 0,
+      "mean_abs_difference": 0.0,
+      "psnr_db": null,
+      "pixel_exact": true
+    },
+    {
+      "fixture": "hevc-4k",
+      "frames": 8,
+      "using_hardware": true,
+      "samples": 99532800,
+      "different_samples": 0,
+      "max_abs_difference": 0,
+      "mean_abs_difference": 0.0,
+      "psnr_db": null,
+      "pixel_exact": true
+    },
+    {
+      "fixture": "hevc-main10-1080p",
+      "frames": 16,
+      "using_hardware": true,
+      "samples": 49766400,
+      "different_samples": 0,
+      "max_abs_difference": 0,
+      "mean_abs_difference": 0.0,
+      "psnr_db": null,
+      "pixel_exact": true
+    }
+  ],
+  "gpu_reports_observed_since_1800": [
+    {
+      "path": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-182735_Mac-Pro.gpuRestart",
+      "fields": [
+        "Date/Time:           Mon Nov  2 18:27:35 2026",
+        "Application:         mediaanalysisd",
+        "Signature:           1000"
+      ]
+    },
+    {
+      "path": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-182701_Mac-Pro.gpuRestart",
+      "fields": [
+        "Date/Time:           Mon Nov  2 18:27:01 2026",
+        "Application:         mediaanalysisd",
+        "Signature:           1000"
+      ]
+    },
+    {
+      "path": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-182344_Mac-Pro.gpuRestart",
+      "fields": [
+        "Date/Time:           Mon Nov  2 18:23:44 2026",
+        "Application:         mediaanalysisd",
+        "Signature:           1000"
+      ]
+    },
+    {
+      "path": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-182251_Mac-Pro.gpuRestart",
+      "fields": [
+        "Date/Time:           Mon Nov  2 18:22:51 2026",
+        "Application:         mediaanalysisd",
+        "Signature:           1000"
+      ]
+    }
+  ],
+  "remaining": [
+    "Usage=0",
+    "system XPC encoding",
+    "multiple active references",
+    "low bitrate",
+    "concurrency",
+    "long-term stability"
+  ]
+}
