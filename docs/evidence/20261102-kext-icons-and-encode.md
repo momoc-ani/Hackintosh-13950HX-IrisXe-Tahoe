@@ -238,3 +238,40 @@ P 帧测试均由软件解码确认实际 I/P 类型，包含池轮换和 30 帧
 截至 19:19 后的报告检查，本组实验未发现新增 GPU reset 报告。18:23:44、18:27:01、18:27:35 的 `mediaanalysisd`、Signature 1000 报告在候选测试之前，另行保留；本次启动早前已有 reset，长期稳定性仍未验收。
 
 系统 VA 文件仍为 2026-10-30 13:29:39 安装的版本；本节只生成和测试 build 副本，**系统驱动与 EFI 均未改动，目前不需要重启**。下一阶段尚需普通 Usage=0、系统 XPC 编码、低码率、并发与长期稳定性验收，之后再决定系统安装范围；HEVC 编码也未验收。
+
+### 普通用途、码率与两进程验证（19:26 后）
+
+本阶段继续测试相同 `va-gen12-native` 候选，扩展探针的实验条件及失败日志；没有修改或安装新的 VA/KEXT，也没有修改 EFI 或发布系统 H.264 能力。完整结果见 [用途、码率和并发证据](20261102-kext-icons-and-encode/usage-rate-and-concurrency-validation.json)。
+
+探针新增 `--usage 0|1|default`、`--low-latency`、`--bitrate`、`--input-nv12`、`--create-only`。默认仍为此前的 Usage=1、8 Mbit/s；用途为 0 或未指定时不启用 RealTime。报告保留创建、设置、准备和编码的实际阶段，失败时也保存错误码。码率验证要求设置成功且属性读回吻合，另行计算实际 Annex-B 文件码率；`pass` 只代表帧内容验收，`bitrate_control_pass=null` 明确表示未将其判为码率控制通过。
+
+| 创建会话模式 | 返回值 | 实际边界 |
+|---|---:|---|
+| 私有 Usage=1 | 0 | 能创建已验证的 VDENC 路径 |
+| 私有 Usage=0 | −12915 | VA 创建上下文返回成功，但编码 context 为空 |
+| 不指定 Usage | −12915 | 与 Usage=0 一样的 streamout 失败 |
+| 公开 EnableLowLatencyRateControl | −12902 | 本地注册实验被 VideoProcessing 拒绝；不能替代 Usage=1 验收 |
+
+新增 [上下文诊断器](../../tools/diagnostics/gpu-tests/xe-va-context-trace.c)，只记录本进程真实能力链、请求、参数及原返回值，不改写请求。Usage=0 请求 `kind=0x20, capability=0x4000`，CreateContexts 返回 0，随后 SetContextParameters 的 streamout 参数 1 携带空 context，返回 4；统一日志明确记录 `Error setting streamout 4` 和 `unsupported usage 0`。Usage=1 请求 `capability=0x400`，同一 streamout 操作有有效 context 并返回 0。
+
+REA 对 `CreateContexts@0x13e43` 的反编译显示，`kind=0x20` 分支只为 `0x400`、`0x80`、`0x40` 创建编码对象，没有为请求的 `0x4000` 创建对象；候选中这段分派正文与当前安装 VA 相同。`0x4000` 仍存在于能力模板 `0x78da80`，因此能力公布与对象创建不一致。其他类型（例如 kind=2）的同值 capability 不能混入这个判断。
+
+仅在独立实验副本中隐藏 `0x4000`，或一起隐藏 `0x1000/0x2000/0x4000`，创建均仍返回 −12915，未使普通模式转到 VDENC。该实验没有合并进当前候选，也不能用强制 Usage=1 来宣称 Usage=0 已修复。公开低延迟模式还分别对照了 RequireHardware 与 EnableHardware 形式，均未创建成功，保留为接口实验失败。
+
+简单图案在请求 4、2、1 Mbit/s 时均输出约 0.43 Mbit/s，60/60 帧、最差单帧 51.86 dB；由于图案本身所需码率较低，不据此验收控制精度。新增输入使用独立 ffmpeg `testsrc2` 生成原始 NV12，并直接核对实际提交参考文件与该输入逐字节一致。
+
+| 720p 动态输入 | 帧数 | 请求 / Mbit/s | 实际 / Mbit/s | 最差帧 PSNR / dB |
+|---|---:|---:|---:|---:|
+| 单进程 | 60 | 4 | 3.977 | 44.86 |
+| 单进程 | 60 | 1 | 1.860 | 38.81 |
+| 延长到四个 GOP | 120 | 1 | 1.830 | 38.61 |
+| 同时运行进程 A | 60 | 4 | 3.977 | 44.86 |
+| 同时运行进程 B | 60 | 4 | 3.977 | 44.86 |
+
+上述码流均无回调错误或丢帧，软件解码确认真实 I/P 及每帧完整有效像素。两个进程独立选择 Intel factory 并加载相同候选，验证范围仅限这两个有限会话。1 Mbit/s 的 120 帧四组 GOP 分别约 1.857、1.862、1.855、1.746 Mbit/s，偏差不是仅由首帧突增造成；不能宣布低码率控制通过。
+
+为区分“参数未传递”与控制反馈问题，又采集 4/1 Mbit/s 的前三帧真实 batch。第三帧 `VDENC_IMG_STATE.DW14.QpPrimeY` 分别为 26/32，`MFX_AVC_IMG_STATE` 的对应 QP 字段同步变化；两组 VDENC QP 上下限相同（10/51）。因此码率设置确已影响提交的 QP，后续应继续检查控制反馈与低目标码率行为，当前没有为追逐输出码率而猜测改写 QP。
+
+本轮 44 项 CPU 测试通过，包括新增的真实探针选项解析与 VA 参数诊断测试。检查另发现 19:31:19、19:33:08 的 `mediaanalysisd`、Signature 1000 GPU reset；两份报告发生在后续码率与并发帧测试之前，必须保留，不能据此宣称整机稳定，也不能直接归因为自有 VDENC 任务。
+
+当前阶段仍不满足系统安装验收：Usage=0 对象创建缺失、复杂输入下低码率偏差、公开低延迟接口与系统 XPC 编码路径尚未通过。系统 VA 和 EFI 继续保持原状态，**无需为本轮诊断重启**。
