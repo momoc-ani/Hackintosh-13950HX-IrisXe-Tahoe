@@ -1,6 +1,7 @@
 // 复现 GT1 的 URB 越界导致系统 ID 和顶点位置丢失；不以命令完成代替像素验收。
 // 编译：clang -fobjc-arc -Wall -Wextra xe-vertex-urb.m -framework Foundation -framework Metal -o xe-vertex-urb
 // 基线：./xe-vertex-urb --gpu intel（或 amd）
+// 上传回归：./xe-vertex-urb --gpu intel --indexed-upload --upload-offset 0（或 4）
 // 进程内对照：./xe-vertex-urb --gpu intel --l3-banks 4
 // 对照只修改本进程的 TGL 能力结构，退出即消失；不写驱动、EFI 或 NVRAM。
 #import <Metal/Metal.h>
@@ -108,7 +109,7 @@ static BOOL checkRecords(const uint32_t *records, BOOL point, BOOL attributes) {
 }
 
 // 同时验收顶点输入记录和实际目标像素，捕获 Completed 但没有渲染的情况。
-static BOOL runRender(id<MTLDevice> device, id<MTLLibrary> library, NSString *name) {
+static BOOL runRender(id<MTLDevice> device, id<MTLLibrary> library, NSString *name, BOOL upload, NSUInteger uploadOffset) {
     BOOL point = [name isEqualToString:@"point"];
     BOOL attributes = [name isEqualToString:@"attributes"];
     MTLRenderPipelineDescriptor *descriptor = [MTLRenderPipelineDescriptor new];
@@ -136,6 +137,13 @@ static BOOL runRender(id<MTLDevice> device, id<MTLLibrary> library, NSString *na
                                           options:MTLResourceStorageModeShared];
     const float positions[] = {-1,-1, 3,-1, -1,3};
     id<MTLBuffer> vertices = [device newBufferWithBytes:positions length:sizeof positions options:MTLResourceStorageModeShared];
+    const uint16_t indexData[] = {0,1,2,0};
+    id<MTLBuffer> indices = nil, readback = nil;
+    if (upload && !point) {
+        indices = [device newBufferWithLength:64 options:MTLResourceStorageModePrivate];
+        readback = [device newBufferWithLength:64 options:MTLResourceStorageModeShared];
+        if (!indices || !readback) return NO;
+    }
     if (!texture || !seen || !vertices) return NO;
     memset(seen.contents, 0, seen.length);
     MTLRenderPassDescriptor *pass = [MTLRenderPassDescriptor renderPassDescriptor];
@@ -144,17 +152,39 @@ static BOOL runRender(id<MTLDevice> device, id<MTLLibrary> library, NSString *na
     pass.colorAttachments[0].clearColor = MTLClearColorMake(1,1,1,1);
     pass.colorAttachments[0].storeAction = MTLStoreActionStore;
     id<MTLCommandBuffer> command = [[device newCommandQueue] commandBuffer];
+    if (upload && !point) {
+        // 重现 Dawn 在单个 blit encoder 内清零后上传顶点及索引缓冲区的顺序。
+        id<MTLBuffer> positionSource = [device newBufferWithLength:64 options:MTLResourceStorageModeShared];
+        id<MTLBuffer> indexSource = [device newBufferWithLength:64 options:MTLResourceStorageModeShared];
+        vertices = [device newBufferWithLength:64 options:MTLResourceStorageModePrivate];
+        if (!positionSource || !indexSource || !vertices) return NO;
+        memcpy((uint8_t *)positionSource.contents + uploadOffset, positions, sizeof positions);
+        memcpy((uint8_t *)indexSource.contents + uploadOffset, indexData, sizeof indexData);
+        id<MTLBlitCommandEncoder> blit = [command blitCommandEncoder];
+        [blit fillBuffer:vertices range:NSMakeRange(0,64) value:0];
+        [blit fillBuffer:indices range:NSMakeRange(0,64) value:0];
+        [blit copyFromBuffer:positionSource sourceOffset:uploadOffset toBuffer:vertices destinationOffset:0 size:sizeof positions];
+        [blit copyFromBuffer:indexSource sourceOffset:uploadOffset toBuffer:indices destinationOffset:0 size:sizeof indexData];
+        [blit endEncoding];
+    }
     id<MTLRenderCommandEncoder> encoder = [command renderCommandEncoderWithDescriptor:pass];
     [encoder setRenderPipelineState:pipeline];
     [encoder setViewport:(MTLViewport){0,0,kSide,kSide,0,1}];
     [encoder setScissorRect:(MTLScissorRect){0,0,kSide,kSide}];
     [encoder setVertexBuffer:seen offset:0 atIndex:0];
     if (attributes) [encoder setVertexBuffer:vertices offset:0 atIndex:1];
-    [encoder drawPrimitives:point ? MTLPrimitiveTypePoint : MTLPrimitiveTypeTriangle
-               vertexStart:0 vertexCount:point ? 1 : 3 instanceCount:point ? 1 : 2];
+    if (upload && !point) {
+        [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:3 indexType:MTLIndexTypeUInt16
+                          indexBuffer:indices indexBufferOffset:0 instanceCount:2];
+    } else {
+        [encoder drawPrimitives:point ? MTLPrimitiveTypePoint : MTLPrimitiveTypeTriangle
+                   vertexStart:0 vertexCount:point ? 1 : 3 instanceCount:point ? 1 : 2];
+    }
     [encoder endEncoding];
     id<MTLBlitCommandEncoder> blit = [command blitCommandEncoder];
     [blit synchronizeResource:texture];
+    // 故意错开读回偏移，使读回本身不经过对齐拷贝的临时缓冲区补丁。
+    if (upload && !point) [blit copyFromBuffer:indices sourceOffset:0 toBuffer:readback destinationOffset:4 size:sizeof indexData];
     [blit endEncoding];
     [command commit];
     [command waitUntilCompleted];
@@ -163,7 +193,13 @@ static BOOL runRender(id<MTLDevice> device, id<MTLLibrary> library, NSString *na
         printf(" FAIL %s\n", command.error.description.UTF8String);
         return NO;
     }
-    BOOL recordsOK = checkRecords(seen.contents, point, attributes);
+    BOOL indicesOK = YES;
+    if (upload && !point) {
+        const uint16_t *values = (const uint16_t *)((const uint8_t *)readback.contents + 4);
+        indicesOK = memcmp(values, indexData, sizeof indexData) == 0;
+        printf(" indexRead=%u,%u,%u",values[0],values[1],values[2]);
+    }
+    BOOL recordsOK = indicesOK && checkRecords(seen.contents, point, attributes);
     uint8_t pixels[kSide * kSide * 4];
     [texture getBytes:pixels bytesPerRow:kSide * 4 fromRegion:MTLRegionMake2D(0,0,kSide,kSide) mipmapLevel:0];
     NSUInteger blue = 0, white = 0;
@@ -205,11 +241,15 @@ static BOOL runCompute(id<MTLDevice> device, id<MTLLibrary> library) {
 // 运行所选 GPU 的真实输入与像素回归；失败退出 1，环境或用法问题退出 2。
 int main(int argc, const char **argv) { @autoreleasepool {
     NSString *gpu = @"Intel";
-    BOOL changeL3 = NO;
+    BOOL changeL3 = NO, upload = NO;
+    NSUInteger uploadOffset = 0;
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "--gpu") && i + 1 < argc) gpu = @(argv[++i]);
         else if (!strcmp(argv[i], "--l3-banks") && i + 1 < argc && !strcmp(argv[i+1], "4")) { changeL3 = YES; ++i; }
-        else { fprintf(stderr,"usage: %s [--gpu intel|amd] [--l3-banks 4]\n",argv[0]); return 2; }
+        else if (!strcmp(argv[i], "--indexed-upload")) upload = YES;
+        else if (!strcmp(argv[i], "--upload-offset") && i + 1 < argc &&
+                 (!strcmp(argv[i+1], "0") || !strcmp(argv[i+1], "4"))) uploadOffset = (NSUInteger)strtoul(argv[++i], NULL, 10);
+        else { fprintf(stderr,"usage: %s [--gpu intel|amd] [--l3-banks 4] [--indexed-upload] [--upload-offset 0|4]\n",argv[0]); return 2; }
     }
     id<MTLDevice> device = selectDevice(gpu);
     if (!device) { fprintf(stderr,"没有找到 GPU: %s\n",gpu.UTF8String); return 2; }
@@ -220,7 +260,7 @@ int main(int argc, const char **argv) { @autoreleasepool {
     if (!library) { fprintf(stderr,"library: %s\n",error.description.UTF8String); return 2; }
     unsigned failures = 0;
     failures += !runCompute(device, library);
-    for (NSString *name in @[@"systemValues", @"attributes", @"point"]) failures += !runRender(device, library, name);
+    for (NSString *name in @[@"systemValues", @"attributes", @"point"]) failures += !runRender(device, library, name, upload, uploadOffset);
     printf("tests=4 failures=%u\n", failures);
     return failures ? 1 : 0;
 } }
