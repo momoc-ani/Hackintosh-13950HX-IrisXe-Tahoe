@@ -1,0 +1,7 @@
+GPU: Intel(R) TGL Unknown registryID=4294968978 lowPower=1 headless=1
+URB caps slices=1 l3=8 address=0x7fa310015498
+regenerated URB l3=4 allocations=32
+command status=4 error=none
+vertex invocations=3 ids+1=2,1,3,0,0,0
+blue pixels=4096/4096 first BGRA=255,0,0,255
+exit=0

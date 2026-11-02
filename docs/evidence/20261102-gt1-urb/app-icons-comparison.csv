@@ -1,0 +1,361 @@
+app,size,reference_valid,amd-resources_alpha,amd-resources_preview,intel8-resources_alpha,intel8-resources_preview,intel4-resources_alpha,intel4-resources_preview,intel8_mean_delta,intel8_max_delta,intel8_status,intel4_mean_delta,intel4_max_delta,intel4_status
+/Applications/Ani Tracker.app,32,True,290,000-32.png,0,000-32.png,290,000-32.png,46.8427734375,255,FAIL,0.0,0,PASS
+/Applications/Ani Tracker.app,128,True,3987,000-128.png,0,000-128.png,3987,000-128.png,46.42881774902344,255,FAIL,0.0,0,PASS
+/Applications/Ani Tracker.app,512,True,61320,000-512.png,0,000-512.png,61320,000-512.png,46.32813739776611,255,FAIL,0.0,0,PASS
+/Applications/Another Redis Desktop Manager.app,32,True,648,001-32.png,0,001-32.png,648,001-32.png,83.310546875,255,FAIL,0.0,0,PASS
+/Applications/Another Redis Desktop Manager.app,128,True,10336,001-128.png,0,001-128.png,10336,001-128.png,87.21243286132812,255,FAIL,0.0,0,PASS
+/Applications/Another Redis Desktop Manager.app,512,True,163840,001-512.png,0,001-512.png,163840,001-512.png,88.22066688537598,255,FAIL,0.0,0,PASS
+/Applications/Apifox.app,32,True,652,002-32.png,0,002-32.png,652,002-32.png,111.550048828125,255,FAIL,0.0,0,PASS
+/Applications/Apifox.app,128,True,10685,002-128.png,0,002-128.png,10685,002-128.png,116.8966064453125,255,FAIL,0.0,0,PASS
+/Applications/Apifox.app,512,True,173507,002-512.png,0,002-512.png,173507,002-512.png,118.01466178894043,255,FAIL,0.0,0,PASS
+/Applications/AweSun.app,32,True,698,003-32.png,698,003-32.png,698,003-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/AweSun.app,128,True,10653,003-128.png,10653,003-128.png,10653,003-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/AweSun.app,512,True,171258,003-512.png,171258,003-512.png,171258,003-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/CC Switch.app,32,True,416,004-32.png,0,004-32.png,416,004-32.png,54.5166015625,255,FAIL,0.0,0,PASS
+/Applications/CC Switch.app,128,True,5680,004-128.png,0,004-128.png,5680,004-128.png,56.63938903808594,255,FAIL,0.0,0,PASS
+/Applications/CC Switch.app,512,True,86872,004-512.png,0,004-512.png,86872,004-512.png,57.12224197387695,255,FAIL,0.0,0,PASS
+/Applications/CF Optimizer.app,32,True,760,005-32.png,760,005-32.png,760,005-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/CF Optimizer.app,128,True,12008,005-128.png,12008,005-128.png,12008,005-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/CF Optimizer.app,512,True,191673,005-512.png,0,005-512.png,191673,005-512.png,74.2866792678833,255,FAIL,0.0,0,PASS
+/Applications/ChatGPT.app,32,True,662,006-32.png,0,006-32.png,662,006-32.png,129.4384765625,255,FAIL,0.0,0,PASS
+/Applications/ChatGPT.app,128,True,10364,006-128.png,0,006-128.png,10364,006-128.png,130.1416015625,255,FAIL,0.0,0,PASS
+/Applications/ChatGPT.app,512,True,166434,006-512.png,166434,006-512.png,166434,006-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Clash Verge.app,32,True,664,007-32.png,664,007-32.png,664,007-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Clash Verge.app,128,True,10431,007-128.png,10431,007-128.png,10431,007-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Clash Verge.app,512,True,165758,007-512.png,0,007-512.png,165758,007-512.png,143.13025379180908,255,FAIL,0.0,0,PASS
+/Applications/DingTalk.app,32,True,786,008-32.png,0,008-32.png,786,008-32.png,126.427734375,255,FAIL,0.0,0,PASS
+/Applications/DingTalk.app,128,True,10577,008-128.png,0,008-128.png,10577,008-128.png,106.93923950195312,255,FAIL,0.0,0,PASS
+/Applications/DingTalk.app,512,True,170277,008-512.png,170277,008-512.png,170277,008-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Docker.app,32,True,676,009-32.png,676,009-32.png,676,009-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Docker.app,128,True,10551,009-128.png,10551,009-128.png,10551,009-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Docker.app,512,True,168418,009-512.png,0,009-512.png,168418,009-512.png,114.7137565612793,255,FAIL,0.0,0,PASS
+/Applications/Firefox.app,32,True,788,010-32.png,0,010-32.png,788,010-32.png,97.835205078125,255,FAIL,0.0,0,PASS
+/Applications/Firefox.app,128,True,10664,010-128.png,0,010-128.png,10664,010-128.png,85.80482482910156,255,FAIL,0.0,0,PASS
+/Applications/Firefox.app,512,True,166192,010-512.png,166192,010-512.png,166192,010-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Geekbench 5.app,32,True,687,011-32.png,687,011-32.png,687,011-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Geekbench 5.app,128,True,9740,011-128.png,0,011-128.png,9740,011-128.png,97.40716552734375,255,FAIL,0.0,0,PASS
+/Applications/Geekbench 5.app,512,True,159907,011-512.png,0,011-512.png,159907,011-512.png,98.30731105804443,255,FAIL,0.0,0,PASS
+/Applications/Google Chrome.app,32,True,831,012-32.png,0,012-32.png,831,012-32.png,140.541259765625,255,FAIL,0.0,0,PASS
+/Applications/Google Chrome.app,128,True,10975,012-128.png,10975,012-128.png,10975,012-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Google Chrome.app,512,True,170988,012-512.png,170988,012-512.png,170988,012-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Hackintool.app,32,True,652,013-32.png,652,013-32.png,652,013-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Hackintool.app,128,True,10648,013-128.png,10648,013-128.png,10648,013-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Hackintool.app,512,True,169764,013-512.png,169764,013-512.png,169764,013-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/IINA.app,32,True,646,014-32.png,0,014-32.png,646,014-32.png,66.923095703125,255,FAIL,0.0,0,PASS
+/Applications/IINA.app,128,True,10414,014-128.png,0,014-128.png,10414,014-128.png,70.07194519042969,255,FAIL,0.0,0,PASS
+/Applications/IINA.app,512,True,168063,014-512.png,0,014-512.png,168063,014-512.png,70.61030960083008,255,FAIL,0.0,0,PASS
+/Applications/Intel Power Gadget/Intel Power Gadget.app,32,True,1000,015-32.png,1000,015-32.png,1000,015-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Intel Power Gadget/Intel Power Gadget.app,128,True,15867,015-128.png,15867,015-128.png,15867,015-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Intel Power Gadget/Intel Power Gadget.app,512,True,252704,015-512.png,252704,015-512.png,252704,015-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/IntelliJ IDEA.app,32,True,772,016-32.png,772,016-32.png,772,016-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/IntelliJ IDEA.app,128,True,10856,016-128.png,10856,016-128.png,10856,016-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/IntelliJ IDEA.app,512,True,167385,016-512.png,167385,016-512.png,167385,016-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/LightProxy.app,32,True,347,017-32.png,347,017-32.png,347,017-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/LightProxy.app,128,True,5435,017-128.png,0,017-128.png,5435,017-128.png,47.702117919921875,255,FAIL,0.0,0,PASS
+/Applications/LightProxy.app,512,True,86941,017-512.png,0,017-512.png,86941,017-512.png,48.225972175598145,255,FAIL,0.0,0,PASS
+/Applications/MacZip.app,32,True,711,018-32.png,711,018-32.png,711,018-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/MacZip.app,128,True,11048,018-128.png,11048,018-128.png,11048,018-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/MacZip.app,512,True,175562,018-512.png,0,018-512.png,175562,018-512.png,102.89860916137695,255,FAIL,0.0,0,PASS
+/Applications/Mangayomi.app,32,True,1020,019-32.png,1020,019-32.png,1020,019-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Mangayomi.app,128,True,16210,019-128.png,0,019-128.png,16210,019-128.png,188.89996337890625,255,FAIL,0.0,0,PASS
+/Applications/Mangayomi.app,512,True,259166,019-512.png,0,019-512.png,259166,019-512.png,188.99200439453125,255,FAIL,0.0,0,PASS
+/Applications/Microsoft Edge.app,32,True,984,020-32.png,0,020-32.png,984,020-32.png,205.55078125,255,FAIL,0.0,0,PASS
+/Applications/Microsoft Edge.app,128,True,10719,020-128.png,10719,020-128.png,10719,020-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Microsoft Edge.app,512,True,170634,020-512.png,0,020-512.png,170634,020-512.png,134.81643390655518,255,FAIL,0.0,0,PASS
+/Applications/Microsoft Remote Desktop Beta.app,32,True,876,021-32.png,876,021-32.png,876,021-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Microsoft Remote Desktop Beta.app,128,True,10382,021-128.png,10382,021-128.png,10382,021-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Microsoft Remote Desktop Beta.app,512,True,165830,021-512.png,0,021-512.png,165830,021-512.png,141.90613174438477,255,FAIL,0.0,0,PASS
+/Applications/MusicFree.app,32,True,674,022-32.png,0,022-32.png,674,022-32.png,74.697265625,255,FAIL,0.0,0,PASS
+/Applications/MusicFree.app,128,True,10746,022-128.png,10746,022-128.png,10746,022-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/MusicFree.app,512,True,173060,022-512.png,173060,022-512.png,173060,022-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Navicat Premium.app,32,True,852,023-32.png,852,023-32.png,852,023-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Navicat Premium.app,128,True,10737,023-128.png,10737,023-128.png,10737,023-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Navicat Premium.app,512,True,171300,023-512.png,171300,023-512.png,171300,023-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Nigate.app,32,True,483,024-32.png,0,024-32.png,483,024-32.png,53.974853515625,255,FAIL,0.0,0,PASS
+/Applications/Nigate.app,128,True,6953,024-128.png,0,024-128.png,6953,024-128.png,54.03349304199219,255,FAIL,0.0,0,PASS
+/Applications/Nigate.app,512,True,107632,024-512.png,0,024-512.png,107632,024-512.png,54.04637145996094,255,FAIL,0.0,0,PASS
+/Applications/OCLP-Mod.app,32,True,668,025-32.png,0,025-32.png,668,025-32.png,116.01123046875,255,FAIL,0.0,0,PASS
+/Applications/OCLP-Mod.app,128,True,10524,025-128.png,0,025-128.png,10524,025-128.png,116.82192993164062,255,FAIL,0.0,0,PASS
+/Applications/OCLP-Mod.app,512,True,169002,025-512.png,0,025-512.png,169002,025-512.png,116.86935615539551,255,FAIL,0.0,0,PASS
+/Applications/Open Design.app,32,True,652,026-32.png,0,026-32.png,652,026-32.png,69.103271484375,255,FAIL,0.0,0,PASS
+/Applications/Open Design.app,128,True,10144,026-128.png,0,026-128.png,10144,026-128.png,69.41142272949219,255,FAIL,0.0,0,PASS
+/Applications/Open Design.app,512,True,159764,026-512.png,0,026-512.png,159764,026-512.png,69.33120155334473,255,FAIL,0.0,0,PASS
+/Applications/OpenClaw.app,32,True,646,027-32.png,646,027-32.png,646,027-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/OpenClaw.app,128,True,10414,027-128.png,10414,027-128.png,10414,027-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/OpenClaw.app,512,True,168338,027-512.png,168338,027-512.png,168338,027-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/OpenCore Configurator.app,32,True,666,028-32.png,666,028-32.png,666,028-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/OpenCore Configurator.app,128,True,10822,028-128.png,0,028-128.png,10822,028-128.png,71.58908081054688,255,FAIL,0.005584716796875,1,PASS
+/Applications/OpenCore Configurator.app,512,True,175951,028-512.png,0,028-512.png,175951,028-512.png,72.30692768096924,255,FAIL,0.00514984130859375,1,PASS
+/Applications/QQ.app,32,True,683,029-32.png,0,029-32.png,683,029-32.png,129.08203125,255,FAIL,0.0,0,PASS
+/Applications/QQ.app,128,True,10438,029-128.png,10438,029-128.png,10438,029-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/QQ.app,512,True,165064,029-512.png,165064,029-512.png,165064,029-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/QQMusic.app,32,True,656,030-32.png,656,030-32.png,656,030-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/QQMusic.app,128,True,10364,030-128.png,0,030-128.png,10364,030-128.png,134.35479736328125,255,FAIL,0.0,0,PASS
+/Applications/QQMusic.app,512,True,163224,030-512.png,163224,030-512.png,163224,030-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/RapidEFI.app,32,True,604,031-32.png,0,031-32.png,604,031-32.png,77.811279296875,255,FAIL,0.0,0,PASS
+/Applications/RapidEFI.app,128,True,9591,031-128.png,9591,031-128.png,9591,031-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/RapidEFI.app,512,True,153981,031-512.png,153981,031-512.png,153981,031-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Safari.app,32,True,644,032-32.png,644,032-32.png,644,032-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Safari.app,128,True,10405,032-128.png,0,032-128.png,10405,032-128.png,131.00466918945312,255,FAIL,0.0,0,PASS
+/Applications/Safari.app,512,True,168139,032-512.png,0,032-512.png,168139,032-512.png,131.97516632080078,255,FAIL,0.0,0,PASS
+/Applications/Sublime Text.app,32,True,646,033-32.png,0,033-32.png,646,033-32.png,75.388427734375,255,FAIL,0.0,0,PASS
+/Applications/Sublime Text.app,128,True,10370,033-128.png,10370,033-128.png,10370,033-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Sublime Text.app,512,True,165349,033-512.png,0,033-512.png,165349,033-512.png,79.860182762146,255,FAIL,0.0,0,PASS
+/Applications/Termius.app,32,True,760,034-32.png,760,034-32.png,760,034-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Termius.app,128,True,10390,034-128.png,0,034-128.png,10390,034-128.png,63.557220458984375,255,FAIL,0.0,0,PASS
+/Applications/Termius.app,512,True,162414,034-512.png,0,034-512.png,162414,034-512.png,62.20516490936279,255,FAIL,0.0,0,PASS
+/Applications/Typora.app,32,True,678,035-32.png,0,035-32.png,678,035-32.png,149.707275390625,255,FAIL,0.0,0,PASS
+/Applications/Typora.app,128,True,11227,035-128.png,0,035-128.png,11227,035-128.png,156.64637756347656,255,FAIL,0.0,0,PASS
+/Applications/Typora.app,512,True,178830,035-512.png,178830,035-512.png,178830,035-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/UURemote.app,32,True,868,036-32.png,868,036-32.png,868,036-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/UURemote.app,128,True,11003,036-128.png,11003,036-128.png,11003,036-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/UURemote.app,512,True,175505,036-512.png,0,036-512.png,175505,036-512.png,151.8798713684082,255,FAIL,0.0,0,PASS
+/Applications/VideoProc Converter AI.app,32,True,729,037-32.png,729,037-32.png,729,037-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/VideoProc Converter AI.app,128,True,11589,037-128.png,0,037-128.png,11589,037-128.png,125.879150390625,255,FAIL,0.0,0,PASS
+/Applications/VideoProc Converter AI.app,512,True,186184,037-512.png,186184,037-512.png,186184,037-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/WeChat.app,32,True,652,038-32.png,652,038-32.png,652,038-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/WeChat.app,128,True,10146,038-128.png,0,038-128.png,10146,038-128.png,107.51593017578125,255,FAIL,0.0,0,PASS
+/Applications/WeChat.app,512,True,160924,038-512.png,160924,038-512.png,160924,038-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Xcode.app,32,True,644,039-32.png,0,039-32.png,644,039-32.png,94.594482421875,255,FAIL,0.0,0,PASS
+/Applications/Xcode.app,128,True,10399,039-128.png,10399,039-128.png,10399,039-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/Xcode.app,512,True,168001,039-512.png,168001,039-512.png,168001,039-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/ZCode.app,32,True,652,040-32.png,652,040-32.png,652,040-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/ZCode.app,128,True,10462,040-128.png,0,040-128.png,10462,040-128.png,65.60343933105469,255,FAIL,0.0055389404296875,1,PASS
+/Applications/ZCode.app,512,True,168954,040-512.png,0,040-512.png,168954,040-512.png,66.43814373016357,255,FAIL,0.005595207214355469,1,PASS
+/Applications/ZeroTier.app,32,True,762,041-32.png,762,041-32.png,762,041-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/ZeroTier.app,128,True,11428,041-128.png,11428,041-128.png,11428,041-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/ZeroTier.app,512,True,180382,041-512.png,0,041-512.png,180382,041-512.png,124.62438774108887,255,FAIL,0.0,0,PASS
+/Applications/aDrive.app,32,True,716,042-32.png,716,042-32.png,716,042-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/aDrive.app,128,True,10740,042-128.png,0,042-128.png,10740,042-128.png,123.270263671875,255,FAIL,0.0,0,PASS
+/Applications/aDrive.app,512,True,169865,042-512.png,0,042-512.png,169865,042-512.png,123.30269050598145,255,FAIL,0.0,0,PASS
+/Applications/iShot.app,32,True,664,043-32.png,0,043-32.png,664,043-32.png,139.46728515625,255,FAIL,0.0,0,PASS
+/Applications/iShot.app,128,True,10806,043-128.png,10806,043-128.png,10806,043-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/iShot.app,512,True,174947,043-512.png,0,043-512.png,174947,043-512.png,147.4208221435547,255,FAIL,0.0,0,PASS
+/Applications/iStat Menus.app,32,True,646,044-32.png,646,044-32.png,646,044-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/iStat Menus.app,128,True,10406,044-128.png,10406,044-128.png,10406,044-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/iStat Menus.app,512,True,168190,044-512.png,168190,044-512.png,168190,044-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/jclasslib bytecode viewer.app,32,True,768,045-32.png,0,045-32.png,768,045-32.png,162.116943359375,255,FAIL,0.0,0,PASS
+/Applications/jclasslib bytecode viewer.app,128,True,12288,045-128.png,0,045-128.png,12288,045-128.png,161.45164489746094,255,FAIL,0.0,0,PASS
+/Applications/jclasslib bytecode viewer.app,512,True,196608,045-512.png,196608,045-512.png,196608,045-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/jetbrains-crack-toolbox.app,32,True,694,046-32.png,694,046-32.png,694,046-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/jetbrains-crack-toolbox.app,128,True,10838,046-128.png,10838,046-128.png,10838,046-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/jetbrains-crack-toolbox.app,512,True,173064,046-512.png,173064,046-512.png,173064,046-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/nano.app,32,True,995,047-32.png,0,047-32.png,995,047-32.png,94.48046875,255,FAIL,0.0,0,PASS
+/Applications/nano.app,128,True,16009,047-128.png,0,047-128.png,16009,047-128.png,94.53701782226562,255,FAIL,0.0,0,PASS
+/Applications/nano.app,512,True,256688,047-512.png,256688,047-512.png,256688,047-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/toonflow.app,32,True,1020,048-32.png,0,048-32.png,1020,048-32.png,202.430908203125,255,FAIL,0.0,0,PASS
+/Applications/toonflow.app,128,True,16216,048-128.png,0,048-128.png,16216,048-128.png,203.5902557373047,255,FAIL,0.0,0,PASS
+/Applications/toonflow.app,512,True,259050,048-512.png,0,048-512.png,259050,048-512.png,203.85614490509033,255,FAIL,0.0,0,PASS
+/Applications/wpsoffice.app,32,True,705,049-32.png,0,049-32.png,705,049-32.png,146.8408203125,255,FAIL,0.0,0,PASS
+/Applications/wpsoffice.app,128,True,10742,049-128.png,0,049-128.png,10742,049-128.png,144.23928833007812,255,FAIL,0.0,0,PASS
+/Applications/wpsoffice.app,512,True,166792,049-512.png,0,049-512.png,166792,049-512.png,144.3164758682251,255,FAIL,0.0,0,PASS
+/Applications/同花顺.app,32,True,854,050-32.png,0,050-32.png,854,050-32.png,113.461669921875,255,FAIL,0.0,0,PASS
+/Applications/同花顺.app,128,True,10862,050-128.png,0,050-128.png,10862,050-128.png,94.29638671875,255,FAIL,0.0,0,PASS
+/Applications/同花顺.app,512,True,170792,050-512.png,0,050-512.png,170792,050-512.png,92.2080192565918,255,FAIL,0.0,0,PASS
+/Applications/哔哩哔哩.app,32,True,644,051-32.png,644,051-32.png,644,051-32.png,0.0,0,PASS,0.0,0,PASS
+/Applications/哔哩哔哩.app,128,True,10006,051-128.png,10006,051-128.png,10006,051-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/哔哩哔哩.app,512,True,161062,051-512.png,161062,051-512.png,161062,051-512.png,0.0,0,PASS,0.0,0,PASS
+/Applications/小米互联服务.app,32,True,646,052-32.png,0,052-32.png,646,052-32.png,137.521240234375,255,FAIL,0.0,0,PASS
+/Applications/小米互联服务.app,128,True,10414,052-128.png,10414,052-128.png,10414,052-128.png,0.0,0,PASS,0.0,0,PASS
+/Applications/小米互联服务.app,512,True,168380,052-512.png,0,052-512.png,168380,052-512.png,144.78533172607422,255,FAIL,0.0,0,PASS
+/System/Applications/App Store.app,32,True,644,053-32.png,644,053-32.png,644,053-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/App Store.app,128,True,10405,053-128.png,0,053-128.png,10405,053-128.png,109.46456909179688,255,FAIL,0.0,0,PASS
+/System/Applications/App Store.app,512,True,168139,053-512.png,168139,053-512.png,168139,053-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Apps.app,32,True,644,054-32.png,0,054-32.png,644,054-32.png,136.06201171875,255,FAIL,0.0,0,PASS
+/System/Applications/Apps.app,128,True,10405,054-128.png,0,054-128.png,10405,054-128.png,142.383056640625,255,FAIL,0.0,0,PASS
+/System/Applications/Apps.app,512,True,168139,054-512.png,0,054-512.png,168139,054-512.png,143.432373046875,255,FAIL,0.0,0,PASS
+/System/Applications/Automator.app,32,True,644,055-32.png,644,055-32.png,644,055-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Automator.app,128,True,10405,055-128.png,10405,055-128.png,10405,055-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Automator.app,512,True,168139,055-512.png,168139,055-512.png,168139,055-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Books.app,32,False,0,056-32.png,0,056-32.png,0,056-32.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE
+/System/Applications/Books.app,128,False,0,056-128.png,0,056-128.png,0,056-128.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE
+/System/Applications/Books.app,512,False,0,056-512.png,0,056-512.png,0,056-512.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE
+/System/Applications/Calculator.app,32,True,644,057-32.png,644,057-32.png,644,057-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Calculator.app,128,True,10405,057-128.png,0,057-128.png,10405,057-128.png,114.44435119628906,255,FAIL,0.0,0,PASS
+/System/Applications/Calculator.app,512,True,168139,057-512.png,168139,057-512.png,168139,057-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Calendar.app,32,True,644,058-32.png,0,058-32.png,644,058-32.png,127.883056640625,255,FAIL,0.0,0,PASS
+/System/Applications/Calendar.app,128,True,10405,058-128.png,10405,058-128.png,10405,058-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Calendar.app,512,True,168139,058-512.png,0,058-512.png,168139,058-512.png,134.81892013549805,255,FAIL,0.0,0,PASS
+/System/Applications/Chess.app,32,True,644,059-32.png,0,059-32.png,644,059-32.png,72.110107421875,255,FAIL,0.0,0,PASS
+/System/Applications/Chess.app,128,True,10405,059-128.png,10405,059-128.png,10405,059-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Chess.app,512,True,168139,059-512.png,168139,059-512.png,168139,059-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Clock.app,32,True,856,060-32.png,856,060-32.png,856,060-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Clock.app,128,True,10870,060-128.png,10870,060-128.png,10870,060-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Clock.app,512,True,170190,060-512.png,0,060-512.png,170190,060-512.png,108.14303588867188,255,FAIL,0.0,0,PASS
+/System/Applications/Contacts.app,32,True,644,061-32.png,644,061-32.png,644,061-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Contacts.app,128,True,10405,061-128.png,10405,061-128.png,10405,061-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Contacts.app,512,True,168139,061-512.png,168139,061-512.png,168139,061-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Dictionary.app,32,True,644,062-32.png,644,062-32.png,644,062-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Dictionary.app,128,True,10405,062-128.png,0,062-128.png,10405,062-128.png,97.60179138183594,255,FAIL,0.0,0,PASS
+/System/Applications/Dictionary.app,512,True,168139,062-512.png,168139,062-512.png,168139,062-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/FaceTime.app,32,True,851,063-32.png,0,063-32.png,851,063-32.png,127.012451171875,255,FAIL,0.0,0,PASS
+/System/Applications/FaceTime.app,128,True,10848,063-128.png,10848,063-128.png,10848,063-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/FaceTime.app,512,True,170128,063-512.png,170128,063-512.png,170128,063-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/FindMy.app,32,True,856,064-32.png,0,064-32.png,856,064-32.png,141.835693359375,255,FAIL,0.0,0,PASS
+/System/Applications/FindMy.app,128,True,10921,064-128.png,0,064-128.png,10921,064-128.png,117.7618408203125,255,FAIL,0.0,0,PASS
+/System/Applications/FindMy.app,512,True,170650,064-512.png,0,064-512.png,170650,064-512.png,115.00429916381836,255,FAIL,0.0,0,PASS
+/System/Applications/Font Book.app,32,True,644,065-32.png,644,065-32.png,644,065-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Font Book.app,128,True,10405,065-128.png,10405,065-128.png,10405,065-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Font Book.app,512,True,168139,065-512.png,168139,065-512.png,168139,065-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Freeform.app,32,True,644,066-32.png,0,066-32.png,644,066-32.png,80.419921875,255,FAIL,0.0,0,PASS
+/System/Applications/Freeform.app,128,True,10405,066-128.png,10405,066-128.png,10405,066-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Freeform.app,512,True,168139,066-512.png,0,066-512.png,168139,066-512.png,84.74592208862305,255,FAIL,0.0,0,PASS
+/System/Applications/Games.app,32,True,644,067-32.png,644,067-32.png,644,067-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Games.app,128,True,10405,067-128.png,0,067-128.png,10405,067-128.png,108.17744445800781,255,FAIL,0.0,0,PASS
+/System/Applications/Games.app,512,True,168139,067-512.png,168139,067-512.png,168139,067-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Home.app,32,True,856,068-32.png,0,068-32.png,856,068-32.png,162.82763671875,255,FAIL,0.0,0,PASS
+/System/Applications/Home.app,128,True,10921,068-128.png,10921,068-128.png,10921,068-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Home.app,512,True,170514,068-512.png,0,068-512.png,170514,068-512.png,139.15925979614258,255,FAIL,0.0,0,PASS
+/System/Applications/Image Capture.app,32,True,644,069-32.png,644,069-32.png,644,069-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Image Capture.app,128,True,10405,069-128.png,0,069-128.png,10405,069-128.png,76.65245056152344,255,FAIL,0.0,0,PASS
+/System/Applications/Image Capture.app,512,True,168139,069-512.png,168139,069-512.png,168139,069-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Image Playground.app,32,True,644,070-32.png,0,070-32.png,644,070-32.png,67.623779296875,255,FAIL,0.0,0,PASS
+/System/Applications/Image Playground.app,128,True,10405,070-128.png,10405,070-128.png,10405,070-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Image Playground.app,512,True,168139,070-512.png,168139,070-512.png,168139,070-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Journal.app,32,True,644,071-32.png,644,071-32.png,644,071-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Journal.app,128,True,10405,071-128.png,0,071-128.png,10405,071-128.png,79.9830322265625,255,FAIL,0.0,0,PASS
+/System/Applications/Journal.app,512,True,168139,071-512.png,0,071-512.png,168139,071-512.png,80.59799194335938,255,FAIL,0.0,0,PASS
+/System/Applications/Mail.app,32,True,644,072-32.png,0,072-32.png,644,072-32.png,117.37841796875,255,FAIL,0.0,0,PASS
+/System/Applications/Mail.app,128,True,10405,072-128.png,0,072-128.png,10405,072-128.png,122.81828308105469,255,FAIL,0.0,0,PASS
+/System/Applications/Mail.app,512,True,168139,072-512.png,0,072-512.png,168139,072-512.png,123.76079177856445,255,FAIL,0.0,0,PASS
+/System/Applications/Maps.app,32,True,851,073-32.png,0,073-32.png,851,073-32.png,151.382080078125,255,FAIL,0.0,0,PASS
+/System/Applications/Maps.app,128,True,10848,073-128.png,0,073-128.png,10848,073-128.png,125.89497375488281,255,FAIL,0.0,0,PASS
+/System/Applications/Maps.app,512,True,170121,073-512.png,0,073-512.png,170121,073-512.png,123.52897644042969,255,FAIL,0.0,0,PASS
+/System/Applications/Messages.app,32,True,851,074-32.png,0,074-32.png,851,074-32.png,135.2431640625,255,FAIL,0.0,0,PASS
+/System/Applications/Messages.app,128,True,10848,074-128.png,0,074-128.png,10848,074-128.png,113.99021911621094,255,FAIL,0.0,0,PASS
+/System/Applications/Messages.app,512,True,170121,074-512.png,0,074-512.png,170121,074-512.png,111.97831344604492,255,FAIL,0.0,0,PASS
+/System/Applications/Mission Control.app,32,True,644,075-32.png,644,075-32.png,644,075-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Mission Control.app,128,True,10405,075-128.png,10405,075-128.png,10405,075-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Mission Control.app,512,True,168139,075-512.png,168139,075-512.png,168139,075-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Music.app,32,True,644,076-32.png,644,076-32.png,644,076-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Music.app,128,True,10405,076-128.png,0,076-128.png,10405,076-128.png,103.15188598632812,255,FAIL,0.0,0,PASS
+/System/Applications/Music.app,512,True,168139,076-512.png,0,076-512.png,168139,076-512.png,103.92623901367188,255,FAIL,0.0,0,PASS
+/System/Applications/News.app,32,True,851,077-32.png,0,077-32.png,851,077-32.png,172.633544921875,255,FAIL,0.0,0,PASS
+/System/Applications/News.app,128,True,10848,077-128.png,10848,077-128.png,10848,077-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/News.app,512,True,170128,077-512.png,170128,077-512.png,170128,077-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Notes.app,32,True,644,078-32.png,0,078-32.png,644,078-32.png,135.651611328125,255,FAIL,0.0,0,PASS
+/System/Applications/Notes.app,128,True,10405,078-128.png,0,078-128.png,10405,078-128.png,141.9071044921875,255,FAIL,0.0,0,PASS
+/System/Applications/Notes.app,512,True,168139,078-512.png,168139,078-512.png,168139,078-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Passwords.app,32,True,644,079-32.png,644,079-32.png,644,079-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Passwords.app,128,True,10405,079-128.png,10405,079-128.png,10405,079-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Passwords.app,512,True,168139,079-512.png,0,079-512.png,168139,079-512.png,72.00433731079102,255,FAIL,0.0,0,PASS
+/System/Applications/Phone.app,32,True,1024,080-32.png,1024,080-32.png,1024,080-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Phone.app,128,True,16384,080-128.png,0,080-128.png,16384,080-128.png,163.6841278076172,255,FAIL,0.0,0,PASS
+/System/Applications/Phone.app,512,True,262144,080-512.png,262144,080-512.png,262144,080-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Photo Booth.app,32,True,644,081-32.png,0,081-32.png,644,081-32.png,96.174072265625,255,FAIL,0.0,0,PASS
+/System/Applications/Photo Booth.app,128,True,10405,081-128.png,10405,081-128.png,10405,081-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Photo Booth.app,512,True,168139,081-512.png,0,081-512.png,168139,081-512.png,101.42530059814453,255,FAIL,0.0,0,PASS
+/System/Applications/Photos.app,32,True,644,082-32.png,644,082-32.png,644,082-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Photos.app,128,True,10405,082-128.png,0,082-128.png,10405,082-128.png,128.59030151367188,255,FAIL,0.0,0,PASS
+/System/Applications/Photos.app,512,True,168139,082-512.png,168139,082-512.png,168139,082-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Podcasts.app,32,True,644,083-32.png,644,083-32.png,644,083-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Podcasts.app,128,True,10405,083-128.png,10405,083-128.png,10405,083-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Podcasts.app,512,True,168139,083-512.png,168139,083-512.png,168139,083-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Preview.app,32,True,644,084-32.png,644,084-32.png,644,084-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Preview.app,128,True,10405,084-128.png,0,084-128.png,10405,084-128.png,113.68276977539062,255,FAIL,0.0,0,PASS
+/System/Applications/Preview.app,512,True,168139,084-512.png,0,084-512.png,168139,084-512.png,114.540283203125,255,FAIL,0.0,0,PASS
+/System/Applications/QuickTime Player.app,32,True,644,085-32.png,644,085-32.png,644,085-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/QuickTime Player.app,128,True,10405,085-128.png,0,085-128.png,10405,085-128.png,132.48284912109375,255,FAIL,0.0,0,PASS
+/System/Applications/QuickTime Player.app,512,True,168139,085-512.png,0,085-512.png,168139,085-512.png,133.45435333251953,255,FAIL,0.0,0,PASS
+/System/Applications/Reminders.app,32,True,644,086-32.png,0,086-32.png,644,086-32.png,142.275634765625,255,FAIL,0.0,0,PASS
+/System/Applications/Reminders.app,128,True,10405,086-128.png,10405,086-128.png,10405,086-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Reminders.app,512,True,168139,086-512.png,0,086-512.png,168139,086-512.png,150.02577209472656,255,FAIL,0.0,0,PASS
+/System/Applications/Shortcuts.app,32,True,644,087-32.png,0,087-32.png,644,087-32.png,80.985595703125,255,FAIL,0.0,0,PASS
+/System/Applications/Shortcuts.app,128,True,10405,087-128.png,10405,087-128.png,10405,087-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Shortcuts.app,512,True,168139,087-512.png,168139,087-512.png,168139,087-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Siri.app,32,True,644,088-32.png,0,088-32.png,644,088-32.png,85.556640625,255,FAIL,0.0,0,PASS
+/System/Applications/Siri.app,128,True,10405,088-128.png,10405,088-128.png,10405,088-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Siri.app,512,True,168139,088-512.png,0,088-512.png,168139,088-512.png,90.2254524230957,255,FAIL,0.0,0,PASS
+/System/Applications/Stickies.app,32,True,644,089-32.png,644,089-32.png,644,089-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Stickies.app,128,True,10405,089-128.png,10405,089-128.png,10405,089-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Stickies.app,512,True,168139,089-512.png,168139,089-512.png,168139,089-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Stocks.app,32,True,851,090-32.png,0,090-32.png,851,090-32.png,78.849365234375,255,FAIL,0.0,0,PASS
+/System/Applications/Stocks.app,128,True,10848,090-128.png,0,090-128.png,10848,090-128.png,65.71038818359375,255,FAIL,0.0,0,PASS
+/System/Applications/Stocks.app,512,True,170128,090-512.png,0,090-512.png,170128,090-512.png,63.32515335083008,255,FAIL,0.0,0,PASS
+/System/Applications/System Settings.app,32,True,644,091-32.png,644,091-32.png,644,091-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/System Settings.app,128,True,10405,091-128.png,0,091-128.png,10405,091-128.png,112.010009765625,255,FAIL,0.0,0,PASS
+/System/Applications/System Settings.app,512,True,168139,091-512.png,168139,091-512.png,168139,091-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/TV.app,32,True,644,092-32.png,644,092-32.png,644,092-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/TV.app,128,True,10405,092-128.png,10405,092-128.png,10405,092-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/TV.app,512,True,168139,092-512.png,0,092-512.png,168139,092-512.png,68.77410507202148,255,FAIL,0.0,0,PASS
+/System/Applications/TextEdit.app,32,True,644,093-32.png,0,093-32.png,644,093-32.png,142.923095703125,255,FAIL,0.0,0,PASS
+/System/Applications/TextEdit.app,128,True,10405,093-128.png,0,093-128.png,10405,093-128.png,149.59185791015625,255,FAIL,0.0,0,PASS
+/System/Applications/TextEdit.app,512,True,168139,093-512.png,168139,093-512.png,168139,093-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Time Machine.app,32,True,644,094-32.png,644,094-32.png,644,094-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Time Machine.app,128,True,10405,094-128.png,10405,094-128.png,10405,094-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Time Machine.app,512,True,168139,094-512.png,168139,094-512.png,168139,094-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Tips.app,32,True,644,095-32.png,0,095-32.png,644,095-32.png,108.926513671875,255,FAIL,0.0,0,PASS
+/System/Applications/Tips.app,128,True,10405,095-128.png,0,095-128.png,10405,095-128.png,114.05793762207031,255,FAIL,0.0,0,PASS
+/System/Applications/Tips.app,512,True,168139,095-512.png,0,095-512.png,168139,095-512.png,114.91681671142578,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Activity Monitor.app,32,True,644,096-32.png,0,096-32.png,644,096-32.png,58.64453125,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Activity Monitor.app,128,True,10405,096-128.png,0,096-128.png,10405,096-128.png,61.39494323730469,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Activity Monitor.app,512,True,168139,096-512.png,0,096-512.png,168139,096-512.png,61.855411529541016,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/AirPort Utility.app,32,True,644,097-32.png,0,097-32.png,644,097-32.png,137.894287109375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/AirPort Utility.app,128,True,10405,097-128.png,0,097-128.png,10405,097-128.png,144.31918334960938,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/AirPort Utility.app,512,True,168139,097-512.png,0,097-512.png,168139,097-512.png,145.38933563232422,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Audio MIDI Setup.app,32,True,644,098-32.png,0,098-32.png,644,098-32.png,66.964111328125,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Audio MIDI Setup.app,128,True,10405,098-128.png,0,098-128.png,10405,098-128.png,70.11968994140625,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Audio MIDI Setup.app,512,True,168139,098-512.png,0,098-512.png,168139,098-512.png,70.64910507202148,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Bluetooth File Exchange.app,32,True,644,099-32.png,644,099-32.png,644,099-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Bluetooth File Exchange.app,128,True,10405,099-128.png,10405,099-128.png,10405,099-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Bluetooth File Exchange.app,512,True,168139,099-512.png,168139,099-512.png,168139,099-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Boot Camp Assistant.app,32,True,882,100-32.png,882,100-32.png,882,100-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Boot Camp Assistant.app,128,True,11633,100-128.png,0,100-128.png,11633,100-128.png,138.3985137939453,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Boot Camp Assistant.app,512,True,183293,100-512.png,183293,100-512.png,183293,100-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/ColorSync Utility.app,32,True,644,101-32.png,0,101-32.png,644,101-32.png,73.18603515625,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/ColorSync Utility.app,128,True,10405,101-128.png,10405,101-128.png,10405,101-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/ColorSync Utility.app,512,True,168139,101-512.png,0,101-512.png,168139,101-512.png,77.24099349975586,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Console.app,32,True,644,102-32.png,644,102-32.png,644,102-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Console.app,128,True,10405,102-128.png,0,102-128.png,10405,102-128.png,64.90043640136719,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Console.app,512,True,168139,102-512.png,168139,102-512.png,168139,102-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Digital Color Meter.app,32,True,644,103-32.png,0,103-32.png,644,103-32.png,127.147216796875,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Digital Color Meter.app,128,True,10405,103-128.png,10405,103-128.png,10405,103-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Digital Color Meter.app,512,True,168139,103-512.png,0,103-512.png,168139,103-512.png,134.01227569580078,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Disk Utility.app,32,True,644,104-32.png,644,104-32.png,644,104-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Disk Utility.app,128,True,10405,104-128.png,0,104-128.png,10405,104-128.png,124.27288818359375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Disk Utility.app,512,True,168139,104-512.png,168139,104-512.png,168139,104-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Grapher.app,32,True,644,105-32.png,0,105-32.png,644,105-32.png,115.591552734375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Grapher.app,128,True,10405,105-128.png,10405,105-128.png,10405,105-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Grapher.app,512,True,168139,105-512.png,168139,105-512.png,168139,105-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Magnifier.app,32,True,644,106-32.png,644,106-32.png,644,106-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Magnifier.app,128,True,10405,106-128.png,0,106-128.png,10405,106-128.png,64.6771240234375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Magnifier.app,512,True,168139,106-512.png,0,106-512.png,168139,106-512.png,65.16837692260742,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Migration Assistant.app,32,True,644,107-32.png,0,107-32.png,644,107-32.png,121.63525390625,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Migration Assistant.app,128,True,10405,107-128.png,0,107-128.png,10405,107-128.png,127.2747802734375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Migration Assistant.app,512,True,168139,107-512.png,168139,107-512.png,168139,107-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Print Center.app,32,True,644,108-32.png,0,108-32.png,644,108-32.png,111.455810546875,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Print Center.app,128,True,10405,108-128.png,0,108-128.png,10405,108-128.png,116.46142578125,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Print Center.app,512,True,168139,108-512.png,0,108-512.png,168139,108-512.png,117.3405532836914,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Screen Sharing.app,32,True,644,109-32.png,0,109-32.png,644,109-32.png,114.656005859375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Screen Sharing.app,128,True,10405,109-128.png,0,109-128.png,10405,109-128.png,120.0137939453125,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Screen Sharing.app,512,True,168139,109-512.png,168139,109-512.png,168139,109-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Screenshot.app,32,True,644,110-32.png,644,110-32.png,644,110-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Screenshot.app,128,True,10405,110-128.png,10405,110-128.png,10405,110-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Screenshot.app,512,True,168139,110-512.png,0,110-512.png,168139,110-512.png,138.40664291381836,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Script Editor.app,32,True,644,111-32.png,0,111-32.png,644,111-32.png,140.583740234375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Script Editor.app,128,True,10405,111-128.png,10405,111-128.png,10405,111-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/Script Editor.app,512,True,168139,111-512.png,168139,111-512.png,168139,111-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/System Information.app,32,True,644,112-32.png,644,112-32.png,644,112-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/System Information.app,128,True,10405,112-128.png,0,112-128.png,10405,112-128.png,141.5291290283203,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/System Information.app,512,True,168139,112-512.png,0,112-512.png,168139,112-512.png,142.57466888427734,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Terminal.app,32,True,644,113-32.png,0,113-32.png,644,113-32.png,55.44189453125,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Terminal.app,128,True,10405,113-128.png,0,113-128.png,10405,113-128.png,58.02153015136719,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/Terminal.app,512,True,168139,113-512.png,168139,113-512.png,168139,113-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/VoiceOver Utility.app,32,True,644,114-32.png,0,114-32.png,644,114-32.png,108.6083984375,255,FAIL,0.0,0,PASS
+/System/Applications/Utilities/VoiceOver Utility.app,128,True,10405,114-128.png,10405,114-128.png,10405,114-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Utilities/VoiceOver Utility.app,512,True,168139,114-512.png,0,114-512.png,168139,114-512.png,114.33244705200195,255,FAIL,0.0,0,PASS
+/System/Applications/VoiceMemos.app,32,True,644,115-32.png,644,115-32.png,644,115-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/VoiceMemos.app,128,True,10405,115-128.png,0,115-128.png,10405,115-128.png,60.65538024902344,255,FAIL,0.0,0,PASS
+/System/Applications/VoiceMemos.app,512,True,168139,115-512.png,168139,115-512.png,168139,115-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Weather.app,32,True,851,116-32.png,851,116-32.png,851,116-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/Weather.app,128,True,10848,116-128.png,0,116-128.png,10848,116-128.png,106.89779663085938,255,FAIL,0.0,0,PASS
+/System/Applications/Weather.app,512,True,170128,116-512.png,170128,116-512.png,170128,116-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Applications/iPhone Mirroring.app,32,True,644,117-32.png,0,117-32.png,644,117-32.png,113.010498046875,255,FAIL,0.0,0,PASS
+/System/Applications/iPhone Mirroring.app,128,True,10405,117-128.png,0,117-128.png,10405,117-128.png,118.21537780761719,255,FAIL,0.0,0,PASS
+/System/Applications/iPhone Mirroring.app,512,True,168139,117-512.png,168139,117-512.png,168139,117-512.png,0.0,0,PASS,0.0,0,PASS
+/System/Library/CoreServices/Finder.app,32,True,644,118-32.png,644,118-32.png,644,118-32.png,0.0,0,PASS,0.0,0,PASS
+/System/Library/CoreServices/Finder.app,128,True,10405,118-128.png,10405,118-128.png,10405,118-128.png,0.0,0,PASS,0.0,0,PASS
+/System/Library/CoreServices/Finder.app,512,True,168139,118-512.png,168139,118-512.png,168139,118-512.png,0.0,0,PASS,0.0,0,PASS
+/Users/momoc/Applications/Claude Code URL Handler.app,32,False,0,119-32.png,0,119-32.png,0,119-32.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE
+/Users/momoc/Applications/Claude Code URL Handler.app,128,False,0,119-128.png,0,119-128.png,0,119-128.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE
+/Users/momoc/Applications/Claude Code URL Handler.app,512,False,0,119-512.png,0,119-512.png,0,119-512.png,0.0,0,NO_REFERENCE,0.0,0,NO_REFERENCE

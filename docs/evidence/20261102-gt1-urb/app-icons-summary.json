@@ -1,0 +1,45 @@
+{
+  "apps": 120,
+  "samples": 360,
+  "amd-resources": {
+    "input_empty": 6,
+    "output_empty": 6,
+    "input_missing": 3
+  },
+  "intel8-resources": {
+    "input_empty": 6,
+    "output_empty": 189,
+    "input_missing": 3
+  },
+  "intel4-resources": {
+    "input_empty": 6,
+    "output_empty": 6,
+    "input_missing": 3
+  },
+  "intel8": {
+    "pass": 171,
+    "fail": 183,
+    "no_reference": 6,
+    "pixel_exact": 177,
+    "max_channel_delta": 255
+  },
+  "intel4": {
+    "pass": 354,
+    "fail": 0,
+    "no_reference": 6,
+    "pixel_exact": 356,
+    "max_channel_delta": 1
+  },
+  "workspace_current_session": {
+    "amd-workspace": {
+      "samples": 360,
+      "input_empty": 175,
+      "output_empty": 175
+    },
+    "intel4-workspace": {
+      "samples": 360,
+      "input_empty": 175,
+      "output_empty": 175
+    }
+  }
+}

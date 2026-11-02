@@ -1,0 +1,8 @@
+GPU=Intel(R) TGL Unknown registryID=4294968978 headless=1
+caps EU=32 slices=1 L3=8 -> 4 (仅本进程)
+compute status=4 correct=4096/4096 PASS
+systemValues status=4 invocations=6 IDs+1=65537,2,131074,1,131073,65538 blue=4096 white=0 PASS
+attributes status=4 invocations=6 IDs+1=65537,2,131074,1,131073,65538 blue=4096 white=0 PASS
+point status=4 invocations=1 IDs+1=1 blue=256 white=3840 PASS
+tests=4 failures=0
+exit=0

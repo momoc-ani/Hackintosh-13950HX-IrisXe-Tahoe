@@ -1,0 +1,8 @@
+GPU=Intel(R) TGL Unknown registryID=4294968978 headless=1
+caps EU=32 slices=1 L3=8
+compute status=4 correct=4096/4096 PASS
+systemValues status=4 invocations=6 IDs+1=1,1,1,1,1,1 blue=0 white=4096 FAIL
+attributes status=4 invocations=6 IDs+1=1,1,1,1,1,1 blue=0 white=4096 FAIL
+point status=4 invocations=1 IDs+1=1 blue=0 white=4096 FAIL
+tests=4 failures=3
+exit=1
