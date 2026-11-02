@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include "xe-vdenc-command-layout.h"
 #ifndef XE_BINDING_TEST
 #include <mach-o/dyld.h>
 #endif
@@ -13,7 +14,7 @@
 static const unsigned char *context, *saved_token, *saved_batch;
 static size_t saved_bytes;
 static unsigned ready_count;
-static int submitted, finished, bind_only_second, events = -1;
+static int submitted, finished, bind_only_second, expand_address, stop_first, events = -1;
 static char output_root[4096];
 
 // 完整写出一个采集块，文件错误时停止自有进程，避免丢证据后继续测试。
@@ -52,9 +53,25 @@ static void capture_ready(const unsigned char *encoder) {
     const unsigned char *begin = *(const unsigned char **)(context + 0x10);
     const unsigned char *end = *(const unsigned char **)(context + 0x70);
     if (!token || !begin || end < begin || (size_t)(end - begin) > 1024 * 1024) _exit(84);
+    if (expand_address) {
+        const unsigned char *limit = *(const unsigned char **)(context + 0x18);
+        const unsigned char *reserved = *(const unsigned char **)(context + 0x20);
+        size_t bytes = (size_t)(end - begin);
+        if (limit < begin || reserved < end || limit < reserved || (size_t)(limit - reserved) < 136)
+            _exit(89);
+        int status = xe_vdenc_expand_address((unsigned char *)(uintptr_t)begin,
+            (size_t)(limit - begin), &bytes, (unsigned char *)(uintptr_t)token, 0xce8);
+        if (status) _exit(90 + status);
+        end = begin + bytes;
+        *(const unsigned char **)(uintptr_t)(context + 0x20) = reserved + 136;
+        *(const unsigned char **)(uintptr_t)(context + 0x70) = end;
+        dprintf(events, "expanded address command frame=%u bytes=%zu reserved_extra=136\n",
+                ready_count, bytes);
+    }
     save_pair(ready_count, "before", token, begin, (size_t)(end - begin));
     dprintf(events, "ready frame=%u batch_bytes=%zu\n", ready_count, (size_t)(end - begin));
-    if (++ready_count == 2) {
+    if (++ready_count == 1 && stop_first) _exit(77);
+    if (ready_count == 2) {
         if (!bind_only_second) {
             dprintf(events, "stop before second frame submission\n");
             _exit(77);
@@ -139,7 +156,12 @@ __attribute__((noinline)) void *xe_binding_copy(void *destination, const void *s
         context = command;
     volatile unsigned char *out = destination;
     const volatile unsigned char *in = source;
-    for (size_t i = 0; i < size; ++i) out[i] = in[i];
+    // macOS 的 memmove 可与 memcpy 共享导出地址，拦截器也必须保留重叠复制语义。
+    if ((uintptr_t)out > (uintptr_t)in && (uintptr_t)out - (uintptr_t)in < size) {
+        for (size_t i = size; i; --i) out[i - 1] = in[i - 1];
+    } else {
+        for (size_t i = 0; i < size; ++i) out[i] = in[i];
+    }
     return destination;
 }
 
@@ -191,6 +213,10 @@ INTERPOSE(finish_adapter, IOAccelVideoContextFinishFenceEvent);
 // 显式设置输出目录才启用采集，通过 DYLD_INSERT_LIBRARIES 仅载入自有探针。
 __attribute__((constructor)) static void initialize(void) {
     initialize_files(getenv("XE_CAPTURE_DIR"));
+    const char *first = getenv("XE_BINDING_BEFORE_ONLY");
+    stop_first = first && !strcmp(first, "1");
+    const char *address = getenv("XE_VDENC_GEN12_ADDR");
+    expand_address = address && !strcmp(address, "1");
     const char *bind_only = getenv("XE_BINDING_SECOND_END");
     bind_only_second = bind_only && !strcmp(bind_only, "1");
     _dyld_register_func_for_add_image(image_added);

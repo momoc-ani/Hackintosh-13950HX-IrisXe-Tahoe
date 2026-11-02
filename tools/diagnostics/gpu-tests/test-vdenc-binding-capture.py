@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """以 CPU 内存验证绑定采集的三个阶段，以及第二帧提交前截停。"""
 from pathlib import Path
+import os
 import subprocess
 import tempfile
 import unittest
@@ -99,6 +100,43 @@ int main(int argc, char **argv) {
             self.assertEqual(before[:4], bytes.fromhex('03000013'))
             self.assertIn('stop after second frame binding',
                           (root / 'binding-events.txt').read_text())
+
+
+    def test_interposed_memmove_preserves_overlapping_bytes(self):
+        """实际加载 dyld 拦截器，验证系统 memmove 别名仍保持向后复制。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / 'overlap.c'
+            source.write_text(r'''
+#include <string.h>
+#include <stddef.h>
+// 实际调用系统 memmove，使其经过 dyld 的 memcpy 别名拦截。
+int main(void) {
+    unsigned char data[1024];
+    for (size_t i = 0; i < sizeof data; ++i) data[i] = i % 251;
+    memmove(data + 136, data, 888);
+    for (size_t i = 0; i < 888; ++i)
+        if (data[i + 136] != i % 251) return 99;
+    return 0;
+}
+''')
+            program = root / 'overlap'
+            subprocess.run(['clang', '-fno-builtin', str(source), '-o', str(program)],
+                           capture_output=True, check=True)
+            for capture_source in [SOURCE, SOURCE.with_name('xe-vdenc-address-lab.c')]:
+                with self.subTest(source=capture_source.name):
+                    library = root / (capture_source.stem + '.dylib')
+                    built = subprocess.run(['clang', '-dynamiclib', '-std=c11', '-Wall', '-Wextra',
+                        '-Werror', '-Wno-c2x-extensions', '-undefined', 'dynamic_lookup',
+                        str(capture_source), '-o', str(library)], capture_output=True, text=True)
+                    self.assertEqual(built.returncode, 0, built.stderr)
+                    environment = os.environ.copy()
+                    environment.update(DYLD_INSERT_LIBRARIES=str(library), XE_CAPTURE_DIR=str(root),
+                                       XE_VDENC_GEN12_ADDR='1')
+                    result = subprocess.run([str(program)], env=environment, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0,
+                                     '重叠拷贝被 memcpy 拦截器破坏: ' + result.stderr)
+
 
 
 if __name__ == '__main__':
