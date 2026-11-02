@@ -1,0 +1,56 @@
+{
+  "recorded_at": "2026-11-02 21:52 CST",
+  "candidate": "build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver",
+  "system_install": false,
+  "efi_changed": false,
+  "cases": [
+    {
+      "input": "testsrc2 1280x720 60 frames",
+      "requested_average_bitrate_bps": 1000000,
+      "requested_data_rate_limit": {"bytes": 250000, "seconds": 1},
+      "settings_status": 0,
+      "average_bitrate_readback_status": 0,
+      "data_rate_limit_readback_status": -12900,
+      "configured_data_rate_limits": null,
+      "actual_bitrate_bps": 1859872,
+      "frame_count": 60,
+      "pass": false,
+      "reason": "硬上限属性未被接受或读回，实际输出仍超过目标"
+    },
+    {
+      "input": "testsrc2 1280x720 60 frames",
+      "requested_average_bitrate_bps": 1000000,
+      "requested_data_rate_limit": {"bytes": 125000, "seconds": 1},
+      "settings_status": 0,
+      "average_bitrate_readback_status": 0,
+      "data_rate_limit_readback_status": -12900,
+      "configured_data_rate_limits": null,
+      "actual_bitrate_bps": 1859872,
+      "frame_count": 60,
+      "pass": false,
+      "reason": "改变硬上限参数没有改变实际输出"
+    }
+  ],
+  "conclusion": "AverageBitRate 仍是软目标；当前候选没有可验证的 DataRateLimits 硬上限。",
+  "remaining": [
+    "Usage=0 编码对象创建",
+    "低码率控制反馈",
+    "系统 XPC 编码",
+    "长期稳定性"
+  ],
+  "gpu_reports_during_fresh_run": [
+    {
+      "date_time": "2026-11-02 21:50:52 CST",
+      "application": "mediaanalysisd",
+      "signature": "1000",
+      "context": "1983"
+    },
+    {
+      "date_time": "2026-11-02 21:52:15 CST",
+      "application": "mediaanalysisd",
+      "signature": "1000",
+      "context": "940"
+    }
+  ],
+  "gpu_report_attribution": "独立系统 mediaanalysisd 报告；未将其归因于本地探针。"
+}

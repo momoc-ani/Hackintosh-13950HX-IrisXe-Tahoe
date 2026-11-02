@@ -275,3 +275,13 @@ REA 对 `CreateContexts@0x13e43` 的反编译显示，`kind=0x20` 分支只为 `
 本轮 44 项 CPU 测试通过，包括新增的真实探针选项解析与 VA 参数诊断测试。检查另发现 19:31:19、19:33:08 的 `mediaanalysisd`、Signature 1000 GPU reset；两份报告发生在后续码率与并发帧测试之前，必须保留，不能据此宣称整机稳定，也不能直接归因为自有 VDENC 任务。
 
 当前阶段仍不满足系统安装验收：Usage=0 对象创建缺失、复杂输入下低码率偏差、公开低延迟接口与系统 XPC 编码路径尚未通过。系统 VA 和 EFI 继续保持原状态，**无需为本轮诊断重启**。
+
+### 硬数据率限制复核
+
+本机 VideoToolbox SDK 将 `AverageBitRate` 定义为长期软目标；本轮又显式设置了 `DataRateLimits`，并要求属性读回后才允许作为硬限速验收。两个 720p 动态输入实验分别设置 250000/1 秒和 125000/1 秒，设置调用返回 0，但 `DataRateLimits` 属性读回均为 `-12900`，没有配置数组可读回；两组实际输出都约 1.86 Mbit/s，与未设置硬上限相同。完整结果见 [硬限速证据](20261102-kext-icons-and-encode/hard-rate-limit-validation.json)。
+
+因此当前只能说平均码率参数影响了 QP 和码流，不能说低码率或硬限速已经修好。没有继续尝试直接改写 QP、TargetSize 或 HuC BRC 命令；这些字段属于另一条控制反馈链，缺少完整 DMEM、HuC 状态和系统编码服务证据时直接改写会把软目标问题与硬件命令问题混在一起。
+
+REA 对 `CreateContexts@0x13e43` 的静态结果需要精确区分节点类型：`kind=0x20` 的 `capability=0x4000` 没有对应的编码对象创建分支；另一个 `kind=0x2` 的同值分支会创建不同的 0x6880 对象，不能拿来修复 Usage=0 的 picture encode 请求。当前 `Usage=0` 的 streamout 空 context 结论仍成立。
+
+本轮新增选项、报告和硬限速验收测试共 46 项 CPU 验证通过；硬限速新鲜复跑期间又出现 21:50:52 和 21:52:15 两份 `mediaanalysisd`、Signature 1000 的 GPU reset，保留为独立稳定性证据，未将其归因于本地探针。系统驱动和 EFI 未改动，不需要重启；后续先停止扩大 GPU 实验。
