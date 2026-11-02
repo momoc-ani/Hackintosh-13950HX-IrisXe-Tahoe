@@ -1,0 +1,6 @@
+   56    0 0xffffff80041ce000 0x115000   0x115000   com.StezzaPilot.NootedGreen (1.0.0) 448B99E3-98B4-3FE1-AC66-BCF731B0A4A7 <55 19 9 7 6 3 2 1>
+   64    0 0xffffff80051dc000 0x65a000   0x65a000   org.ChefKiss.NootRX (1.0.0) 4E7A5B01-FF73-360F-89F2-2C69108B224E <55 19 9 7 6 3 2 1>
+  130    2 0xffffff7f96dbf000 0x1df96    0x1df96    org.smichaud.HookCase (8.0.1) 4691455C-993E-30CF-A7FD-ADD9459BE727 <19 9 7 6 3 2 1>
+  131    0 0xffffff7f969a9000 0x138000   0x138000   com.xxxxx.driver.AppleIntelTGLGraphicsFramebuffer (16.0.0) B96A8448-9D17-3F78-B76D-15A0B359A9A0 <130 129 128 127 47 19 17 9 7 6 3 1>
+  149    0 0xffffff7f9685d000 0xc7ff9    0xc7ff9    com.xxxxx.driver.AppleIntelTGLGraphics (16.0.2) BA3AA1C0-FE6B-33B3-9D85-73F848394E3D <130 129 127 98 19 9 7 6 3 1>
+No variant specified, falling back to release

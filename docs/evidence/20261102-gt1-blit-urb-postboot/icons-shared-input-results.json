@@ -1,0 +1,68 @@
+[
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/Applications\/Xcode.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 0,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 15
+  },
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/Applications\/Xcode.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 1,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 15
+  },
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/Applications\/Xcode.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 2,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 15
+  },
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/System\/Applications\/Journal.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 0,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 23
+  },
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/System\/Applications\/Journal.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 1,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 23
+  },
+  {
+    "amd_alpha" : 166420,
+    "app" : "\/System\/Applications\/Journal.app",
+    "channels_above_one" : 0,
+    "contents_class" : "_NSImageLayerContents",
+    "intel_alpha" : 166420,
+    "iteration" : 2,
+    "max_channel_delta" : 1,
+    "pass" : 1,
+    "slot" : 23
+  }
+]

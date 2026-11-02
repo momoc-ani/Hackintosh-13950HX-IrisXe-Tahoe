@@ -1,0 +1,31 @@
+{
+  "workspace": {
+    "apps": 120,
+    "samples": 360,
+    "intel_empty": 0,
+    "amd_empty": 0,
+    "pixel_exact": 3,
+    "max_channel_delta": 97,
+    "failed": [
+      {
+        "app": "/Applications/Xcode.app",
+        "size": 512,
+        "max_delta": 97
+      },
+      {
+        "app": "/System/Applications/Journal.app",
+        "size": 512,
+        "max_delta": 15
+      }
+    ]
+  },
+  "resources": {
+    "apps": 120,
+    "samples": 360,
+    "intel_empty": 6,
+    "amd_empty": 6,
+    "pixel_exact": 356,
+    "max_channel_delta": 1,
+    "failed": []
+  }
+}

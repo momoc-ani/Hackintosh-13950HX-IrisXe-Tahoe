@@ -1,0 +1,38 @@
+{
+  "system_profiler_devices": [
+    {
+      "name": "AMD Radeon RX 6750 XT",
+      "vram": "12 GB",
+      "metal": "spdisplays_metal3",
+      "displays": [
+        {
+          "name": "VX2762-2K-HD",
+          "resolution": "2560 x 1440 @ 75.00Hz",
+          "main": "spdisplays_yes",
+          "online": "spdisplays_yes"
+        }
+      ]
+    }
+  ],
+  "framebuffer_count": 4,
+  "framebuffers": [
+    {
+      "name": "ATY,RadeonFramebuffer",
+      "class": "AMDRadeonX6000_AmdRadeonFramebuffer"
+    },
+    {
+      "name": "ATY,RadeonFramebuffer",
+      "class": "AMDRadeonX6000_AmdRadeonFramebuffer"
+    },
+    {
+      "name": "ATY,RadeonFramebuffer",
+      "class": "AMDRadeonX6000_AmdRadeonFramebuffer"
+    },
+    {
+      "name": "ATY,RadeonFramebuffer",
+      "class": "AMDRadeonX6000_AmdRadeonFramebuffer"
+    }
+  ],
+  "intel_framebuffer_controller_instances": false,
+  "iondrv_framebuffer_instances": false
+}

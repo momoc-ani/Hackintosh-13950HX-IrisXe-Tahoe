@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-11-02 13:40:59 +0800",
+  "boot_time": "2026-11-02 13:36:53 +0800",
+  "boot_epoch": 1793597813,
+  "bootargs": "-v keepsyms=1 alcid=11 -amfipassbeta darkwake=0 -disablegfxfirmware -ngreenxefix ngreen-eu=32 ngreen-l3=4 -ngreengt1 -allow3d -ngreenheadless -ngreengva -ngreentglwithgfx ngreenV142=3 -ngreenfullmtldyld ngreenV130=3",
+  "driver_urb_table": [
+    "0x78300000",
+    "0x10030200",
+    "0x78300000",
+    "0x10030200",
+    "0x78310000",
+    "0x10000000",
+    "0x78320000",
+    "0x10000000",
+    "0x78330000",
+    "0x10000000"
+  ],
+  "driver_urb_entries": [
+    512,
+    512
+  ],
+  "signature_exit": 0
+}

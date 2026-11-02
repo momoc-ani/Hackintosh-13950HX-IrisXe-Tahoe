@@ -1,0 +1,4 @@
+GPU=AMD Radeon RX 6750 XT registryID=4294969024 headless=0 repeats=2 native-copy=0 native-all=0
+iteration=0 tests=108 failures=0
+iteration=1 tests=216 failures=0
+tests=216 failures=0

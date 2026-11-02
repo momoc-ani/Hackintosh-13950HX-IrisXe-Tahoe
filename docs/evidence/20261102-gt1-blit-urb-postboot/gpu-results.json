@@ -1,0 +1,32 @@
+[
+  {
+    "name": "buffer-intel",
+    "exit": 0,
+    "result": "tests=432 failures=0"
+  },
+  {
+    "name": "indexed-intel-aligned",
+    "exit": 0,
+    "result": "tests=4 failures=0"
+  },
+  {
+    "name": "indexed-intel-unaligned",
+    "exit": 0,
+    "result": "tests=4 failures=0"
+  },
+  {
+    "name": "vertex-intel",
+    "exit": 0,
+    "result": "tests=4 failures=0"
+  },
+  {
+    "name": "buffer-amd",
+    "exit": 0,
+    "result": "tests=216 failures=0"
+  },
+  {
+    "name": "indexed-amd",
+    "exit": 0,
+    "result": "tests=4 failures=0"
+  }
+]

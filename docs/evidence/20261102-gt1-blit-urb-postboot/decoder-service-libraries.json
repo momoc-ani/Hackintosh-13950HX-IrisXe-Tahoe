@@ -1,0 +1,14 @@
+[
+  {
+    "pid": 698,
+    "intel_va_paths": [
+      "/Library/GPUBundles/AppleIntelTGLGraphicsVADriver.bundle/Contents/MacOS/AppleIntelTGLGraphicsVADriver"
+    ]
+  },
+  {
+    "pid": 763,
+    "intel_va_paths": [
+      "/Library/GPUBundles/AppleIntelTGLGraphicsVADriver.bundle/Contents/MacOS/AppleIntelTGLGraphicsVADriver"
+    ]
+  }
+]

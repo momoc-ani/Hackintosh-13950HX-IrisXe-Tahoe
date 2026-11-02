@@ -1,0 +1,6 @@
+GPU=Intel(R) TGL Unknown registryID=4294968992 headless=1 repeats=4 native-copy=0 native-all=0
+iteration=0 tests=108 failures=0
+iteration=1 tests=216 failures=0
+iteration=2 tests=324 failures=0
+iteration=3 tests=432 failures=0
+tests=432 failures=0

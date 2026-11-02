@@ -1,0 +1,58 @@
+{
+  "boot_time": "2026-11-02 13:36:53 +0800",
+  "verified_at": "2026-11-02 13:47:50 +0800",
+  "gpu_tests": [
+    {
+      "name": "buffer-intel",
+      "exit": 0,
+      "result": "tests=432 failures=0"
+    },
+    {
+      "name": "indexed-intel-aligned",
+      "exit": 0,
+      "result": "tests=4 failures=0"
+    },
+    {
+      "name": "indexed-intel-unaligned",
+      "exit": 0,
+      "result": "tests=4 failures=0"
+    },
+    {
+      "name": "vertex-intel",
+      "exit": 0,
+      "result": "tests=4 failures=0"
+    },
+    {
+      "name": "buffer-amd",
+      "exit": 0,
+      "result": "tests=216 failures=0"
+    },
+    {
+      "name": "indexed-amd",
+      "exit": 0,
+      "result": "tests=4 failures=0"
+    }
+  ],
+  "codec_frames": 92,
+  "codec_all_pixel_exact": true,
+  "icon_workspace_nonempty": 360,
+  "icon_workspace_crossprocess_pixel_differences": [
+    {
+      "app": "/Applications/Xcode.app",
+      "size": 512,
+      "max_delta": 97
+    },
+    {
+      "app": "/System/Applications/Journal.app",
+      "size": 512,
+      "max_delta": 15
+    }
+  ],
+  "icon_same_contents_replays": {
+    "tests": 6,
+    "failures": 0
+  },
+  "new_crash_reports": [],
+  "application_ui": "pending_user_confirmation",
+  "driver_or_efi_changes_this_turn": false
+}

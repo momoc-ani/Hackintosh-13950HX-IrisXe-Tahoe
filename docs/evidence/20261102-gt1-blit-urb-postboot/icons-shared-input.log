@@ -1,0 +1,8 @@
+Intel registryID=4294968992 headless=1; AMD registryID=4294969024 headless=0
+/Applications/Xcode.app iteration=0 max=1 channels-above-one=0 PASS
+/Applications/Xcode.app iteration=1 max=1 channels-above-one=0 PASS
+/Applications/Xcode.app iteration=2 max=1 channels-above-one=0 PASS
+/System/Applications/Journal.app iteration=0 max=1 channels-above-one=0 PASS
+/System/Applications/Journal.app iteration=1 max=1 channels-above-one=0 PASS
+/System/Applications/Journal.app iteration=2 max=1 channels-above-one=0 PASS
+tests=6 failures=0
