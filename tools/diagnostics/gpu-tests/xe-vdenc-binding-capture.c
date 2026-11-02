@@ -190,6 +190,7 @@ static void initialize_files(const char *root) {
 #ifndef XE_BINDING_TEST
 static uintptr_t va_base;
 static void *video_context;
+static int native_candidate;
 extern int IOAccelVideoContextSubmitDataBuffers(void *, uint32_t, uint32_t *, uint32_t *);
 extern int IOAccelVideoContextFinishFenceEvent(void *, uint32_t, uint32_t, uint32_t);
 
@@ -205,8 +206,10 @@ static void image_added(const struct mach_header *header, intptr_t slide) {
         const unsigned char *bytes = (const unsigned char *)header;
         const unsigned char copy_call[] = {0xe8, 0x9d, 0x8e, 0x21, 0x00};
         const unsigned char flush_call[] = {0xe8, 0xef, 0x6b, 0x21, 0x00};
+        const unsigned char candidate_call[] = {0xe8, 0x79, 0x99, 0xfd, 0xff};
+        native_candidate = !memcmp(bytes + 0x277aa, candidate_call, sizeof candidate_call);
         if (memcmp(bytes + 0x2557a, copy_call, sizeof copy_call) ||
-            memcmp(bytes + 0x277aa, flush_call, sizeof flush_call)) _exit(80);
+            (!native_candidate && memcmp(bytes + 0x277aa, flush_call, sizeof flush_call))) _exit(80);
         va_base = (uintptr_t)header;
         dprintf(events, "image=%s\n", name);
     }
@@ -237,6 +240,12 @@ __attribute__((naked)) static void *copy_adapter(void *, const void *, size_t) {
 __attribute__((noinline)) int xe_binding_flush(FILE *stream, const unsigned char *encoder) {
     if (va_base && (uintptr_t)__builtin_return_address(0) - va_base == 0x277af) {
         if (!context) _exit(81);
+        if (native_candidate) {
+            // 将反编译恢复的关系与旧 builder 的实际上下文比对，避免只相信静态推断。
+            const unsigned char *derived = *(const unsigned char **)(encoder + 0x10) + 0x48;
+            if (derived != context) _exit(88);
+            dprintf(events, "native candidate context relation verified frame=%u\n", ready_count);
+        }
         capture_ready(encoder);
         if (capture_frames) {
             current_recon = *(IOSurfaceRef *)(encoder + 0x170);

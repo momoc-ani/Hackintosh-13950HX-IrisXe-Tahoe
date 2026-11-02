@@ -1,15 +1,17 @@
 # H.264 hardware encode: work in progress (not part of the build)
 
-2026-11-02 / 13950HX A788 更新：新增 [`patch_vphalfallback.py`](patch_vphalfallback.py)，
-在普通 VPHAL 转换的上下文创建阶段返回不支持，保留用途为编码器内部请求的 scaler。
-进程内候选已通过 1080p H.264 全 I 帧编码与 NV12/BGRA 的五组转换对照。
-**普通 P 帧仍失败；没有安装系统编码驱动，也没有发布系统编码能力。**
+2026-11-02 / 13950HX A788 更新：[`patch_vphalfallback.py`](patch_vphalfallback.py)
+在普通 VPHAL 转换的上下文创建阶段返回不支持，保留编码器内部 scaler。
+新增 [`patch_vdencgen12.py`](patch_vdencgen12.py)，在 VA 自身生成 27 DWORD 的 Gen12 walker，
+同时扩大命令预留、更新 slice 累计，并将单活动参考的 MFX 索引和 token 槽一并映射到零。
+**独立 VA 候选已通过 Usage=1 的真实 I/P 编码；尚未安装系统、修改 EFI 或发布全局编码能力。**
+不能将此结果外推到 Usage=0、多活动参考、系统 XPC 编码或长期稳定性。
 完整记录、限制和复现命令见
 [本轮编码证据](../../../docs/evidence/20261102-kext-icons-and-encode.md)。
 以下 2026-10-24 的 XPS 测试属于历史记录，不能替代当前 A788 验收。
 
-These patches apply, in this order, to the VA plugin that `../build-vadriver.sh` produces
-(sha256 `6291f574…`). They are **not** applied by `install.sh`, because the result is not safe to install yet (see
+The historical patches below apply, in the listed order, to the 16.0.32 VA plugin prepared by this repository.
+They are **not** applied by `install.sh`, because the result is not safe to install yet (see
 "Open problems"). Each script checks the original bytes before writing.
 
 | Patch | What it does |
@@ -35,6 +37,10 @@ The accelerator must also advertise `IOGVAH264EncodeCapabilities` (`nootedgreen-
 
 ## Open problems
 
+以下列表为 2026-10-24 XPS 历史记录。当前 A788 中，普通 VPHAL 创建阶段回退、Gen12 walker
+及单活动参考映射已经通过限定范围内的进程测试；系统能力发布、Usage=0 和长期稳定性仍未通过验收。
+不要将历史 `patch_vdencintra.py` 合入本次候选，它会强制帧内预测，不能验证真实 P 帧。
+
 1. **VPHAL in the whole system.** With the VPHAL patches, `VTPixelTransferSession` (AVFPixelProcess) also starts using
    the GPU video processor for every app, and it crashes on 1920×1080 `420v` buffers. Hiding the scaler capability
    fixes that but then the encoder refuses to open (it needs at least one scaler). The encoder uses the scaler entry at
@@ -47,3 +53,39 @@ The accelerator must also advertise `IOGVAH264EncodeCapabilities` (`nootedgreen-
 3. The low-latency rate control drops frames at low bitrates, because intra-only P frames are larger.
 4. Each GPU hang is recovered (XE-GPUREC v2 for the render engine, Apple's reset for VCS), but several in a row leave
    the desktop sluggish until a reboot.
+
+## A788 独立候选复现
+
+当前基线为本轮已经通过全 I 与硬解回归的 `va-vphal-fallback`，其中包含编码 SPS、VDENC
+表面/寄存器修补和坏媒体 kernel 能力隐藏，不包含强制 intra。补丁生成器只写独立输出副本：
+
+```sh
+mkdir -p build/validation-encode-and-kext-icons-20261102/va-gen12-native \
+  build/validation-encode-and-kext-icons-20261102/native-hardware
+python3 macos/vadriver/encode-experimental/patch_vdencgen12.py \
+  build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver \
+  build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver
+codesign -f -s - build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver
+python3 tools/diagnostics/test-vdenc-gen12-patch.py
+clang -fobjc-arc -Wall -Wextra -Werror tools/diagnostics/gpu-tests/xe-h264-encode-lab.m \
+  -framework Foundation -framework Metal -framework VideoToolbox -framework CoreMedia -framework CoreVideo \
+  -o build/validation-encode-and-kext-icons-20261102/xe-h264-encode-lab
+```
+
+测试只把候选目录传给自有探针，不需要诊断 dylib。确认调用环境没有遗留的
+`DYLD_INSERT_LIBRARIES` 后，再运行有限帧数的硬件测试：
+
+```sh
+DYLD_LIBRARY_PATH="$PWD/build/validation-encode-and-kext-icons-20261102/va-gen12-native" \
+  build/validation-encode-and-kext-icons-20261102/xe-h264-encode-lab \
+  build/validation-encode-and-kext-icons-20261102/native-hardware/inter-720p-60 \
+  1280 720 60 --inter
+python3 tools/diagnostics/gpu-tests/verify-h264-encode.py \
+  build/validation-encode-and-kext-icons-20261102/native-hardware/inter-720p-60 --inter
+```
+
+硬件实验可能引起 GPU 重置；CPU 机器码测试不连接 GPU。`--inter` 要求真实 I/P 输出，
+默认模式为全 I；`--bgra` 将已知 NV12 先软件转换为 BGRA，并将原 NV12 保留为包含颜色往返的参考。
+每帧 PSNR 均须达到 35 dB。当前矩阵包括 720p 60 帧、1080p 30 帧、4K 8 帧、1080p
+缓冲池输入及 1080p BGRA 30 帧。候选硬解 H.264/HEVC/Main10 共 92 帧与软件参考逐像素一致，
+五种普通转换的回退结果也与软件参考一致。详细证据见上方本轮记录。

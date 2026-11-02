@@ -50,6 +50,23 @@ static CVPixelBufferRef frame(NSUInteger width,NSUInteger height,NSUInteger inde
   CVPixelBufferUnlockBaseAddress(pixel,0);return pixel;
 }
 
+// 将已知 NV12 输入显式软件转换为 BGRA；原 NV12 用于验收包含颜色往返的整条链路。
+static CVPixelBufferRef bgraInput(CVPixelBufferRef input,void *vt){
+  CVPixelBufferRef output=NULL;
+  NSDictionary *attrs=@{(__bridge id)kCVPixelBufferIOSurfacePropertiesKey:@{}};
+  if(CVPixelBufferCreate(NULL,CVPixelBufferGetWidth(input),CVPixelBufferGetHeight(input),kCVPixelFormatType_32BGRA,(__bridge CFDictionaryRef)attrs,&output))return NULL;
+  VTPixelTransferSessionRef transfer=NULL;OSStatus status=VTPixelTransferSessionCreate(NULL,&transfer);
+  const char *symbols[]={"kVTPixelTransferPropertyKey_EnableHardwareAcceleratedTransfer","kVTPixelTransferPropertyKey_EnableGPUAcceleratedTransfer"};
+  for(unsigned index=0;index<2;index++){
+    NSString *property=key(vt,symbols[index]);
+    if(!status)status=property?VTSessionSetProperty(transfer,(__bridge CFStringRef)property,kCFBooleanFalse):-1;
+  }
+  if(!status)status=VTPixelTransferSessionTransferImage(transfer,input,output);
+  if(transfer){VTPixelTransferSessionInvalidate(transfer);CFRelease(transfer);}
+  if(status){fprintf(stderr,"software BGRA input conversion=%d\n",(int)status);CFRelease(output);return NULL;}
+  return output;
+}
+
 // 将 AVCC 样本写成 Annex-B，保留 SPS/PPS、帧大小和 PTS，供独立软件解码验收。
 static NSArray *writeSamples(NSArray *samples,NSString *path){
   NSMutableData *bytes=[NSMutableData data];NSMutableArray *rows=[NSMutableArray array];const uint8_t marker[]={0,0,0,1};
@@ -71,9 +88,10 @@ static NSArray *writeSamples(NSArray *samples,NSString *path){
 }
 // 用已经核对的当前系统 factory 在独立进程创建会话；退出即撤销注册。
 int main(int argc,const char **argv){@autoreleasepool{
-  if(argc<5){fprintf(stderr,"usage: %s output-prefix width height frames [--encoder-pool] [--software-transfer] [--inter]\n",argv[0]);return 2;}
-  BOOL usePool=NO,softwareTransfer=NO,inter=NO;
-  for(int i=5;i<argc;i++){if(!strcmp(argv[i],"--encoder-pool"))usePool=YES;else if(!strcmp(argv[i],"--software-transfer"))softwareTransfer=YES;else if(!strcmp(argv[i],"--inter"))inter=YES;else return 2;}
+  if(argc<5){fprintf(stderr,"usage: %s output-prefix width height frames [--encoder-pool] [--software-transfer] [--inter] [--bgra]\n",argv[0]);return 2;}
+  BOOL usePool=NO,softwareTransfer=NO,inter=NO,bgra=NO;
+  for(int i=5;i<argc;i++){if(!strcmp(argv[i],"--encoder-pool"))usePool=YES;else if(!strcmp(argv[i],"--software-transfer"))softwareTransfer=YES;else if(!strcmp(argv[i],"--inter"))inter=YES;else if(!strcmp(argv[i],"--bgra"))bgra=YES;else return 2;}
+  if(usePool&&bgra)return 2;
   NSString *prefix=@(argv[1]);NSUInteger width=strtoul(argv[2],NULL,10),height=strtoul(argv[3],NULL,10),count=strtoul(argv[4],NULL,10);
   if(!width||!height||width%2||height%2||!count||count>120)return 2;
   setvbuf(stdout,NULL,_IOLBF,0);
@@ -115,6 +133,7 @@ int main(int argc,const char **argv){@autoreleasepool{
   NSMutableData *input=[NSMutableData data];unsigned submitErrors=0;
   for(NSUInteger i=0;i<count;i++){
     CVPixelBufferRef pixel=frame(width,height,i,input,usePool?VTCompressionSessionGetPixelBufferPool(s):NULL);if(!pixel)return 2;
+    if(bgra){CVPixelBufferRef converted=bgraInput(pixel,vt);CFRelease(pixel);pixel=converted;if(!pixel)return 2;}
     NSDictionary *options=@{(__bridge id)kVTEncodeFrameOptionKey_ForceKeyFrame:@(!inter||i%30==0)};VTEncodeInfoFlags flags=0;
     st=VTCompressionSessionEncodeFrame(s,pixel,CMTimeMake((int64_t)i,30),CMTimeMake(1,30),(__bridge CFDictionaryRef)options,NULL,&flags);CFRelease(pixel);
     printf("submit=%lu status=%d flags=%u\n",(unsigned long)i,(int)st,(unsigned)flags);if(st){submitErrors++;break;}
@@ -123,6 +142,7 @@ int main(int argc,const char **argv){@autoreleasepool{
   OSStatus complete=VTCompressionSessionCompleteFrames(s,kCMTimeInvalid);printf("complete=%d callbacks=%lu errors=%u dropped=%u\n",(int)complete,(unsigned long)capture.samples.count,capture.errors,capture.dropped);
   NSArray *packets=writeSamples(capture.samples,[prefix stringByAppendingString:@".h264"]);
   if(![input writeToFile:[prefix stringByAppendingString:@".nv12"] atomically:YES])return 2;
+  report[@"input_format"]=bgra?@"BGRA":@"NV12";report[@"reference_includes_color_roundtrip"]=@(bgra);
   report[@"intra_only"]=@(!inter);report[@"encoder_pool_input"]=@(usePool);report[@"software_pixel_transfer"]=@(softwareTransfer);report[@"width"]=@(width);report[@"height"]=@(height);report[@"requested_frames"]=@(count);report[@"frames"]=packets?:@[];report[@"callbacks"]=@(capture.samples.count);report[@"callback_errors"]=@(capture.errors);report[@"dropped"]=@(capture.dropped);report[@"submit_errors"]=@(submitErrors);report[@"complete_status"]=@(complete);report[@"target_gpu_registry_id"]=@(gpu.registryID);
   NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted|NSJSONWritingSortedKeys error:NULL];[json writeToFile:[prefix stringByAppendingString:@".json"] atomically:YES];
   VTCompressionSessionInvalidate(s);CFRelease(s);
