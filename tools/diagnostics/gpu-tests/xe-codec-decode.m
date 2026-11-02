@@ -1,10 +1,53 @@
 // 解码固定 MP4，输出完整 Y/UV 行与硬件状态；需再用 compare-codec-frames.py 验收像素。
 // 编译：clang -fobjc-arc -Wall -Wextra -Werror -Wno-deprecated-declarations xe-codec-decode.m \
-//   -framework Foundation -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework VideoToolbox -o xe-codec-decode
-// 用法：xe-codec-decode file.mp4 hardware|software output-prefix 8|10
+//   -framework Foundation -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework VideoToolbox -framework Metal -o xe-codec-decode
+// 用法：xe-codec-decode file.mp4 hardware|software output-prefix 8|10 [--local-gva]
+// --local-gva 仅用于25E253的候选VA回归，避免XPC服务加载系统旧包。
 #import <AVFoundation/AVFoundation.h>
 #import <VideoToolbox/VideoToolbox.h>
 #include <stdio.h>
+#include <dlfcn.h>
+#include <sys/sysctl.h>
+#import <Metal/Metal.h>
+
+// 从实际系统导出表读取注册键，原有 XPC / 软件解码用法不调用此入口。
+static NSString *decoderKey(void *handle,const char *symbol){
+    CFStringRef *key=dlsym(handle,symbol);
+    return key?(__bridge NSString*)*key:nil;
+}
+
+// 将系统 GVA decoder 仅注册到测试进程，确保候选 VA 的真实硬件解码可以独立验收。
+static NSString *registerLocalDecoder(CMVideoCodecType codec){
+    char build[64];size_t size=sizeof(build);
+    if(sysctlbyname("kern.osversion",build,&size,NULL,0)||strcmp(build,"25E253"))return nil;
+    void *vt=dlopen("/System/Library/Frameworks/VideoToolbox.framework/VideoToolbox",RTLD_NOW);Dl_info info;
+    void *reg=dlsym(vt,"VTRegisterVideoDecoderWithInfo");if(!reg||!dladdr(reg,&info))return nil;
+    void *factory=NULL;
+    if(codec==kCMVideoCodecType_H264){
+        factory=(char*)info.dli_fbase+0x4187e8;
+        const unsigned char expected[]={0x55,0x48,0x89,0xe5,0x41,0x57,0x41,0x56,0x41,0x54,0x53};
+        if(memcmp(factory,expected,sizeof expected))return nil;
+    }else if(codec==kCMVideoCodecType_HEVC){
+        // HEVC 使用系统 plug-in 导出的 factory，不能借用 H.264 decoder。
+        void *hevc=dlopen("/System/Library/Video/Plug-Ins/AppleGVAHEVCDecoder.bundle/Contents/MacOS/AppleGVAHEVCDecoder",RTLD_NOW);
+        if(hevc)factory=dlsym(hevc,"GVACODEC_VTDecoder_CreateInstance");
+    }
+    if(!factory)return nil;
+    id<MTLDevice> intel=nil;
+    for(id<MTLDevice> device in MTLCopyAllDevices())if([device.name localizedCaseInsensitiveContainsString:@"Intel"])intel=device;
+    if(!intel)return nil;
+    NSMutableDictionary *attributes=[@{@"CMClassImplementationID":@"local.test.intel.decoder"} mutableCopy];
+    const char *symbols[]={"kVTVideoDecoder_IsHardwareAccelerated","kVTVideoDecoder_DecoderMetalRegistryID","kVTVideoDecoder_AllowSandboxedDecode"};
+    NSArray *values=@[@YES,@(intel.registryID),@NO];
+    for(NSUInteger i=0;i<values.count;i++){
+        NSString *key=decoderKey(vt,symbols[i]);if(!key)return nil;attributes[key]=values[i];
+    }
+    typedef OSStatus(*Register)(CMVideoCodecType,CFDictionaryRef,void*);
+    OSStatus status=((Register)reg)(codec,(__bridge CFDictionaryRef)attributes,factory);
+    printf("local_decoder_register=%d\n",(int)status);if(status)return nil;
+    // VTRegisterVideoDecoderWithInfo 会把 fourcc 后缀加入注册 ID。
+    return [NSString stringWithFormat:@"local.test.intel.decoder.%c%c%c%c",(int)(codec>>24)&255,(int)(codec>>16)&255,(int)(codec>>8)&255,(int)codec&255];
+}
 
 // 保存每帧输出和 PTS，解码顺序与显示顺序分别处理。
 @interface DecodeCapture : NSObject
@@ -62,7 +105,8 @@ static CMSampleBufferRef nextPacket(AVAssetReaderTrackOutput *output, unsigned *
 // 对一个固定文件执行硬件强制或软件强制解码，不安装插件或改动系统配置。
 int main(int argc,const char **argv){@autoreleasepool{
     setvbuf(stdout,NULL,_IONBF,0);
-    if(argc<5){fprintf(stderr,"usage: %s file.mp4 hardware|software output-prefix 8|10\n",argv[0]);return 2;}
+    if(argc<5||argc>6){fprintf(stderr,"usage: %s file.mp4 hardware|software output-prefix 8|10 [--local-gva]\n",argv[0]);return 2;}
+    BOOL local=argc==6;if(local&&strcmp(argv[5],"--local-gva"))return 2;
     if((strcmp(argv[2],"hardware") && strcmp(argv[2],"software")) ||
        (strcmp(argv[4],"8") && strcmp(argv[4],"10")))return 2;
     BOOL hardware=!strcmp(argv[2],"hardware"),tenBit=!strcmp(argv[4],"10");
@@ -87,6 +131,14 @@ int main(int argc,const char **argv){@autoreleasepool{
     VTDecompressionOutputCallbackRecord callback={decoded,(__bridge void *)capture};
     NSDictionary *spec=hardware?@{(__bridge id)kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder:@YES}:
         @{(__bridge id)kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder:@NO};
+    if(local){
+        if(!hardware)return 2;
+        NSString *id=registerLocalDecoder(CMFormatDescriptionGetMediaSubType(inputFormat));if(!id)return 2;
+        void *vt=dlopen("/System/Library/Frameworks/VideoToolbox.framework/VideoToolbox",RTLD_NOW);
+        NSString *key=decoderKey(vt,"kVTVideoDecoderSpecification_DecoderID");if(!key)return 2;
+        NSMutableDictionary *localSpec=[spec mutableCopy];localSpec[key]=id;spec=localSpec;
+        printf("selected_decoder=%s\n",id.UTF8String);
+    }
     NSDictionary *attributes=@{(__bridge id)kCVPixelBufferPixelFormatTypeKey:@(tenBit?kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange:kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),(__bridge id)kCVPixelBufferIOSurfacePropertiesKey:@{}};
     VTDecompressionSessionRef session=NULL;
     OSStatus status=VTDecompressionSessionCreate(NULL,inputFormat,(__bridge CFDictionaryRef)spec,(__bridge CFDictionaryRef)attributes,&callback,&session);
@@ -121,7 +173,7 @@ int main(int argc,const char **argv){@autoreleasepool{
     }
     writesOK&=fclose(file)==0;
     BOOL pass=usingHardware==hardware && frames.count==submitted && submitted>0 && !submitErrors && !capture.errors && !wait && writesOK && reader.status==AVAssetReaderStatusCompleted;
-    NSDictionary *result=@{@"source":@(argv[1]),@"requested_hardware":@(hardware),@"using_hardware":@(usingHardware),
+    NSDictionary *result=@{@"source":@(argv[1]),@"local_gva":@(local),@"requested_hardware":@(hardware),@"using_hardware":@(usingHardware),
         @"gpu_registry_id":gpu?(__bridge id)gpu:NSNull.null,@"submitted":@(submitted),@"frames":@(frames.count),@"markers_skipped":@(markers),
         @"submit_errors":@(submitErrors),@"callback_errors":@(capture.errors),@"last_error":@(capture.lastError),
         @"wait_status":@(wait),@"seconds":@(elapsed),@"transfer_ok":@(pass),@"frame_metadata":metadata};
