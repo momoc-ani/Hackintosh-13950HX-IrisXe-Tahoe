@@ -1,0 +1,5 @@
+安装时间：20261102-132601
+已安装：/Library/GPUBundles/AppleIntelTGLGraphicsMTLDriver.bundle
+完整备份：/Library/GPUBundles/AppleIntelTGLGraphicsMTLDriver.bundle.before-gt1-blit-urb-20261102-132601
+回退命令：sudo zsh tools/rollback-gt1-blit-urb.sh '/Library/GPUBundles/AppleIntelTGLGraphicsMTLDriver.bundle.before-gt1-blit-urb-20261102-132601'
+EFI、boot-args、内核扩展均未修改；请完整重开受影响应用后验收。

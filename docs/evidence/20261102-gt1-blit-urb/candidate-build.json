@@ -1,0 +1,24 @@
+{
+  "profile": "13950HX/A788 32EU 1-slice L3=4",
+  "source": "/Library/GPUBundles/AppleIntelTGLGraphicsMTLDriver.bundle",
+  "candidate": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-20261102-115041/AppleIntelTGLGraphicsMTLDriver-gt1.bundle",
+  "initializer_reference": "0x96b8c",
+  "table": "0x43de50",
+  "changes": [
+    {
+      "offset": "0x43de54",
+      "before": "0x10030380",
+      "after": "0x10030200",
+      "entries_before": 896,
+      "entries_after": 512
+    },
+    {
+      "offset": "0x43de5c",
+      "before": "0x10030380",
+      "after": "0x10030200",
+      "entries_before": 896,
+      "entries_after": 512
+    }
+  ],
+  "libxedrv_changed": false
+}

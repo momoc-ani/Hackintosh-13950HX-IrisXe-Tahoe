@@ -1,0 +1,14 @@
+{
+  "icons-blit-urb-intel-workspace": {
+    "samples": 360,
+    "intel_empty": 0,
+    "amd_empty": 0,
+    "differences_above_one": []
+  },
+  "icons-blit-urb-intel-resources": {
+    "samples": 360,
+    "intel_empty": 6,
+    "amd_empty": 6,
+    "differences_above_one": []
+  }
+}

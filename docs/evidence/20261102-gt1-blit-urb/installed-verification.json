@@ -1,0 +1,81 @@
+{
+  "time": "2026-11-02 13:27:22 +0800",
+  "counts": {
+    "installed": [
+      512,
+      512
+    ],
+    "backup": [
+      896,
+      896
+    ],
+    "candidate": [
+      512,
+      512
+    ]
+  },
+  "installed_equals_candidate": true,
+  "libxedrv_equals_backup": true,
+  "bootargs": "-v keepsyms=1 alcid=11 -amfipassbeta darkwake=0 -disablegfxfirmware -ngreenxefix ngreen-eu=32 ngreen-l3=4 -ngreengt1 -allow3d -ngreenheadless -ngreengva -ngreentglwithgfx ngreenV142=3 -ngreenfullmtldyld ngreenV130=3",
+  "boot_time": "2026-11-02 11:50:41 +0800",
+  "new_gpu_or_video_crash_reports": [
+    "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130313_Mac-Pro.gpuRestart",
+    "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130656_Mac-Pro.gpuRestart",
+    "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130324_Mac-Pro.gpuRestart",
+    "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-131900_Mac-Pro.gpuRestart",
+    "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130239_Mac-Pro.gpuRestart"
+  ],
+  "installation_time": "2026-11-02 13:26:01 +0800",
+  "observed_at": "2026-11-02 13:31:21 +0800",
+  "gpu_reset_events": [
+    {
+      "Date/Time": "Mon Nov  2 11:47:21 2026",
+      "Application": "",
+      "Graphics Hardware": "AMD Radeon RX 6750 XT",
+      "Signature": "2",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-114721_Mac-Pro.gpuRestart",
+      "before_installation": true
+    },
+    {
+      "Date/Time": "Mon Nov  2 13:02:39 2026",
+      "Application": "mediaanalysisd",
+      "Graphics Hardware": "Intel Iris Xe Graphics (A788 / 32 EU)",
+      "Signature": "1000",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130239_Mac-Pro.gpuRestart",
+      "before_installation": true
+    },
+    {
+      "Date/Time": "Mon Nov  2 13:03:13 2026",
+      "Application": "mediaanalysisd",
+      "Graphics Hardware": "Intel Iris Xe Graphics (A788 / 32 EU)",
+      "Signature": "1000",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130313_Mac-Pro.gpuRestart",
+      "before_installation": true
+    },
+    {
+      "Date/Time": "Mon Nov  2 13:03:24 2026",
+      "Application": "Codex (Service)",
+      "Graphics Hardware": "Intel Iris Xe Graphics (A788 / 32 EU)",
+      "Signature": "803",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130324_Mac-Pro.gpuRestart",
+      "before_installation": true
+    },
+    {
+      "Date/Time": "Mon Nov  2 13:06:56 2026",
+      "Application": "Terminal",
+      "Graphics Hardware": "AMD Radeon RX 6750 XT",
+      "Signature": "2",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-130656_Mac-Pro.gpuRestart",
+      "before_installation": true
+    },
+    {
+      "Date/Time": "Mon Nov  2 13:19:00 2026",
+      "Application": "Terminal",
+      "Graphics Hardware": "AMD Radeon RX 6750 XT",
+      "Signature": "2",
+      "file": "/Library/Logs/DiagnosticReports/Kernel_2026-11-02-131900_Mac-Pro.gpuRestart",
+      "before_installation": true
+    }
+  ],
+  "gpu_reset_events_after_installation": []
+}

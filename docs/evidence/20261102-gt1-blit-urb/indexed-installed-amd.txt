@@ -1,0 +1,6 @@
+GPU=AMD Radeon RX 6750 XT registryID=4294968993 headless=0
+compute status=4 correct=4096/4096 PASS
+systemValues status=4 indexRead=0,1,2 invocations=6 IDs+1=1,65537,131073,2,65538,131074 blue=4096 white=0 PASS
+attributes status=4 indexRead=0,1,2 invocations=6 IDs+1=1,65537,131073,2,65538,131074 blue=4096 white=0 PASS
+point status=4 invocations=1 IDs+1=1 blue=256 white=3840 PASS
+tests=4 failures=0
