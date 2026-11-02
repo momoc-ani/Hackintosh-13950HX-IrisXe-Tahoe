@@ -1,0 +1,282 @@
+[
+  {
+    "file": "/Users/momoc/Library/Logs/DiagnosticReports/xe-h264-encode-lab-2026-11-02-155258.ips",
+    "time": "2026-11-02 15:52:48.4539 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000048",
+      "rawCodes": [
+        1,
+        72
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000048"
+    },
+    "frames": [
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x126561",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x130ea5",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13162e",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13246a",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x133d86",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235e30",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235aef",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x15ab2",
+        "symbol": null
+      }
+    ]
+  },
+  {
+    "file": "/Users/momoc/Library/Logs/DiagnosticReports/xe-intel-encode-2026-11-02-142317.ips",
+    "time": "2026-11-02 14:23:07.2917 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000048",
+      "rawCodes": [
+        1,
+        72
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000048"
+    },
+    "frames": [
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x126561",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x130ea5",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13162e",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13246a",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x133d86",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235e30",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235aef",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x15ab2",
+        "symbol": null
+      }
+    ]
+  },
+  {
+    "file": "/Users/momoc/Library/Logs/DiagnosticReports/xe-intel-encode-2026-11-02-142805.ips",
+    "time": "2026-11-02 14:28:05.4682 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000000",
+      "rawCodes": [
+        1,
+        0
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000"
+    },
+    "frames": [
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x12d316",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x131d6f",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x1b1fc1",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x131863",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13246a",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x133d86",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235e30",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235aef",
+        "symbol": null
+      }
+    ]
+  },
+  {
+    "file": "/Users/momoc/Library/Logs/DiagnosticReports/xe-intel-encode-2026-11-02-143554.ips",
+    "time": "2026-11-02 14:35:54.4739 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000048",
+      "rawCodes": [
+        1,
+        72
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000048"
+    },
+    "frames": [
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x126561",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x130ea5",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13162e",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13246a",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x133d86",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235e30",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235aef",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x15ab2",
+        "symbol": null
+      }
+    ]
+  },
+  {
+    "file": "/Users/momoc/Library/Logs/DiagnosticReports/xe-intel-encode-2026-11-02-152713.ips",
+    "time": "2026-11-02 15:27:03.5328 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000048",
+      "rawCodes": [
+        1,
+        72
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000048"
+    },
+    "frames": [
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x126561",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x130ea5",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13162e",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x13246a",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x133d86",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235e30",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x235aef",
+        "symbol": null
+      },
+      {
+        "image": "AppleIntelTGLGraphicsVADriver",
+        "offset": "0x15ab2",
+        "symbol": null
+      }
+    ]
+  }
+]

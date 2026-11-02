@@ -1,0 +1,82 @@
+[
+  {
+    "amd_alpha" : 168,
+    "channels_above_one" : 0,
+    "file" : "\/System\/Library\/CoreServices\/CoreTypes.bundle\/Contents\/Resources\/KEXT.icns",
+    "intel_alpha" : 168,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 16,
+    "source" : "system-resource"
+  },
+  {
+    "amd_alpha" : 618,
+    "channels_above_one" : 0,
+    "file" : "\/System\/Library\/CoreServices\/CoreTypes.bundle\/Contents\/Resources\/KEXT.icns",
+    "intel_alpha" : 618,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 32,
+    "source" : "system-resource"
+  },
+  {
+    "amd_alpha" : 9543,
+    "channels_above_one" : 0,
+    "file" : "\/System\/Library\/CoreServices\/CoreTypes.bundle\/Contents\/Resources\/KEXT.icns",
+    "intel_alpha" : 9543,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 128,
+    "source" : "system-resource"
+  },
+  {
+    "amd_alpha" : 151055,
+    "channels_above_one" : 0,
+    "file" : "\/System\/Library\/CoreServices\/CoreTypes.bundle\/Contents\/Resources\/KEXT.icns",
+    "intel_alpha" : 151055,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 512,
+    "source" : "system-resource"
+  },
+  {
+    "amd_alpha" : 168,
+    "channels_above_one" : 0,
+    "file" : "\/Volumes\/NO NAME\/EFI\/OC\/Kexts\/AMFIPass.kext",
+    "intel_alpha" : 168,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 16,
+    "source" : "workspace-kext"
+  },
+  {
+    "amd_alpha" : 618,
+    "channels_above_one" : 0,
+    "file" : "\/Volumes\/NO NAME\/EFI\/OC\/Kexts\/AMFIPass.kext",
+    "intel_alpha" : 618,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 32,
+    "source" : "workspace-kext"
+  },
+  {
+    "amd_alpha" : 9543,
+    "channels_above_one" : 0,
+    "file" : "\/Volumes\/NO NAME\/EFI\/OC\/Kexts\/AMFIPass.kext",
+    "intel_alpha" : 9543,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 128,
+    "source" : "workspace-kext"
+  },
+  {
+    "amd_alpha" : 151055,
+    "channels_above_one" : 0,
+    "file" : "\/Volumes\/NO NAME\/EFI\/OC\/Kexts\/AMFIPass.kext",
+    "intel_alpha" : 151055,
+    "max_channel_delta" : 0,
+    "pass" : 1,
+    "size" : 512,
+    "source" : "workspace-kext"
+  }
+]

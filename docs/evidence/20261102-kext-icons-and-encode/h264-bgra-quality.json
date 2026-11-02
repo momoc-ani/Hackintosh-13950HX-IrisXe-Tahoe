@@ -1,0 +1,16 @@
+{
+  "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/intra-1080p-bgra-fallback",
+  "width": 1920,
+  "height": 1080,
+  "frames": 4,
+  "intra_only": true,
+  "minimum_psnr_db": 35.0,
+  "target_gpu_registry_id": 4294968992,
+  "samples": 12441600,
+  "different_samples": 4275211,
+  "max_abs_difference": 26,
+  "mean_abs_difference": 0.8283962673611112,
+  "psnr_db": 42.21427420674815,
+  "pixel_exact": false,
+  "pass": true
+}

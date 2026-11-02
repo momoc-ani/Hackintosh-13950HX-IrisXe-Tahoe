@@ -1,0 +1,50 @@
+[
+  {
+    "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/fallback-720p",
+    "width": 1280,
+    "height": 720,
+    "frames": 30,
+    "intra_only": true,
+    "minimum_psnr_db": 35.0,
+    "target_gpu_registry_id": 4294968992,
+    "samples": 41472000,
+    "different_samples": 7525376,
+    "max_abs_difference": 10,
+    "mean_abs_difference": 0.20580782214506174,
+    "psnr_db": 53.34107283098311,
+    "pixel_exact": false,
+    "pass": true
+  },
+  {
+    "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/fallback-1080p",
+    "width": 1920,
+    "height": 1080,
+    "frames": 30,
+    "intra_only": true,
+    "minimum_psnr_db": 35.0,
+    "target_gpu_registry_id": 4294968992,
+    "samples": 93312000,
+    "different_samples": 19174991,
+    "max_abs_difference": 10,
+    "mean_abs_difference": 0.23426768261316872,
+    "psnr_db": 52.72780153650592,
+    "pixel_exact": false,
+    "pass": true
+  },
+  {
+    "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/fallback-4k",
+    "width": 3840,
+    "height": 2160,
+    "frames": 8,
+    "intra_only": true,
+    "minimum_psnr_db": 35.0,
+    "target_gpu_registry_id": 4294968992,
+    "samples": 99532800,
+    "different_samples": 40539678,
+    "max_abs_difference": 20,
+    "mean_abs_difference": 0.6778084309895833,
+    "psnr_db": 45.6313965532689,
+    "pixel_exact": false,
+    "pass": true
+  }
+]

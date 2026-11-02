@@ -1,5 +1,13 @@
 # H.264 hardware encode: work in progress (not part of the build)
 
+2026-11-02 / 13950HX A788 更新：新增 [`patch_vphalfallback.py`](patch_vphalfallback.py)，
+在普通 VPHAL 转换的上下文创建阶段返回不支持，保留用途为编码器内部请求的 scaler。
+进程内候选已通过 1080p H.264 全 I 帧编码与 NV12/BGRA 的五组转换对照。
+**普通 P 帧仍失败；没有安装系统编码驱动，也没有发布系统编码能力。**
+完整记录、限制和复现命令见
+[本轮编码证据](../../../docs/evidence/20261102-kext-icons-and-encode.md)。
+以下 2026-10-24 的 XPS 测试属于历史记录，不能替代当前 A788 验收。
+
 These patches apply, in this order, to the VA plugin that `../build-vadriver.sh` produces
 (sha256 `6291f574…`). They are **not** applied by `install.sh`, because the result is not safe to install yet (see
 "Open problems"). Each script checks the original bytes before writing.

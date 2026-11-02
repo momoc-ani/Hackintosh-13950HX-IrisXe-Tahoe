@@ -1,0 +1,16 @@
+{
+  "prefix": "/Users/momoc/Desktop/my_project/Hackintosh-13950HX-IrisXe-Tahoe/build/validation-encode-and-kext-icons-20261102/intra-1080p-vphal-fallback",
+  "width": 1920,
+  "height": 1080,
+  "frames": 4,
+  "intra_only": true,
+  "minimum_psnr_db": 35.0,
+  "target_gpu_registry_id": 4294968992,
+  "samples": 12441600,
+  "different_samples": 2830901,
+  "max_abs_difference": 10,
+  "mean_abs_difference": 0.25642706725823045,
+  "psnr_db": 52.455507793264964,
+  "pixel_exact": false,
+  "pass": true
+}

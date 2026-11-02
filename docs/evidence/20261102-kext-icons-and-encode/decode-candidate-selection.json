@@ -1,0 +1,47 @@
+{
+  "h264-1080p": {
+    "local_gva": true,
+    "gpu_registry_id": 4294968992,
+    "frames": 30,
+    "candidate_va_loaded": true,
+    "candidate_path": [
+      "build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver"
+    ]
+  },
+  "hevc-1080p": {
+    "local_gva": true,
+    "gpu_registry_id": 4294968992,
+    "frames": 30,
+    "candidate_va_loaded": true,
+    "candidate_path": [
+      "build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver"
+    ]
+  },
+  "hevc-main10-1080p": {
+    "local_gva": true,
+    "gpu_registry_id": 4294968992,
+    "frames": 16,
+    "candidate_va_loaded": true,
+    "candidate_path": [
+      "build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver"
+    ]
+  },
+  "h264-4k": {
+    "local_gva": true,
+    "gpu_registry_id": 4294968992,
+    "frames": 8,
+    "candidate_va_loaded": true,
+    "candidate_path": [
+      "build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver"
+    ]
+  },
+  "hevc-4k": {
+    "local_gva": true,
+    "gpu_registry_id": 4294968992,
+    "frames": 8,
+    "candidate_va_loaded": true,
+    "candidate_path": [
+      "build/validation-encode-and-kext-icons-20261102/va-vphal-fallback/AppleIntelTGLGraphicsVADriver"
+    ]
+  }
+}

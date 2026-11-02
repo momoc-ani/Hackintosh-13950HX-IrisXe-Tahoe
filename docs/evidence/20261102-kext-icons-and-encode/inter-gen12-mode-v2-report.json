@@ -1,0 +1,21 @@
+{
+  "callback_errors" : 1,
+  "callbacks" : 1,
+  "complete_status" : 0,
+  "dropped" : 0,
+  "EncoderID" : "local.test.intel.h264",
+  "frames" : [
+    {
+      "bytes" : 6007,
+      "keyframe" : true,
+      "pts_timescale" : 30,
+      "pts_value" : 0
+    }
+  ],
+  "height" : 720,
+  "requested_frames" : 2,
+  "submit_errors" : 0,
+  "target_gpu_registry_id" : 4294968992,
+  "UsingHardwareAcceleratedVideoEncoder" : true,
+  "width" : 1280
+}

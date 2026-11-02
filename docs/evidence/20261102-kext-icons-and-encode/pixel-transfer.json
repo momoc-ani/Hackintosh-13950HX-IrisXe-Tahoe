@@ -1,0 +1,47 @@
+[
+  {
+    "bytes" : 3110400,
+    "case" : "nv12-copy",
+    "hardware_enabled_status" : 0,
+    "nonzero_bytes" : 3110400,
+    "pass" : true,
+    "pixel_exact" : true,
+    "software_status" : 0
+  },
+  {
+    "bytes" : 8294400,
+    "case" : "nv12-bgra",
+    "hardware_enabled_status" : 0,
+    "nonzero_bytes" : 8230400,
+    "pass" : true,
+    "pixel_exact" : true,
+    "software_status" : 0
+  },
+  {
+    "bytes" : 3110400,
+    "case" : "bgra-nv12",
+    "hardware_enabled_status" : 0,
+    "nonzero_bytes" : 3110400,
+    "pass" : true,
+    "pixel_exact" : true,
+    "software_status" : 0
+  },
+  {
+    "bytes" : 2073600,
+    "case" : "bgra-scale",
+    "hardware_enabled_status" : 0,
+    "nonzero_bytes" : 2073600,
+    "pass" : true,
+    "pixel_exact" : true,
+    "software_status" : 0
+  },
+  {
+    "bytes" : 1382400,
+    "case" : "nv12-scale",
+    "hardware_enabled_status" : 0,
+    "nonzero_bytes" : 1382400,
+    "pass" : true,
+    "pixel_exact" : true,
+    "software_status" : 0
+  }
+]
