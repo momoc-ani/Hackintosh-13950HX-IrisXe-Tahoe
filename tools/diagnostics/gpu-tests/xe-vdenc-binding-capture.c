@@ -7,15 +7,21 @@
 #include <string.h>
 #include <errno.h>
 #include "xe-vdenc-command-layout.h"
+#include "xe-vdenc-reference-state.h"
 #ifndef XE_BINDING_TEST
 #include <mach-o/dyld.h>
+#include <IOSurface/IOSurface.h>
 #endif
 
 static const unsigned char *context, *saved_token, *saved_batch;
 static size_t saved_bytes;
 static unsigned ready_count;
-static int submitted, finished, bind_only_second, expand_address, stop_first, events = -1;
+static unsigned capture_frames;
+static int submitted, finished, bind_only_second, expand_address, default_weights, full_walker, map_reference, stop_first, events = -1;
 static char output_root[4096];
+#ifndef XE_BINDING_TEST
+static IOSurfaceRef current_recon, current_ds;
+#endif
 
 // 完整写出一个采集块，文件错误时停止自有进程，避免丢证据后继续测试。
 static void write_all(int fd, const void *bytes, size_t size) {
@@ -53,25 +59,39 @@ static void capture_ready(const unsigned char *encoder) {
     const unsigned char *begin = *(const unsigned char **)(context + 0x10);
     const unsigned char *end = *(const unsigned char **)(context + 0x70);
     if (!token || !begin || end < begin || (size_t)(end - begin) > 1024 * 1024) _exit(84);
-    if (expand_address) {
+    if (expand_address || default_weights || full_walker) {
         const unsigned char *limit = *(const unsigned char **)(context + 0x18);
         const unsigned char *reserved = *(const unsigned char **)(context + 0x20);
         size_t bytes = (size_t)(end - begin);
-        if (limit < begin || reserved < end || limit < reserved || (size_t)(limit - reserved) < 136)
+        if (limit < begin || reserved < end || limit < reserved)
             _exit(89);
-        int status = xe_vdenc_expand_address((unsigned char *)(uintptr_t)begin,
-            (size_t)(limit - begin), &bytes, (unsigned char *)(uintptr_t)token, 0xce8);
+        size_t old_bytes = bytes;
+        size_t capacity = (size_t)(limit - begin) - (size_t)(reserved - end);
+        int status = expand_address ? xe_vdenc_expand_address((unsigned char *)(uintptr_t)begin,
+            capacity, &bytes, (unsigned char *)(uintptr_t)token, 0xce8) :
+            default_weights ? xe_vdenc_add_default_weights((unsigned char *)(uintptr_t)begin,
+            capacity, &bytes, (unsigned char *)(uintptr_t)token, 0xce8) :
+            xe_vdenc_expand_walker((unsigned char *)(uintptr_t)begin,
+            capacity, &bytes, (unsigned char *)(uintptr_t)token, 0xce8);
         if (status) _exit(90 + status);
         end = begin + bytes;
-        *(const unsigned char **)(uintptr_t)(context + 0x20) = reserved + 136;
+        *(const unsigned char **)(uintptr_t)(context + 0x20) = reserved + (bytes - old_bytes);
         *(const unsigned char **)(uintptr_t)(context + 0x70) = end;
-        dprintf(events, "expanded address command frame=%u bytes=%zu reserved_extra=136\n",
-                ready_count, bytes);
+        dprintf(events, "%s frame=%u bytes=%zu reserved_extra=%zu\n",
+                expand_address ? "expanded address command" :
+                default_weights ? "default reference weights" : "full Gen12 walker",
+                ready_count, bytes, bytes - old_bytes);
+    }
+    if (map_reference) {
+        int status = xe_vdenc_map_single_reference((unsigned char *)(uintptr_t)begin,
+            (size_t)(end - begin), (unsigned char *)(uintptr_t)token, 0xce8);
+        if (status) _exit(100 + status);
+        dprintf(events, "single reference mapped frame=%u\n", ready_count);
     }
     save_pair(ready_count, "before", token, begin, (size_t)(end - begin));
     dprintf(events, "ready frame=%u batch_bytes=%zu\n", ready_count, (size_t)(end - begin));
     if (++ready_count == 1 && stop_first) _exit(77);
-    if (ready_count == 2) {
+    if (!capture_frames && ready_count == 2) {
         if (!bind_only_second) {
             dprintf(events, "stop before second frame submission\n");
             _exit(77);
@@ -85,10 +105,19 @@ static void capture_ready(const unsigned char *encoder) {
     saved_token = token;
     saved_batch = begin;
     saved_bytes = (size_t)(end - begin);
+    if (capture_frames) submitted = finished = 0;
 }
 
 // 提交返回后立即采集，早于 VA 换用下一缓冲区及清零操作。
 static void capture_submitted(int status, uint32_t flags, uint32_t fault) {
+    if (capture_frames) {
+        if (!ready_count || submitted) return;
+        dprintf(events, "submit frame=%u status=%d flags=%u fault=%u\n", ready_count - 1, status, flags, fault);
+        if (status || fault || (flags & 0x20000000)) _exit(85);
+        save_pair(ready_count - 1, "submitted", saved_token, saved_batch, saved_bytes);
+        submitted = 1;
+        return;
+    }
     if (ready_count == 2 && bind_only_second) {
         if (*(const uint32_t *)saved_batch != 0x05000000) _exit(88);
         dprintf(events, "bind-only submit status=%d flags=%u fault=%u\n", status, flags, fault);
@@ -106,6 +135,40 @@ static void capture_submitted(int status, uint32_t flags, uint32_t fault) {
 
 // 同一视频上下文的 fence 完成后再采集一次，并单独记录完成状态。
 static void capture_finished(int status, uint32_t fence) {
+    if (capture_frames) {
+        if (!ready_count || !submitted || finished) return;
+        dprintf(events, "finish frame=%u status=%d fence=%u\n", ready_count - 1, status, fence);
+        if (status) _exit(86);
+        save_pair(ready_count - 1, "finished", saved_token, saved_batch, saved_bytes);
+        finished = 1;
+#ifndef XE_BINDING_TEST
+        IOSurfaceRef surfaces[] = {current_recon, current_ds};
+        const char *names[] = {"recon", "ds"};
+        for (unsigned index = 0; index < 2; ++index) {
+            IOSurfaceRef surface = surfaces[index];
+            if (!surface || IOSurfaceLock(surface, kIOSurfaceLockReadOnly, NULL)) _exit(94);
+            char path[4096];
+            snprintf(path, sizeof path, "%s/frame-%u-%s.nv12", output_root, ready_count - 1, names[index]);
+            int output = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+            if (output < 0) _exit(82);
+            dprintf(events, "%s frame=%u id=%u width=%zu height=%zu\n", names[index], ready_count - 1,
+                IOSurfaceGetID(surface), IOSurfaceGetWidth(surface), IOSurfaceGetHeight(surface));
+            for (size_t plane = 0; plane < IOSurfaceGetPlaneCount(surface); ++plane) {
+                unsigned char *base = IOSurfaceGetBaseAddressOfPlane(surface, plane);
+                size_t rows = IOSurfaceGetHeightOfPlane(surface, plane);
+                size_t width = IOSurfaceGetWidthOfPlane(surface, plane) * IOSurfaceGetBytesPerElementOfPlane(surface, plane);
+                size_t pitch = IOSurfaceGetBytesPerRowOfPlane(surface, plane);
+                for (size_t row = 0; row < rows; ++row) write_all(output, base + row * pitch, width);
+            }
+            close(output);
+            IOSurfaceUnlock(surface, kIOSurfaceLockReadOnly, NULL);
+            CFRelease(surface);
+        }
+        current_recon = current_ds = NULL;
+#endif
+        if (ready_count == capture_frames) _exit(77);
+        return;
+    }
     if (ready_count != 1 || !submitted || finished) return;
     dprintf(events, "finish status=%d fence=%u\n", status, fence);
     if (status) _exit(86);
@@ -175,6 +238,12 @@ __attribute__((noinline)) int xe_binding_flush(FILE *stream, const unsigned char
     if (va_base && (uintptr_t)__builtin_return_address(0) - va_base == 0x277af) {
         if (!context) _exit(81);
         capture_ready(encoder);
+        if (capture_frames) {
+            current_recon = *(IOSurfaceRef *)(encoder + 0x170);
+            current_ds = *(IOSurfaceRef *)(encoder + 0x178);
+            if (current_recon) CFRetain(current_recon);
+            if (current_ds) CFRetain(current_ds);
+        }
     }
     return fflush(stream);
 }
@@ -186,7 +255,8 @@ __attribute__((naked)) static int flush_adapter(FILE *) {
 
 // 已由 0xa893 汇编确认四参数 ABI；第一帧提交后保存内核写回数据。
 static int submit_adapter(void *ctx, uint32_t request, uint32_t *flags, uint32_t *fault) {
-    int capture = (ready_count == 1 && !submitted) || (ready_count == 2 && bind_only_second);
+    int capture = (capture_frames && ready_count && !submitted) ||
+        (ready_count == 1 && !submitted) || (ready_count == 2 && bind_only_second);
     int result = IOAccelVideoContextSubmitDataBuffers(ctx, request, flags, fault);
     if (capture) {
         video_context = ctx;
@@ -215,10 +285,22 @@ __attribute__((constructor)) static void initialize(void) {
     initialize_files(getenv("XE_CAPTURE_DIR"));
     const char *first = getenv("XE_BINDING_BEFORE_ONLY");
     stop_first = first && !strcmp(first, "1");
+    const char *weights = getenv("XE_VDENC_DEFAULT_WEIGHTS");
+    default_weights = weights && !strcmp(weights, "1");
     const char *address = getenv("XE_VDENC_GEN12_ADDR");
     expand_address = address && !strcmp(address, "1");
+    const char *walker = getenv("XE_VDENC_FULL_WALKER");
+    full_walker = walker && !strcmp(walker, "1");
+    const char *mapping = getenv("XE_VDENC_SINGLE_REF_MAP");
+    map_reference = mapping && !strcmp(mapping, "1");
+    if (expand_address + default_weights + full_walker > 1) _exit(78);
     const char *bind_only = getenv("XE_BINDING_SECOND_END");
     bind_only_second = bind_only && !strcmp(bind_only, "1");
+    const char *frames = getenv("XE_CAPTURE_FRAMES");
+    if (frames) {
+        capture_frames = (unsigned)strtoul(frames, NULL, 10);
+        if (!capture_frames || capture_frames > 120 || bind_only_second || stop_first) _exit(78);
+    }
     _dyld_register_func_for_add_image(image_added);
 }
 #endif

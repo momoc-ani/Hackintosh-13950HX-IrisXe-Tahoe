@@ -137,6 +137,43 @@ int main(void) {
                     self.assertEqual(result.returncode, 0,
                                      '重叠拷贝被 memcpy 拦截器破坏: ' + result.stderr)
 
+    def test_capture_multiple_completed_frames_in_separate_files(self):
+        """显式多帧模式逐次保存回填和完成快照，达到上限后退出。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            harness = root / 'multiple.c'
+            harness.write_text('#define XE_BINDING_TEST 1\n#include "' + str(SOURCE) + '"\n' + r'''
+// 用 CPU 内存模拟三帧完成，验证不会覆盖前一帧的证据。
+int main(int argc, char **argv) {
+    (void)argc;
+    unsigned char token[0xce8] = {0}, batch[128] = {0};
+    unsigned char encoder[0x6bd0] = {0}, command[0x78] = {0};
+    initialize_files(argv[1]);
+    capture_frames = 3;
+    *(const unsigned char **)(encoder + 0x6bc8) = token;
+    *(const unsigned char **)(command + 0x10) = batch;
+    *(const unsigned char **)(command + 0x70) = batch + sizeof batch;
+    context = command;
+    for (unsigned index = 0; index < 3; ++index) {
+        token[0x10] = index;
+        capture_ready(encoder);
+        token[0x10] += 10;
+        capture_submitted(0, 0, 0);
+        capture_finished(0, index + 1);
+    }
+    return 99;
+}
+''')
+            program = root / 'multiple'
+            built = subprocess.run(['clang', '-std=c11', '-Wall', '-Wextra', '-Werror',
+                                    str(harness), '-o', str(program)], capture_output=True, text=True)
+            self.assertEqual(built.returncode, 0, built.stderr)
+            result = subprocess.run([str(program), str(root)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77)
+            for index in range(3):
+                self.assertEqual((root / f'frame-{index}-before-token.bin').read_bytes()[0x10], index)
+                self.assertEqual((root / f'frame-{index}-finished-token.bin').read_bytes()[0x10], index + 10)
+
 
 
 if __name__ == '__main__':

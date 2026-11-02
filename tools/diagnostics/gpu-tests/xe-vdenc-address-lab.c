@@ -1,4 +1,4 @@
-// 实验专用：补齐 Gen12 VDENC 地址命令，仅注入自有编码探针。
+// 实验专用：独立验证 Gen12 地址长度或参考权重，仅注入自有编码探针。
 #include <mach-o/dyld.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -6,10 +6,12 @@
 #include <unistd.h>
 #include <string.h>
 #include "xe-vdenc-command-layout.h"
+#include "xe-vdenc-reference-state.h"
 
 static uintptr_t va_base;
 static unsigned char *context;
 static unsigned frames;
+static int default_weights, full_walker, map_reference;
 
 // 确认候选驱动及两个调用点，避免在其他版本上使用固定对象偏移。
 static void image_added(const struct mach_header *header, intptr_t slide) {
@@ -58,18 +60,26 @@ __attribute__((noinline)) int xe_address_flush(FILE *stream, unsigned char *enco
         unsigned char *reserved = *(unsigned char **)(context + 0x20);
         unsigned char *end = *(unsigned char **)(context + 0x70);
         if (!token || !begin || end < begin || reserved < end || limit < reserved ||
-            (size_t)(limit - reserved) < 136) _exit(89);
+            limit < begin) _exit(89);
         size_t bytes = (size_t)(end - begin);
-        int status = xe_vdenc_expand_address(begin, (size_t)(limit - begin), &bytes, token, 0xce8);
+        size_t old_bytes = bytes;
+        size_t capacity = (size_t)(limit - begin) - (size_t)(reserved - end);
+        int status = default_weights ? xe_vdenc_add_default_weights(begin, capacity, &bytes, token, 0xce8) :
+            full_walker ? xe_vdenc_expand_walker(begin, capacity, &bytes, token, 0xce8) :
+            xe_vdenc_expand_address(begin, capacity, &bytes, token, 0xce8);
         if (status) {
             fprintf(stderr, "GEN12-ADDR rejected frame=%u status=%d bytes=%zu token_words=%u source_words=%u slice_words=%u\n",
                 frames, status, bytes, *(uint32_t *)(token + 0xce0),
                 *(uint32_t *)(token + 0xc1c), *(uint32_t *)(token + 0xc20));
             _exit(90 + status);
         }
-        *(unsigned char **)(context + 0x20) = reserved + 136;
+        *(unsigned char **)(context + 0x20) = reserved + (bytes - old_bytes);
         *(unsigned char **)(context + 0x70) = begin + bytes;
-        fprintf(stderr, "GEN12-ADDR frame=%u bytes=%zu\n", frames++, bytes);
+        if (map_reference) {
+            int mapping_status = xe_vdenc_map_single_reference(begin, bytes, token, 0xce8);
+            if (mapping_status) _exit(100 + mapping_status);
+        }
+        fprintf(stderr, "%s frame=%u bytes=%zu\n", default_weights ? "DEFAULT-WEIGHTS" : full_walker ? "GEN12-WALKER" : "GEN12-ADDR", frames++, bytes);
     }
     return fflush(stream);
 }
@@ -88,6 +98,13 @@ INTERPOSE(flush_adapter, fflush);
 // 必须显式选择实验模式；本库不会写入系统驱动或发布系统编码能力。
 __attribute__((constructor)) static void initialize(void) {
     const char *enabled = getenv("XE_VDENC_GEN12_ADDR");
-    if (!enabled || strcmp(enabled, "1")) _exit(78);
+    const char *weights = getenv("XE_VDENC_DEFAULT_WEIGHTS");
+    default_weights = weights && !strcmp(weights, "1");
+    int expand_address = enabled && !strcmp(enabled, "1");
+    const char *walker = getenv("XE_VDENC_FULL_WALKER");
+    full_walker = walker && !strcmp(walker, "1");
+    const char *mapping = getenv("XE_VDENC_SINGLE_REF_MAP");
+    map_reference = mapping && !strcmp(mapping, "1");
+    if (expand_address + default_weights + full_walker != 1) _exit(78);
     _dyld_register_func_for_add_image(image_added);
 }

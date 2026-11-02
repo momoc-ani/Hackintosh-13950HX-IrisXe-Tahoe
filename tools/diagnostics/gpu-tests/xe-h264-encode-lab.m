@@ -1,5 +1,5 @@
-// 诊断专用：仅在本进程注册当前系统 GVA factory，验证 Intel H.264 全 I 帧编码。
-// 此探针不是系统编码能力发布开关，也不测试存在挂起风险的帧间预测路径。
+// 诊断专用：仅在本进程注册当前系统 GVA factory，验证 Intel H.264 编码。
+// 默认全 I 帧；--inter 须配合已验证的实验候选使用，不发布系统编码能力。
 // 编译：clang -fobjc-arc -Wall -Wextra -Werror xe-h264-encode-lab.m \
 //   -framework Foundation -framework Metal -framework VideoToolbox -framework CoreMedia -framework CoreVideo -o xe-h264-encode-lab
 #import <Foundation/Foundation.h>
@@ -71,9 +71,9 @@ static NSArray *writeSamples(NSArray *samples,NSString *path){
 }
 // 用已经核对的当前系统 factory 在独立进程创建会话；退出即撤销注册。
 int main(int argc,const char **argv){@autoreleasepool{
-  if(argc<5){fprintf(stderr,"usage: %s output-prefix width height frames [--encoder-pool] [--software-transfer]\n",argv[0]);return 2;}
-  BOOL usePool=NO,softwareTransfer=NO;
-  for(int i=5;i<argc;i++){if(!strcmp(argv[i],"--encoder-pool"))usePool=YES;else if(!strcmp(argv[i],"--software-transfer"))softwareTransfer=YES;else return 2;}
+  if(argc<5){fprintf(stderr,"usage: %s output-prefix width height frames [--encoder-pool] [--software-transfer] [--inter]\n",argv[0]);return 2;}
+  BOOL usePool=NO,softwareTransfer=NO,inter=NO;
+  for(int i=5;i<argc;i++){if(!strcmp(argv[i],"--encoder-pool"))usePool=YES;else if(!strcmp(argv[i],"--software-transfer"))softwareTransfer=YES;else if(!strcmp(argv[i],"--inter"))inter=YES;else return 2;}
   NSString *prefix=@(argv[1]);NSUInteger width=strtoul(argv[2],NULL,10),height=strtoul(argv[3],NULL,10),count=strtoul(argv[4],NULL,10);
   if(!width||!height||width%2||height%2||!count||count>120)return 2;
   setvbuf(stdout,NULL,_IOLBF,0);
@@ -108,14 +108,14 @@ int main(int argc,const char **argv){@autoreleasepool{
     CFTypeRef value=NULL;OSStatus result=VTSessionCopyProperty(s,(__bridge CFStringRef)property,NULL,&value);
     printf("%s status=%d value=%s\n",[property description].UTF8String,(int)result,value?[(__bridge id)value description].UTF8String:"null");if(value){report[[property description]]=(__bridge id)value;CFRelease(value);}
   }
-  NSMutableDictionary *settings=[@{(__bridge id)kVTCompressionPropertyKey_RealTime:@YES,(__bridge id)kVTCompressionPropertyKey_AllowFrameReordering:@NO,(__bridge id)kVTCompressionPropertyKey_MaxKeyFrameInterval:@(1),(__bridge id)kVTCompressionPropertyKey_AverageBitRate:@8000000,(__bridge id)kVTCompressionPropertyKey_ExpectedFrameRate:@30} mutableCopy];
+  NSMutableDictionary *settings=[@{(__bridge id)kVTCompressionPropertyKey_RealTime:@YES,(__bridge id)kVTCompressionPropertyKey_AllowFrameReordering:@NO,(__bridge id)kVTCompressionPropertyKey_MaxKeyFrameInterval:@(inter?30:1),(__bridge id)kVTCompressionPropertyKey_AverageBitRate:@8000000,(__bridge id)kVTCompressionPropertyKey_ExpectedFrameRate:@30} mutableCopy];
   if(softwareTransfer){NSString *hardware=key(vt,"kVTPixelTransferPropertyKey_EnableHardwareAcceleratedTransfer");if(!hardware)return 2;settings[(__bridge id)kVTCompressionPropertyKey_PixelTransferProperties]=@{hardware:@NO};}
   st=VTSessionSetProperties(s,(__bridge CFDictionaryRef)settings);printf("settings=%d\n",(int)st);if(st){VTCompressionSessionInvalidate(s);CFRelease(s);return 1;}
   st=VTCompressionSessionPrepareToEncodeFrames(s);printf("prepare=%d\n",(int)st);if(st){VTCompressionSessionInvalidate(s);CFRelease(s);return 1;}
   NSMutableData *input=[NSMutableData data];unsigned submitErrors=0;
   for(NSUInteger i=0;i<count;i++){
     CVPixelBufferRef pixel=frame(width,height,i,input,usePool?VTCompressionSessionGetPixelBufferPool(s):NULL);if(!pixel)return 2;
-    NSDictionary *options=@{(__bridge id)kVTEncodeFrameOptionKey_ForceKeyFrame:@(YES)};VTEncodeInfoFlags flags=0;
+    NSDictionary *options=@{(__bridge id)kVTEncodeFrameOptionKey_ForceKeyFrame:@(!inter||i%30==0)};VTEncodeInfoFlags flags=0;
     st=VTCompressionSessionEncodeFrame(s,pixel,CMTimeMake((int64_t)i,30),CMTimeMake(1,30),(__bridge CFDictionaryRef)options,NULL,&flags);CFRelease(pixel);
     printf("submit=%lu status=%d flags=%u\n",(unsigned long)i,(int)st,(unsigned)flags);if(st){submitErrors++;break;}
     st=VTCompressionSessionCompleteFrames(s,CMTimeMake((int64_t)i,30));if(st){submitErrors++;break;}
@@ -123,7 +123,7 @@ int main(int argc,const char **argv){@autoreleasepool{
   OSStatus complete=VTCompressionSessionCompleteFrames(s,kCMTimeInvalid);printf("complete=%d callbacks=%lu errors=%u dropped=%u\n",(int)complete,(unsigned long)capture.samples.count,capture.errors,capture.dropped);
   NSArray *packets=writeSamples(capture.samples,[prefix stringByAppendingString:@".h264"]);
   if(![input writeToFile:[prefix stringByAppendingString:@".nv12"] atomically:YES])return 2;
-  report[@"intra_only"]=@YES;report[@"encoder_pool_input"]=@(usePool);report[@"software_pixel_transfer"]=@(softwareTransfer);report[@"width"]=@(width);report[@"height"]=@(height);report[@"requested_frames"]=@(count);report[@"frames"]=packets?:@[];report[@"callbacks"]=@(capture.samples.count);report[@"callback_errors"]=@(capture.errors);report[@"dropped"]=@(capture.dropped);report[@"submit_errors"]=@(submitErrors);report[@"complete_status"]=@(complete);report[@"target_gpu_registry_id"]=@(gpu.registryID);
+  report[@"intra_only"]=@(!inter);report[@"encoder_pool_input"]=@(usePool);report[@"software_pixel_transfer"]=@(softwareTransfer);report[@"width"]=@(width);report[@"height"]=@(height);report[@"requested_frames"]=@(count);report[@"frames"]=packets?:@[];report[@"callbacks"]=@(capture.samples.count);report[@"callback_errors"]=@(capture.errors);report[@"dropped"]=@(capture.dropped);report[@"submit_errors"]=@(submitErrors);report[@"complete_status"]=@(complete);report[@"target_gpu_registry_id"]=@(gpu.registryID);
   NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted|NSJSONWritingSortedKeys error:NULL];[json writeToFile:[prefix stringByAppendingString:@".json"] atomically:YES];
   VTCompressionSessionInvalidate(s);CFRelease(s);
   return (!packets||capture.samples.count!=count||submitErrors||capture.errors||capture.dropped||complete)?1:0;
