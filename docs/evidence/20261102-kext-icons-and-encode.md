@@ -182,3 +182,30 @@ python3 tools/diagnostics/gpu-tests/verify-h264-encode.py \
 当前仍不能发布系统 Intel 通用编码能力，没有可要求用户重启安装的编码版 EFI。后续根因调查应继续核对 P 帧独有参考状态、缩小参考状态、图像状态与同步要求；本阶段没有增加新的猜测性 VA 或内核修补。普通 Usage=0、HEVC 编码、系统 XPC 调用、并发和长期稳定性仍未验收。
 
 本阶段没有完成独立代理审查，不宣称独立代码审查通过。
+
+### P 帧后续：完整 walker 与单活动参考映射
+
+本节记录同一次启动（2026-11-02 16:35:45）中 17:50–18:56 的实验。系统驱动与 EFI 未安装本节修正，编码器仅在自有探针进程内注册。
+
+原 `VDENC_WALKER_STATE` 长 4 DWORD，Intel 官方 Gen12 构造为 27 DWORD。新增 [状态转换器](../../tools/diagnostics/gpu-tests/xe-vdenc-reference-state.h) 保留原始前四字，设置 DW5 的 source width−1、DW14=`0x3f400000`、DW16=`0x003f3f3f`，其余新增字清零；每 slice 增加 23 DWORD，并同步 token 的 slice 长度、原有命令长度预估及实际/预留尾指针。
+
+仅补齐 walker 后，最小 I+P 两帧通过，60 帧却只有 10.11 dB。六帧逐帧采集进一步显示：第三张 P 开始，硬件重建图仍接近输入，码流经独立软件解码却漂移；VDENC 引用的实际 GPU 地址仍为上一帧。这个结果排除了“回调成功即编码正确”，也说明此前两帧参考地址核对不足以证明连续帧正确。
+
+官方 `codechal_vdenc_avc_g12.cpp` 的 Gen12 AVC VDENC 显式设置 `m_oneOnOneMapping=true`；`mhw_vdbox_mfx_g12_X.cpp` 使用活动引用替代整个 DPB，`mhw_vdbox_mfx_generic.h::AddMfxAvcRefIdx` 配套从零分配活动 reference ID。当前 VA 沿用 DPB 池轮换的 `0,2,4,6` 索引。新实验对**单活动参考**将 MFX reference index 映射到槽零，同时将对应 token 的 resource index/flags 移到槽零，供内核回填地址；多参考和 I 帧保持原分支。
+
+参考源码来自 Intel 官方 `intel/media-driver` 与 `intel/intel-vaapi-driver`，原文保留在 `build/validation-encode-and-kext-icons-20261102/`。初始结构核对保留在 [参考与同步审计](20261102-kext-icons-and-encode/p-reference-sync-audit.json)，六帧漂移证据与组合验证保留在 [P 帧阶段结果](20261102-kext-icons-and-encode/p-frame-walker-reference-results.json)。
+
+完整 walker 加单参考映射后的结果如下。独立解码强制软件路径，检查真实 I/P 类型、全部回调、PTS、完整有效像素；新验收还要求每帧都达到 35 dB，防止少数坏帧被平均值掩盖。
+
+| 输入 | 完整帧数 | 整段 PSNR / dB | 最差单帧 / dB |
+|---|---:|---:|---:|
+| 720p，两个 GOP | 60/60 | 52.49 | 51.86 |
+| 1080p | 30/30 | 51.95 | 51.46 |
+| 4K | 8/8 | 51.97 | 51.65 |
+| 1080p，编码器缓冲池输入 | 30/30 | 51.95 | 51.46 |
+
+独立的默认 `VDENC_WEIGHTSOFFSETS_STATE` 实验并未解决 P 帧挂起，于 17:50:40 产生 VCS0 reset；该状态没有合入成功组合。18:19:02 与 18:22:51 还有应用为 `mediaanalysisd`、Signature 1000 的独立报告，不能据此声称整机稳定，也不能直接归因于自有 VCS0 编码实验。
+
+CPU 验证共 30 项通过：状态转换 3、参考审计 3、地址布局 1、采集器 4、VPHAL 分流 8、编码验收 11。原始六帧重建图、命令及五组码流保留在 build 目录；本节提交小型 JSON 证据，未提交大体积原始图像。
+
+此时的结论限定为**探针进程中、Usage=1、单活动参考、已测 NV12 I/P 输入通过**。独立 VA 候选、BGRA、普通像素转换、硬解回归、Usage=0、系统 XPC 编码、低码率、并发和长期稳定性仍需后续验证，尚不能发布系统通用 Intel 编码能力。

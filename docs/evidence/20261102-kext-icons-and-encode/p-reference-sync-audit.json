@@ -1,0 +1,140 @@
+{
+  "checks": {
+    "full_reference_handle_and_address_match_previous_recon": true,
+    "ds_reference_handle_and_address_match_previous_ds": true,
+    "vdenc_and_mfx_reference_match_previous_recon": true,
+    "vdenc_ds_reference_matches_previous_ds": true,
+    "mfx_ref0_selects_valid_store_zero": true,
+    "p_slice_reference_counts_match_single_reference": true,
+    "slice_and_walker_row_ranges_match": true,
+    "slices_cover_frame_rows_without_gaps": true,
+    "all_slices_wait_vdenc_mfx_parser_and_flush_vdenc": true,
+    "reference_surface_pitch_matches_bound_resource": true,
+    "ds_surface_pitch_matches_bound_resource": true,
+    "full_chroma_offset_matches_previous_bound_planes": true,
+    "ds_chroma_offset_matches_previous_bound_planes": true,
+    "reference_formats_are_planar_420_8": true
+  },
+  "previous_recon": {
+    "index": 2,
+    "handle": 106,
+    "address": 1073872896,
+    "pitch": 1280,
+    "flags": 1
+  },
+  "previous_ds": {
+    "index": 4,
+    "handle": 108,
+    "address": 1075306496,
+    "pitch": 384,
+    "flags": 1
+  },
+  "reference_surface": {
+    "width": 1280,
+    "height": 720,
+    "pitch": 1280,
+    "format": 4,
+    "tile_mode": 3,
+    "chroma_u_row": 736,
+    "chroma_v_row": 736
+  },
+  "ds_reference_surface": {
+    "width": 320,
+    "height": 192,
+    "pitch": 384,
+    "format": 4,
+    "tile_mode": 3,
+    "chroma_u_row": 192,
+    "chroma_v_row": 192
+  },
+  "slices": [
+    {
+      "offset": "0x844",
+      "slice_type": 0,
+      "active_l0_references": 1,
+      "active_l1_references": 0,
+      "weighted_prediction": 0,
+      "start_row": 0,
+      "next_row": 12,
+      "last_slice": false,
+      "walker_start_row": 0,
+      "walker_next_row": 12,
+      "walker_dwords": 4,
+      "flush_word": "0x0002001a",
+      "wait_vdenc_mfx_parser_and_flush_vdenc": true
+    },
+    {
+      "offset": "0x8f8",
+      "slice_type": 0,
+      "active_l0_references": 1,
+      "active_l1_references": 0,
+      "weighted_prediction": 0,
+      "start_row": 12,
+      "next_row": 24,
+      "last_slice": false,
+      "walker_start_row": 12,
+      "walker_next_row": 24,
+      "walker_dwords": 4,
+      "flush_word": "0x0002001a",
+      "wait_vdenc_mfx_parser_and_flush_vdenc": true
+    },
+    {
+      "offset": "0x98c",
+      "slice_type": 0,
+      "active_l0_references": 1,
+      "active_l1_references": 0,
+      "weighted_prediction": 0,
+      "start_row": 24,
+      "next_row": 36,
+      "last_slice": false,
+      "walker_start_row": 24,
+      "walker_next_row": 36,
+      "walker_dwords": 4,
+      "flush_word": "0x0002001a",
+      "wait_vdenc_mfx_parser_and_flush_vdenc": true
+    },
+    {
+      "offset": "0xa20",
+      "slice_type": 0,
+      "active_l0_references": 1,
+      "active_l1_references": 0,
+      "weighted_prediction": 0,
+      "start_row": 36,
+      "next_row": 45,
+      "last_slice": true,
+      "walker_start_row": 36,
+      "walker_next_row": 45,
+      "walker_dwords": 4,
+      "flush_word": "0x0002001a",
+      "wait_vdenc_mfx_parser_and_flush_vdenc": true
+    }
+  ],
+  "observed_layout": {
+    "mode_dwords": 2,
+    "address_dwords": 37,
+    "ds_surface_dwords": 6,
+    "walker_dwords": [
+      4,
+      4,
+      4,
+      4
+    ],
+    "walker_tile_width_present": false,
+    "default_weights_present": false
+  },
+  "gen12_reference": {
+    "mode_dwords": 6,
+    "address_dwords": 71,
+    "ds_surface_dwords": 10,
+    "walker_dwords": 27,
+    "walker_tile_width": 1279,
+    "walker_reserved_dw14": "0x3f400000",
+    "walker_reserved_dw16": "0x003f3f3f"
+  },
+  "p_frame_hardware_pass": null,
+  "limitations": [
+    "仅适用于这组 AVC 单参考、逐行帧、Gen12 字段的捕获",
+    "结构核对不能证明 GPU 数据读取、缓存一致性或 P 帧编码已成功",
+    "格式差异分别记录；不能把短命令差异直接判定为根因"
+  ]
+}
