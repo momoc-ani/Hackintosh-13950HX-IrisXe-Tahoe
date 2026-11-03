@@ -6,11 +6,15 @@
 同时扩大命令预留、更新 slice 累计，并将单活动参考的 MFX 索引和 token 槽一并映射到零。
 **独立 VA 候选已通过 Usage=1 的真实 I/P 编码；尚未安装系统、修改 EFI 或发布全局编码能力。**
 不能将此结果外推到 Usage=0、多活动参考、系统 XPC 编码或长期稳定性。
-后续创建诊断确认：Usage=0 请求的 `0x4000` 编码能力没有对应的对象创建分支，streamout
+后续创建诊断确认：Usage=0 请求的 `kind=0x20/capability=0x4000` 没有对应的对象创建分支，streamout
 得到空 context 并返回 4。复杂动态输入下，4 Mbit/s 实际约 3.98 Mbit/s，而 1 Mbit/s
 实际约 1.83–1.86 Mbit/s；帧画质通过不等于码率控制通过。两进程各 60 帧的有限并发已通过。
 完整记录、限制和复现命令见
 [本轮编码证据](../../../docs/evidence/20261102-kext-icons-and-encode.md)。
+2026-11-03 的进一步诊断发现：将该请求映射为 VDENC `0x400` 仅能通过会话创建；
+普通 VME/PAK 链与 VDENC 帧参数布局不同，单帧实验同时暴露 RCS 重置和空指针。
+该映射保留在默认关闭的进程诊断工具中，并强制在原 VA 调度前截停，不合入候选 VA。
+详见 [Usage=0 分派与首帧证据](../../../docs/evidence/20261103-usage0-remap-diagnostic.md)。
 以下 2026-10-24 的 XPS 测试属于历史记录，不能替代当前 A788 验收。
 
 The historical patches below apply, in the listed order, to the 16.0.32 VA plugin prepared by this repository.

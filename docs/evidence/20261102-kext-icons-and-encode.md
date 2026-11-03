@@ -285,3 +285,5 @@ REA 对 `CreateContexts@0x13e43` 的反编译显示，`kind=0x20` 分支只为 `
 REA 对 `CreateContexts@0x13e43` 的静态结果需要精确区分节点类型：`kind=0x20` 的 `capability=0x4000` 没有对应的编码对象创建分支；另一个 `kind=0x2` 的同值分支会创建不同的 0x6880 对象，不能拿来修复 Usage=0 的 picture encode 请求。当前 `Usage=0` 的 streamout 空 context 结论仍成立。
 
 本轮新增选项、报告和硬限速验收测试共 46 项 CPU 验证通过；硬限速新鲜复跑期间又出现 21:50:52 和 21:52:15 两份 `mediaanalysisd`、Signature 1000 的 GPU reset，保留为独立稳定性证据，未将其归因于本地探针。系统驱动和 EFI 未改动，不需要重启；后续先停止扩大 GPU 实验。
+
+2026-11-03 的 Usage=0 创建映射与原调度前截停结果另见 [后续诊断](20261103-usage0-remap-diagnostic.md)：创建边界能通过，普通 VME/PAK 与 VDENC 帧参数仍不兼容；单帧映射实验产生探针关联的 RCS、Signature 813 重置。该实验映射未合入候选或系统，真实 Usage=0 编码仍未通过验收。

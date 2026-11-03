@@ -1,0 +1,423 @@
+{
+  "recorded_at": "2026-11-03T10:50:25+08:00",
+  "system_install": false,
+  "efi_changed": false,
+  "system_va_mtime": "2026-10-30T13:29:39+08:00",
+  "creation": {
+    "baseline": {
+      "create_only": true,
+      "create_status": -12915,
+      "data_rate_limit": null,
+      "encoder_pool_input": false,
+      "height": 720,
+      "input_format": "NV12",
+      "input_nv12": "generated",
+      "intra_only": 1,
+      "low_latency_rate_control_requested": false,
+      "phase": "create-failed",
+      "real_time": 0,
+      "reference_includes_color_roundtrip": false,
+      "requested_bitrate_bps": 8000000,
+      "requested_data_rate_limit": null,
+      "requested_frames": 2,
+      "requested_usage": 0,
+      "software_pixel_transfer": false,
+      "target_gpu_registry_id": 4294968942,
+      "width": 1280
+    },
+    "context_only_remap": {
+      "create_only": true,
+      "create_status": -12915,
+      "data_rate_limit": null,
+      "encoder_pool_input": false,
+      "height": 720,
+      "input_format": "NV12",
+      "input_nv12": "generated",
+      "intra_only": 1,
+      "low_latency_rate_control_requested": false,
+      "phase": "create-failed",
+      "real_time": 0,
+      "reference_includes_color_roundtrip": false,
+      "requested_bitrate_bps": 8000000,
+      "requested_data_rate_limit": null,
+      "requested_frames": 2,
+      "requested_usage": 0,
+      "software_pixel_transfer": false,
+      "target_gpu_registry_id": 4294968942,
+      "width": 1280
+    },
+    "context_and_parameters_remap": {
+      "create_only": true,
+      "create_status": 0,
+      "data_rate_limit": null,
+      "encoder_pool_input": false,
+      "EncoderID": "local.test.intel.h264",
+      "height": 720,
+      "input_format": "NV12",
+      "input_nv12": "generated",
+      "intra_only": 1,
+      "low_latency_rate_control_requested": false,
+      "phase": "created-only",
+      "real_time": 0,
+      "reference_includes_color_roundtrip": false,
+      "requested_bitrate_bps": 8000000,
+      "requested_data_rate_limit": null,
+      "requested_frames": 2,
+      "requested_usage": 0,
+      "software_pixel_transfer": false,
+      "target_gpu_registry_id": 4294968942,
+      "UsingHardwareAcceleratedVideoEncoder": true,
+      "width": 1280
+    },
+    "dyld_confirmed_remap": {
+      "create_only": true,
+      "create_status": 0,
+      "data_rate_limit": null,
+      "encoder_pool_input": false,
+      "EncoderID": "local.test.intel.h264",
+      "height": 720,
+      "input_format": "NV12",
+      "input_nv12": "generated",
+      "intra_only": 1,
+      "low_latency_rate_control_requested": false,
+      "phase": "created-only",
+      "real_time": 0,
+      "reference_includes_color_roundtrip": false,
+      "requested_bitrate_bps": 8000000,
+      "requested_data_rate_limit": null,
+      "requested_frames": 2,
+      "requested_usage": 0,
+      "software_pixel_transfer": false,
+      "target_gpu_registry_id": 4294968942,
+      "UsingHardwareAcceleratedVideoEncoder": true,
+      "width": 1280
+    }
+  },
+  "failed_one_frame_experiment": {
+    "log": "build/validation-encode-and-kext-icons-20261102/usage0-remap-one-i-20261103.log",
+    "report_path": "/Users/momoc/Library/Logs/DiagnosticReports/xe-h264-encode-modes-lab-2026-11-03-101700.ips",
+    "pid": 41459,
+    "capture_time": "2026-11-03 10:16:51.1760 +0800",
+    "exception": {
+      "codes": "0x0000000000000001, 0x0000000000000000",
+      "rawCodes": [
+        1,
+        0
+      ],
+      "type": "EXC_BAD_ACCESS",
+      "signal": "SIGSEGV",
+      "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000"
+    },
+    "rip_image_offset": "0x273e3",
+    "frames_in_va": [
+      "0x273e3",
+      "0x2778d",
+      "0x15ab2"
+    ],
+    "rcx": 0,
+    "frame_api_accepted": true,
+    "encoded_frame_pass": false,
+    "gpu_reset_report": {
+      "path": "/Library/Logs/DiagnosticReports/Kernel_2026-11-03-101651_Mac-Pro.gpuRestart",
+      "time": "2026-11-03T10:16:51+08:00",
+      "application": "xe-h264-encode-m",
+      "signature": 813,
+      "hung_ring": "RCS",
+      "VCS0": "disabled/idle",
+      "reset_associated_with_probe": true
+    }
+  },
+  "preschedule_capture": {
+    "0": {
+      "log": "build/validation-encode-and-kext-icons-20261102/usage0-frame-preschedule-20261103.log",
+      "exit_code": 77,
+      "original_va_schedule_called": false,
+      "stage_log": [
+        "create=0",
+        "settings=0",
+        "prepare=0"
+      ],
+      "parameter_11": [
+        {
+          "event": "parameter",
+          "sequence": 4,
+          "entry": 0,
+          "kind": 32,
+          "capability": "0x400",
+          "id": 1001,
+          "context_present": true,
+          "parameter": 11
+        },
+        {
+          "event": "parameter-result",
+          "sequence": 4,
+          "status": 5
+        }
+      ],
+      "command_events": [
+        {
+          "event": "schedule",
+          "roots": 1
+        },
+        {
+          "event": "node",
+          "root": 0,
+          "depth": 0,
+          "kind": 2,
+          "capability": "0x1000",
+          "context_present": true,
+          "frame_present": true
+        },
+        {
+          "event": "node",
+          "root": 0,
+          "depth": 1,
+          "kind": 16,
+          "capability": "0x20",
+          "context_present": false,
+          "frame_present": true
+        },
+        {
+          "event": "stop-before-original",
+          "exit_code": 77
+        }
+      ],
+      "encoded_frame_pass": null
+    },
+    "1": {
+      "log": "build/validation-encode-and-kext-icons-20261102/usage1-frame-preschedule-20261103.log",
+      "exit_code": 77,
+      "original_va_schedule_called": false,
+      "stage_log": [
+        "create=0",
+        "settings=0",
+        "prepare=0"
+      ],
+      "parameter_11": [
+        {
+          "event": "parameter",
+          "sequence": 4,
+          "entry": 0,
+          "kind": 32,
+          "capability": "0x400",
+          "id": 1001,
+          "context_present": true,
+          "parameter": 11
+        },
+        {
+          "event": "parameter-result",
+          "sequence": 4,
+          "status": 5
+        }
+      ],
+      "command_events": [
+        {
+          "event": "schedule",
+          "roots": 1
+        },
+        {
+          "event": "node",
+          "root": 0,
+          "depth": 0,
+          "kind": 32,
+          "capability": "0x400",
+          "context_present": true,
+          "frame_present": true
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x8",
+          "value": "0x6000032e8c50"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x410",
+          "value": "0x7f8854848000"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x418",
+          "value": "0x7f8854848e00"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x420",
+          "value": "0x4"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x428",
+          "value": "0x6000032e85d0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x430",
+          "value": "0x7f8854849400"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x438",
+          "value": "0x1a"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x440",
+          "value": "0x7f88381a9418"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x448",
+          "value": "0x19"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x450",
+          "value": "0x1a"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x458",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x460",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x468",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x470",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x478",
+          "value": "0x6000032d4130"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x480",
+          "value": "0x600001bec1c0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x488",
+          "value": "0x6000032e85e0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x490",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x498",
+          "value": "0x0"
+        },
+        {
+          "event": "frame-field",
+          "root": 0,
+          "depth": 0,
+          "offset": "0x4a0",
+          "value": "0x0"
+        },
+        {
+          "event": "stop-before-original",
+          "exit_code": 77
+        }
+      ],
+      "encoded_frame_pass": null
+    }
+  },
+  "static_boundary": {
+    "va_factory_schedule_slot": 11,
+    "va_factory_schedule_offset": "0x58",
+    "original_va_schedule": "0x159a4",
+    "node_next_offset": "0x30",
+    "frame_pointer_from_command_node": "0x20",
+    "faulting_field_in_frame_payload": "0x440",
+    "faulting_field_is_encoder_object_member": false,
+    "instructions": [
+      "0x273aa MOV RBX, [RSI+0x20]",
+      "0x273dc MOV RCX, [RBX+0x440]",
+      "0x273e3 MOV RCX, [RCX]"
+    ],
+    "ordinary_gva_path": "Branch_Encoder1_VMEPAK",
+    "ordinary_gva_execute_pak": "0x7ffa0c574af6",
+    "ordinary_pak_sps_field": "0x458",
+    "ordinary_pak_pps_field": "0x460",
+    "ordinary_pak_slice_list_field": "0x478",
+    "vdenc_sps_field": "0x410",
+    "vdenc_pps_field": "0x418",
+    "vdenc_reconstructed_surface_field": "0x478"
+  },
+  "conclusions": [
+    "会话创建与streamout可经映射通过，但Usage=0真实编码未通过。",
+    "Usage=0先调度kind=2/cap=0x1000及kind=16/cap=0x20，Usage=1直接调度kind=0x20/cap=0x400。",
+    "Usage=0已在额外链前截停，未获得它的最终PAK帧字段，不能声称完成两种编码帧数据的动态对照。",
+    "静态PAK与VDENC帧布局不同，capability值映射不构成完整接口适配。",
+    "Usage=1也对参数11返回5；该返回值不是Usage=0失败的充分原因。",
+    "单帧失败实验产生探针关联RCS重置，撤回此前仅凭统一日志得出的未观察到重置判断。"
+  ],
+  "automatic_stop_without_explicit_stop_switch": {
+    "log": "build/validation-encode-and-kext-icons-20261102/usage0-remap-auto-stop-20261103.log",
+    "remap_switch": "1",
+    "stop_switch_present": false,
+    "exit_code": 77,
+    "last_event": "stop-before-original",
+    "original_va_schedule_called": false
+  },
+  "cpu_validation": {
+    "test_directory": "tools/diagnostics/gpu-tests",
+    "execution": "逐个执行 test-*.py，检查每个进程的返回值与测试数量",
+    "files": 9,
+    "tests_passed": 38,
+    "failures": 0
+  },
+  "installed_fix": false,
+  "usage0_fixed": false,
+  "reboot_required": false
+}
