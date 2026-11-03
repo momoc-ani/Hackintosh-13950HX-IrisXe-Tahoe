@@ -1,0 +1,487 @@
+{
+  "run_date": "2026-11-03",
+  "system_va_modified": false,
+  "efi_modified": false,
+  "real_usage0_encoding_passed": false,
+  "native_cpu_builder": {
+    "source": "build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver",
+    "execution": "native-cpu-memory-fixture",
+    "gpu_commands_executed": false,
+    "native_va_methods": [
+      "0x2c84a",
+      "0x2cc16",
+      "0x2c7ee",
+      "0x1c1b",
+      "0x1c40"
+    ],
+    "fixture_width": 1280,
+    "fixture_height": 720,
+    "fixture_hardware_threads": 224,
+    "block_dimensions": [
+      80,
+      45
+    ],
+    "batch_bytes": 288,
+    "batch_dwords": [
+      285212673,
+      0,
+      2147483712,
+      2046820356,
+      1052832,
+      0,
+      0,
+      0,
+      0,
+      1761874689,
+      1627455502,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1879048199,
+      0,
+      0,
+      14618624,
+      0,
+      8126465,
+      0,
+      0,
+      0,
+      1879113730,
+      0,
+      32,
+      1024,
+      1879179266,
+      0,
+      64,
+      0,
+      1896022031,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      134154239,
+      2949200,
+      0,
+      0,
+      65536,
+      1,
+      2949200,
+      0,
+      80,
+      2949120,
+      2046820356,
+      1052832,
+      0,
+      0,
+      0,
+      0,
+      2046820356,
+      2204,
+      0,
+      0,
+      0,
+      0
+    ],
+    "walker_offset_bytes": 172,
+    "walker_end_bytes": 240,
+    "walker_dwords": [
+      1896022031,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      134154239,
+      2949200,
+      0,
+      0,
+      65536,
+      1,
+      2949200,
+      0,
+      80,
+      2949120
+    ],
+    "vfe_dwords": [
+      1879048199,
+      0,
+      0,
+      14618624,
+      0,
+      8126465,
+      0,
+      0,
+      0
+    ],
+    "curbe_load_dwords": [
+      1879113730,
+      0,
+      32,
+      1024
+    ],
+    "descriptor_load_dwords": [
+      1879179266,
+      0,
+      64,
+      0
+    ]
+  },
+  "live_preschedule_capture": {
+    "report": "usage0-statistics-preschedule-results-20261103.json",
+    "usage0_log": "usage0-frame-statistics-preschedule-20261103.log",
+    "usage1_log": "usage1-frame-statistics-preschedule-20261103.log",
+    "exit_codes": [
+      77,
+      77
+    ],
+    "original_va_schedule_called": false,
+    "usage0_nodes": [
+      {
+        "kind": 2,
+        "capability": "0x1000",
+        "context_present": true,
+        "frame_present": true
+      },
+      {
+        "kind": 16,
+        "capability": "0x20",
+        "context_present": false,
+        "frame_present": true
+      }
+    ],
+    "usage0_frame": {
+      "current_surface_nonzero": true,
+      "previous_surface": "0x0",
+      "statistics_slot": 0,
+      "blocks_before_schedule": 0,
+      "output_surface": "0x0"
+    },
+    "usage0_context": {
+      "width": 1280,
+      "height": 720,
+      "block_width": 16,
+      "block_height": 16,
+      "curbe_bytes": 32,
+      "kernel_count": 1,
+      "kernel_bytes": 8272
+    },
+    "usage1_frame_layout": "The existing VA-specific frame fields were collected; no usage0 fields were reinterpreted as VDENC pointers.",
+    "raw_runs": [
+      {
+        "usage": 0,
+        "exit_code": 77,
+        "events": [
+          {
+            "event": "schedule",
+            "roots": 1
+          },
+          {
+            "event": "node",
+            "root": 0,
+            "depth": 0,
+            "kind": 2,
+            "capability": "0x1000",
+            "context_present": true,
+            "frame_present": true
+          },
+          {
+            "event": "frame-statistics",
+            "root": 0,
+            "depth": 0,
+            "current_surface": "0x600001a148c0",
+            "previous_surface": "0x0",
+            "statistics_slot": 0,
+            "blocks_before_schedule": 0
+          },
+          {
+            "event": "frame-statistics-context",
+            "root": 0,
+            "depth": 0,
+            "width": 1280,
+            "height": 720,
+            "block_width": 16,
+            "block_height": 16,
+            "curbe_bytes": 32,
+            "kernel_count": 1,
+            "kernel_bytes": 8272
+          },
+          {
+            "event": "node",
+            "root": 0,
+            "depth": 1,
+            "kind": 16,
+            "capability": "0x20",
+            "context_present": false,
+            "frame_present": true
+          },
+          {
+            "event": "frame-statistics-output",
+            "root": 0,
+            "depth": 1,
+            "output_surface": "0x0"
+          },
+          {
+            "event": "stop-before-original",
+            "exit_code": 77
+          }
+        ]
+      },
+      {
+        "usage": 1,
+        "exit_code": 77,
+        "events": [
+          {
+            "event": "schedule",
+            "roots": 1
+          },
+          {
+            "event": "node",
+            "root": 0,
+            "depth": 0,
+            "kind": 32,
+            "capability": "0x400",
+            "context_present": true,
+            "frame_present": true
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x8",
+            "value": "0x600002084a70"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x410",
+            "value": "0x7fc74982fa00"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x418",
+            "value": "0x7fc749830800"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x420",
+            "value": "0x4"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x428",
+            "value": "0x600002090630"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x430",
+            "value": "0x7fc749830e00"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x438",
+            "value": "0x1a"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x440",
+            "value": "0x7fc7101a9418"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x448",
+            "value": "0x19"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x450",
+            "value": "0x1a"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x458",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x460",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x468",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x470",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x478",
+            "value": "0x6000020a8910"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x480",
+            "value": "0x60000099c850"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x488",
+            "value": "0x600002090640"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x490",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x498",
+            "value": "0x0"
+          },
+          {
+            "event": "frame-field",
+            "root": 0,
+            "depth": 0,
+            "offset": "0x4a0",
+            "value": "0x0"
+          },
+          {
+            "event": "stop-before-original",
+            "exit_code": 77
+          }
+        ]
+      }
+    ],
+    "new_gpu_reports_observed_at_exit": []
+  },
+  "intel_gen12_vfe_reference": {
+    "sources": [
+      "mhw_render_hwcmd_g12_X.h",
+      "mhw_render_hwcmd_g12_X.cpp",
+      "mhw_render_g12_X.cpp",
+      "codechal_encode_avc_g12.cpp",
+      "codechal_vdenc_avc_g12.cpp"
+    ],
+    "media_object_walker_dwords": 17,
+    "vfe_dw3_fused_eu_dispatch_bit": 6,
+    "bit_one_disables_fused_eu": true,
+    "avc_encoder_sets_fused_eu_dispatch": false,
+    "avc_vdenc_encoder_sets_fused_eu_dispatch": false
+  },
+  "vfe_cpu_only_candidate": {
+    "generator": "macos/vadriver/encode-experimental/patch_vfelegacy.py",
+    "candidate": "va-vfe-legacy-cpu-only/AppleIntelTGLGraphicsVADriver",
+    "changed_file_offset": "0x2c9b0",
+    "before": "0x00",
+    "after": "0x40",
+    "meaning": "Set VFE MEDIA_OBJECT_WALKER dispatch legacy mode by setting DW3 bit 6.",
+    "native_cpu_matrix": [
+      {
+        "width": 1280,
+        "height": 720,
+        "hardware_thread_fixture": 224,
+        "changed_batch_dwords": 1
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "hardware_thread_fixture": 112,
+        "changed_batch_dwords": 1
+      }
+    ],
+    "installed": false,
+    "gpu_tested": false,
+    "root_cause_confirmed": false,
+    "file_changes": [
+      {
+        "offset": "0x2c9b0",
+        "before": "0x0",
+        "after": "0x40"
+      }
+    ],
+    "batch_changes": [
+      {
+        "offset": "0x74",
+        "before": "0xdf1000",
+        "after": "0xdf1040"
+      }
+    ],
+    "resigned": false
+  },
+  "gpu_reset_report_review": {
+    "report": "/Library/Logs/DiagnosticReports/Kernel_2026-11-03-101651_Mac-Pro.gpuRestart",
+    "application": "xe-h264-encode-m",
+    "signature": 813,
+    "last_instruction_header": "0x7103000f",
+    "acthd": "0x400100f0",
+    "cpu_builder_walker_end_offset": "0xf0",
+    "correlation": "The relative offsets match the generated batch boundary; no complete hardware batch capture establishes a unique root cause."
+  },
+  "verification": {
+    "cpu_test_files": 12,
+    "cpu_tests_passed": 57,
+    "diagnostic_library_strict_compile": true,
+    "real_usage0_encode_test_run": false,
+    "code_review_agent_result": "No actual review returned; not counted as independent review approval."
+  },
+  "recorded_at": "2026-11-03T11:53:17+08:00",
+  "original_va_frame_schedule_called": false,
+  "installed_va_observation": {
+    "path": "/Library/Extensions/AppleIntelTGLGraphicsVADriver.bundle/Contents/MacOS/AppleIntelTGLGraphicsVADriver",
+    "bytes": 8450544,
+    "mtime": "2026-10-29T19:31:00+08:00"
+  }
+}

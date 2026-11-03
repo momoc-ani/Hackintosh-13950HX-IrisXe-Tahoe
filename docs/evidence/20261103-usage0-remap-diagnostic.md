@@ -92,3 +92,5 @@ build/validation-encode-and-kext-icons-20261102/xe-h264-encode-modes-lab \
 ## 状态
 
 此映射不是 Usage=0 修复，不能安装到系统或用于真实帧编码。它保留为默认关闭、供 `--create-only` 及原 VA 调度前截停的分派诊断。后续需要还原 AppleGVA 普通编码分支的实际帧参数布局，确认 `+0x440` 的来源；在该结构被证实之前，不再用这个映射执行原 VA 编码命令。系统 VA 与 EFI 仍保持原样，不需要重启。
+
+同日后续已确认首条前置链的类型为 `AVD_FrameStatisticsContext`，补齐其原调度前字段采集，并在普通 CPU 内存中执行真实命令构建器。RCS walker 的 17 DWORD 长度与 Gen12 定义一致；VFE 融合 EU 分派位存在独立差异，仅制作了单字节 CPU 验证副本，尚未运行 GPU。详见[前置统计任务与 VFE 核对](20261103-usage0-frame-statistics.md)。这不改变上述映射的截停限制，也不代表普通编码通过。
