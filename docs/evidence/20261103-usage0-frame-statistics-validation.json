@@ -3,10 +3,29 @@
   "system_va_modified": false,
   "efi_modified": false,
   "real_usage0_encoding_passed": false,
+  "hardware_identity": {
+    "cpu_label": "Q1LP custom i9-13950HX (user-provided identification)",
+    "intel_sku_gpu_name": "Intel UHD Graphics for 13th Gen Intel Processors",
+    "gpu_pci_id_from_alpine": "8086:A788",
+    "gpu_topology_from_alpine": "32 EU / 1 slice / 2 DSS",
+    "quick_sync_video": true,
+    "multi_format_codec_engines": 2,
+    "macos_injected_gpu_device_id": "8086:9A49",
+    "macos_injected_model_label": "Intel Iris Xe Graphics (A788 / 32 EU)",
+    "linux_platform_report": "ALDERLAKE_S/RPL-S",
+    "linux_612_device_info_mapping": "INTEL_RPLS_IDS -> adl_s_info -> GEN12_FEATURES",
+    "display_version": "12.00",
+    "stepping": "D0",
+    "macos_cpu_brand_string": "Genuine Intel(R) 0000 (modified firmware report)",
+    "bundled_iga_model": "12p1 maps to XE/TGL/TGLLP/DG1; no distinct RPL-S model alias",
+    "iga_rpl_s_instruction_match": "not independently proven"
+  },
   "native_cpu_builder": {
     "source": "build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver",
     "execution": "native-cpu-memory-fixture",
     "gpu_commands_executed": false,
+    "fixture_thread_value_is_synthetic": true,
+    "host_cpu_thread_count_observed": false,
     "native_va_methods": [
       "0x2c84a",
       "0x2cc16",
@@ -179,6 +198,19 @@
       "curbe_bytes": 32,
       "kernel_count": 1,
       "kernel_bytes": 8272
+    },
+    "usage0_storage": {
+      "capacity_bytes": 12288,
+      "original_kernel_bytes": 8272,
+      "original_kernel_aligned_bytes": 8320,
+      "remaining_bytes": 3968,
+      "gen12_candidate_bytes": 8824,
+      "gen12_candidate_aligned_bytes": 8864,
+      "candidate_fits_as_replacement": true,
+      "candidate_fits_as_append_after_original": false,
+      "capture": "usage0-statistics-storage-preschedule-20261103.log",
+      "used_bytes_after_original_kernel_loaded_before_schedule": 8320,
+      "aligned_replacement_remaining_bytes": 3424
     },
     "usage1_frame_layout": "The existing VA-specific frame fields were collected; no usage0 fields were reinterpreted as VDENC pointers.",
     "raw_runs": [
@@ -443,7 +475,11 @@
       }
     ],
     "installed": false,
-    "gpu_tested": false,
+    "gpu_tested": true,
+    "gpu_probe_scope": "one FrameStatisticsContext schedule only; not full Usage=0 encode",
+    "gpu_probe_result": "one original statistics schedule returned 0; following PAK request stopped before its original schedule; same-process Signature 813 RCS reset observed",
+    "gpu_probe_log": "usage0-vfe-statistics-only-test-20261103.log",
+    "candidate_rejected_for_next_round": true,
     "root_cause_confirmed": false,
     "file_changes": [
       {
@@ -461,6 +497,37 @@
     ],
     "resigned": false
   },
+  "statistics_kernel_gen12_port_candidate": {
+    "original_bytes": 8272,
+    "candidate_bytes": 8824,
+    "original_iga_model": "11",
+    "candidate_iga_model": "12p1",
+    "original_direct_decode_on_candidate_model_errors": 896,
+    "instruction_count_original": 581,
+    "instruction_count_candidate": 581,
+    "send_instruction_count_original": 8,
+    "send_instruction_count_candidate": 8,
+    "original_message_categories": [
+      "4 media-block reads",
+      "2 HDC media-block writes",
+      "1 DC0 OWord block-write x2",
+      "1 EOT send"
+    ],
+    "candidate_message_categories": [
+      "4 DC1 media-block reads",
+      "2 DC1 media-block writes",
+      "1 DC0 OWord block-write x2",
+      "1 send.ts EOT"
+    ],
+    "original_no_preempt_reads": 3,
+    "candidate_no_preempt_reads": 0,
+    "bundled_iga_xe_model_supports_no_preempt": false,
+    "iga_roundtrip_proves_hardware_semantic_equivalence": false,
+    "installed": false,
+    "submitted_to_gpu": false,
+    "no_preempt_difference_is_confirmed_fault": false,
+    "ready_for_install": false
+  },
   "gpu_reset_report_review": {
     "report": "/Library/Logs/DiagnosticReports/Kernel_2026-11-03-101651_Mac-Pro.gpuRestart",
     "application": "xe-h264-encode-m",
@@ -470,18 +537,158 @@
     "cpu_builder_walker_end_offset": "0xf0",
     "correlation": "The relative offsets match the generated batch boundary; no complete hardware batch capture establishes a unique root cause."
   },
+  "statistics_only_probe_reset_correlation": {
+    "probe_log": "usage0-vfe-statistics-only-test-20261103.log",
+    "probe_result": "statistics-only-result status=0 (event has no wall-clock timestamp)",
+    "reset_report": "/Library/Logs/DiagnosticReports/Kernel_2026-11-03-132324_Mac-Pro.gpuRestart",
+    "reset_time": "2026-11-03T13:23:24+08:00",
+    "signature": 813,
+    "association": "same probe process; status 0 returned, then a PAK request was captured and stopped before its original schedule; reset report followed within 1 second; unique guilty batch attribution remains unknown",
+    "strict_preschedule_followup": "exit 77 before original schedule; no new reset observed",
+    "probe_start_time": "2026-11-03T13:23:14+08:00",
+    "probe_log_mtime": "2026-11-03T13:23:23+08:00",
+    "only_one_original_schedule_allowed": true,
+    "pak_request_original_schedule_called": false
+  },
+  "diagnostic_schedule_policy": {
+    "allow_first_schedule_variable_removed": true,
+    "allow_statistics_only_variable_removed": true,
+    "usage0_remap_always_stops_before_original_schedule": true
+  },
   "verification": {
-    "cpu_test_files": 12,
-    "cpu_tests_passed": 57,
+    "previous_run": {
+      "cpu_test_files": 12,
+      "cpu_tests_passed": 57,
+      "source": "earlier validation report; not this turn"
+    },
+    "current_run": {
+      "cpu_test_files": 2,
+      "cpu_tests_passed": 10,
+      "files": [
+        "tools/diagnostics/gpu-tests/test-va-command-trace.py",
+        "tools/diagnostics/gpu-tests/test-frame-statistics-cpu.py"
+      ],
+      "diagnostic_library_strict_compile": true
+    },
     "diagnostic_library_strict_compile": true,
     "real_usage0_encode_test_run": false,
     "code_review_agent_result": "No actual review returned; not counted as independent review approval."
   },
   "recorded_at": "2026-11-03T11:53:17+08:00",
-  "original_va_frame_schedule_called": false,
+  "original_va_frame_schedule_called": true,
   "installed_va_observation": {
     "path": "/Library/Extensions/AppleIntelTGLGraphicsVADriver.bundle/Contents/MacOS/AppleIntelTGLGraphicsVADriver",
     "bytes": 8450544,
     "mtime": "2026-10-29T19:31:00+08:00"
-  }
+  },
+  "original_va_frame_schedule_scope": "historical 13:23 statistics-only probe; strict preschedule runs did not call original",
+  "kernel_isa_recheck": {
+    "recorded_at": "2026-11-03T15:58:26.206400+08:00",
+    "gpu_commands_submitted": false,
+    "source_kernel_matches_va_bytes": true,
+    "va_file_offset": 7843440,
+    "original_bytes": 8272,
+    "candidate_bytes": 8824,
+    "decode_runs": [
+      {
+        "label": "original-gen11",
+        "model": "11",
+        "exit_code": 0,
+        "error_lines": 0,
+        "assembly": "build/validation-encode-and-kext-icons-20261102/kernel-isa-review-20261103/original-gen11.asm"
+      },
+      {
+        "label": "original-xe",
+        "model": "12p1",
+        "exit_code": 1,
+        "error_lines": 896,
+        "assembly": "build/validation-encode-and-kext-icons-20261102/kernel-isa-review-20261103/original-xe.asm"
+      },
+      {
+        "label": "candidate-xe",
+        "model": "12p1",
+        "exit_code": 0,
+        "error_lines": 0,
+        "assembly": "build/validation-encode-and-kext-icons-20261102/kernel-isa-review-20261103/candidate-xe.asm"
+      }
+    ],
+    "candidate_rebuild_exit_code": 0,
+    "candidate_rebuilt_bytes": 8824,
+    "candidate_rebuilt_byte_equal": true,
+    "semantic_equivalence_proven": false
+  },
+  "strict_preschedule_storage_followup": {
+    "started_at": "2026-11-03T16:03:00.463524+08:00",
+    "finished_at": "2026-11-03T16:03:00.685833+08:00",
+    "exit_code": 77,
+    "log": "build/validation-encode-and-kext-icons-20261102/usage0-storage-final-20261103.log",
+    "deprecated_allow_variables_set": true,
+    "original_schedule_called": false,
+    "events": [
+      {
+        "event": "schedule",
+        "roots": 1
+      },
+      {
+        "event": "node",
+        "root": 0,
+        "depth": 0,
+        "kind": 2,
+        "capability": "0x1000",
+        "context_present": true,
+        "frame_present": true
+      },
+      {
+        "event": "frame-statistics",
+        "root": 0,
+        "depth": 0,
+        "current_surface": "0x60000340c270",
+        "previous_surface": "0x0",
+        "statistics_slot": 0,
+        "blocks_before_schedule": 0
+      },
+      {
+        "event": "frame-statistics-context",
+        "root": 0,
+        "depth": 0,
+        "width": 1280,
+        "height": 720,
+        "block_width": 16,
+        "block_height": 16,
+        "curbe_bytes": 32,
+        "kernel_count": 1,
+        "kernel_bytes": 8272
+      },
+      {
+        "event": "frame-statistics-storage",
+        "root": 0,
+        "depth": 0,
+        "capacity": 12288,
+        "used_bytes": 8320,
+        "storage_base": "0x106bb1000",
+        "kernel_copy": "0x106bb1000",
+        "kernel_bytes": 8272
+      },
+      {
+        "event": "node",
+        "root": 0,
+        "depth": 1,
+        "kind": 16,
+        "capability": "0x20",
+        "context_present": false,
+        "frame_present": true
+      },
+      {
+        "event": "frame-statistics-output",
+        "root": 0,
+        "depth": 1,
+        "output_surface": "0x0"
+      },
+      {
+        "event": "stop-before-original",
+        "exit_code": 77
+      }
+    ]
+  },
+  "updated_at": "2026-11-03T16:08:18.058114+08:00"
 }

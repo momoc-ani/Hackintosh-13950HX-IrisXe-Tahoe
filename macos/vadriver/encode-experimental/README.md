@@ -15,9 +15,11 @@
 普通 VME/PAK 链与 VDENC 帧参数布局不同，单帧实验同时暴露 RCS 重置和空指针。
 该映射保留在默认关闭的进程诊断工具中，并强制在原 VA 调度前截停，不合入候选 VA。
 详见 [Usage=0 分派与首帧证据](../../../docs/evidence/20261103-usage0-remap-diagnostic.md)。
-同日新增 [`patch_vfelegacy.py`](patch_vfelegacy.py)，仅供独立 CPU 验证：通用媒体 walker 构建器的
+同日新增 [`patch_vfelegacy.py`](patch_vfelegacy.py)，先供独立 CPU 验证：通用媒体 walker 构建器的
 VFE DW3 bit 6 改为 1，与 Intel Gen12 AVC 的 legacy 分派设置一致。它只改变一个文件字节，
-原生 CPU 对照确认 batch 只改变这一位；该副本未重新签名、未供 GPU 运行、未加入安装链。
+原生 CPU 对照确认 batch 只改变这一位；该副本未重新签名、未加入安装链。随后受控探针加载此副本，
+只放行一条 FrameStatisticsContext 调度，返回 0 后同一实验链出现 Signature 813 的 RCS reset；
+因此这项改动已排除为单独修复，不能继续作为可安装候选。
 当前 RCS `MEDIA_OBJECT_WALKER` 已是 Gen12 定义的 17 DWORD，不能套用 VDENC 的 27 DWORD 修补。
 普通 PAK / VDENC 帧接口错配仍未解决，映射诊断继续强制在原调度前退出。
 详见[统计任务、重置边界与 CPU 验证](../../../docs/evidence/20261103-usage0-frame-statistics.md)。
