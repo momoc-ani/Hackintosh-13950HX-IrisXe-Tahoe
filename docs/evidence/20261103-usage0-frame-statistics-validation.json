@@ -559,20 +559,32 @@
     "previous_run": {
       "cpu_test_files": 12,
       "cpu_tests_passed": 57,
-      "source": "earlier validation report; not this turn"
+      "note": "Earlier suite result; not the current turn."
     },
     "current_run": {
-      "cpu_test_files": 2,
-      "cpu_tests_passed": 10,
+      "test_files": 10,
+      "test_files_passed": 10,
+      "test_files_failed": 0,
+      "test_case_total": null,
+      "test_case_total_note": "Not aggregated by the suite runner.",
       "files": [
-        "tools/diagnostics/gpu-tests/test-va-command-trace.py",
-        "tools/diagnostics/gpu-tests/test-frame-statistics-cpu.py"
+        "test-frame-statistics-cpu.py",
+        "test-h264-encode-options.py",
+        "test-h264-encode-report.py",
+        "test-usage0-remap.py",
+        "test-va-command-trace.py",
+        "test-va-context-trace.py",
+        "test-vdenc-binding-capture.py",
+        "test-vdenc-command-layout.py",
+        "test-vdenc-reference-audit.py",
+        "test-vdenc-reference-state.py"
       ],
-      "diagnostic_library_strict_compile": true
+      "diagnostic_library_strict_compile": true,
+      "evidence_json_parse": true,
+      "git_diff_check": true
     },
-    "diagnostic_library_strict_compile": true,
     "real_usage0_encode_test_run": false,
-    "code_review_agent_result": "No actual review returned; not counted as independent review approval."
+    "code_review_agent_result": "No independent code review performed in this turn."
   },
   "recorded_at": "2026-11-03T11:53:17+08:00",
   "original_va_frame_schedule_called": true,
@@ -690,5 +702,5 @@
       }
     ]
   },
-  "updated_at": "2026-11-03T16:08:18.058114+08:00"
+  "updated_at": "2026-11-03T16:10:00+08:00"
 }

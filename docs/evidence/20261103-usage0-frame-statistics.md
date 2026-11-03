@@ -78,7 +78,7 @@ Intel 官方 Gen12 `MEDIA_VFE_STATE.DW3` 的 bit 6 为 `FusedEuDispatch`，值 1
 - walker、CURBE、描述符加载、资源引用、线程字段及后续命令保持原有字节。
 - 作用域是通用媒体构建器的 walker 分支，包含统计任务，并非仅限某个 context；MEDIA_OBJECT 分支和另一个 AVCENC 构建器不在本次修改范围。
 
-验证副本位于 `build/validation-encode-and-kext-icons-20261102/va-vfe-legacy-cpu-only/AppleIntelTGLGraphicsVADriver`。它未重新签名、未加入安装链，原 `va-gen12-native` 保持不变。随后 13:23 的受控统计探针确实加载了这个副本，只放行一条 `FrameStatisticsContext` 原调度；VA 返回 `status=0`，随后出现 Signature 813 的 RCS reset。因此 VFE DW3 bit 6 的 legacy 分派单独不足以解决统计任务卡死；这次仍不是完整 Usage=0 编码验收。
+验证副本位于 `build/validation-encode-and-kext-icons-20261102/va-vfe-legacy-cpu-only/AppleIntelTGLGraphicsVADriver`。它未重新签名、未加入安装链，原 `va-gen12-native` 保持不变。随后 13:23 的受控探针加载了这个副本，放行一条 `FrameStatisticsContext` 原调度；VA 返回 `status=0`，随后同一实验进程出现 Signature 813 的 RCS reset。该实验没有证明 VFE DW3 bit 6 的修改使统计路径恢复，也不是完整 Usage=0 编码验收；reset 无法唯一归因到统计任务。
 
 即使后续验证统计任务恢复，普通 PAK 与 VDENC 的帧接口错配仍独立存在，不能直接取消映射诊断的强制截停，也不能将该副本作为可安装的 Usage=0 驱动。
 
@@ -100,7 +100,7 @@ python3 tools/diagnostics/gpu-tests/test-frame-statistics-cpu.py
 python3 tools/diagnostics/gpu-tests/test-va-command-trace.py
 ```
 
-主机 CPU 夹具测试需要上述已构建的独立 VA，不以缺失输入或 0 项发现作为通过。先前一轮历史验证运行过 12 个测试文件、57 项测试；本轮诊断门控修改后重新运行 `test-va-command-trace.py` 和 `test-frame-statistics-cpu.py`，共 2 个文件、10 项测试通过，诊断库严格编译也通过。完整 Usage=0 编码仍未通过；早前 RCS reset 的统计任务归因仍不唯一。
+主机 CPU 夹具测试需要上述已构建的独立 VA，不以缺失输入或 0 项发现作为通过。先前一轮历史验证运行过 12 个测试文件、57 项测试；本轮诊断门控修改后重跑整个 `tools/diagnostics/gpu-tests/test-*.py` 集合，10 个测试文件全部通过，诊断库严格编译、JSON 解析和 `git diff --check` 均通过。测试案例总数没有从 runner 输出汇总。完整 Usage=0 编码仍未通过；早前 RCS reset 的统计任务归因仍不唯一。
 
 下一步需基于 RPL-S/A788 的权威 ISA 与消息定义，重新建立统计 kernel 各读写操作的格式和同步语义，并继续还原普通 VME/PAK context 与帧接口。context 容量为 12 KiB，单个 8,824 字节候选若能被证明等价，可替换唯一原 kernel；追加到已有原 kernel 后则不够容量。当前诊断库删除了允许首条调度通过的两个环境变量，Usage=0 映射开启时一律在原调度前退出。系统 VA、EFI 与安装目录未修改。
 
