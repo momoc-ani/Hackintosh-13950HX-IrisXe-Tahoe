@@ -95,6 +95,113 @@ int main(void) {
             self.assertNotIn("original-called", result.stdout)
             self.assertIn('"event":"stop-before-original"', result.stderr)
 
+    def build_statistics_harness(self, directory):
+        """按统计任务的实际大小分配帧数据，检查采集不套用 VDENC 帧布局。"""
+        source = directory / "statistics.c"
+        source.write_text('#include "' + str(SOURCE) + '"\n' + r'''
+#include <sys/mman.h>
+
+// 将帧尾紧贴不可访问页，字段宽度错误或误套 VDENC 大结构会直接使测试失败。
+static unsigned char *guarded_frame(size_t bytes) {
+    size_t page = (size_t)sysconf(_SC_PAGESIZE);
+    unsigned char *memory = mmap(NULL, page * 2, PROT_READ | PROT_WRITE,
+                                 MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (memory == MAP_FAILED || mprotect(memory + page, page, PROT_NONE)) exit(93);
+    return memory + page - bytes;
+}
+
+// 一旦调用原调度便返回失败标记，统计采集必须先于这个入口退出。
+static int original(void *accelerator, uint32_t *request, void *output) {
+    (void)accelerator; (void)request; (void)output;
+    fputs("unexpected-original-call\n", stderr);
+    return 91;
+}
+
+// 构造 FrameStatisticsContext 及其关联输出；表面值故意不指向可访问内存。
+int main(void) {
+    unsigned char header[16] = {0}, first[0x38] = {0}, second[0x38] = {0};
+    unsigned char *frame = guarded_frame(0x18), *output = guarded_frame(0x10);
+    unsigned char *context = calloc(1, 0x4730), *commands[] = {first};
+    uint32_t count = 1, kind = 2, output_kind = 16;
+    uint64_t capability = 0x1000, output_capability = 0x20;
+    uint64_t surfaces[] = {0x1020304050607080ULL, 0x8877665544332211ULL};
+    uint64_t output_surface = 0x1122334455667788ULL;
+    uint32_t slot = 3, blocks = 0x87654321;
+    uint32_t width = 1280, height = 720, block_width = 16, block_height = 16;
+    uint32_t curbe_bytes = 32, kernel_count = 1, kernel_bytes = 0x2050;
+    if (getenv("XE_TEST_NO_CONTEXT")) context = NULL;
+    if (getenv("XE_TEST_OTHER_KIND")) {
+        kind = 4;
+        context = (void *)(uintptr_t)1;
+    }
+    void *array = commands;
+    memcpy(header, &count, 4); memcpy(header + 8, &array, 8);
+    memcpy(first, &kind, 4); memcpy(first + 8, &capability, 8);
+    memcpy(first + 0x18, &context, 8); memcpy(first + 0x20, &frame, 8);
+    unsigned char *next = second;
+    memcpy(first + 0x30, &next, 8);
+    memcpy(second, &output_kind, 4); memcpy(second + 8, &output_capability, 8);
+    memcpy(second + 0x20, &output, 8);
+    memcpy(frame, surfaces, sizeof(surfaces));
+    memcpy(frame + 0x10, &slot, 4); memcpy(frame + 0x14, &blocks, 4);
+    memcpy(output + 8, &output_surface, 8);
+    if (context && !getenv("XE_TEST_OTHER_KIND")) {
+        memcpy(context + 0x138, &width, 4); memcpy(context + 0x13c, &height, 4);
+        memcpy(context + 0x150, &block_width, 4); memcpy(context + 0x158, &block_height, 4);
+        memcpy(context + 0x160, &curbe_bytes, 4); memcpy(context + 0x168, &kernel_count, 4);
+        memcpy(context + 0x4590, &kernel_bytes, 4);
+    }
+    return xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
+}
+''')
+        executable = directory / "statistics"
+        built = subprocess.run([
+            "clang", "-std=c11", "-Wall", "-Wextra", "-Werror",
+            str(source), "-o", str(executable),
+        ], capture_output=True, text=True)
+        self.assertEqual(built.returncode, 0, built.stderr)
+        return executable
+
+    def test_statistics_fields_use_their_own_layout_and_integer_widths(self):
+        """统计任务只读 24 字节帧，槽号与输出块数分别按 32 位记录。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ, "XE_VA_STOP_BEFORE_SCHEDULE": "1"}
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            events = [json.loads(line.removeprefix("VA-COMMAND "))
+                      for line in result.stderr.splitlines() if line.startswith("VA-COMMAND ")]
+            statistics = [event for event in events if event["event"] == "frame-statistics"]
+            self.assertEqual(len(statistics), 1, result.stderr)
+            self.assertEqual(statistics[0]["current_surface"], "0x1020304050607080")
+            self.assertEqual(statistics[0]["previous_surface"], "0x8877665544332211")
+            self.assertEqual(statistics[0]["statistics_slot"], 3)
+            self.assertEqual(statistics[0]["blocks_before_schedule"], 0x87654321)
+            contexts = [event for event in events if event["event"] == "frame-statistics-context"]
+            self.assertEqual(len(contexts), 1, result.stderr)
+            for name, expected in {"width": 1280, "height": 720, "block_width": 16,
+                                   "block_height": 16, "curbe_bytes": 32, "kernel_count": 1,
+                                   "kernel_bytes": 0x2050}.items():
+                self.assertEqual(contexts[0][name], expected)
+            outputs = [event for event in events if event["event"] == "frame-statistics-output"]
+            self.assertEqual(len(outputs), 1, result.stderr)
+            self.assertEqual(outputs[0]["output_surface"], "0x1122334455667788")
+            self.assertFalse(any(event["event"] == "frame-field" for event in events))
+            self.assertNotIn("unexpected-original-call", result.stderr)
+
+    def test_statistics_context_is_optional_and_unknown_kinds_are_not_read(self):
+        """空 context 仍可采集帧；其他 kind 不解引用其不可访问的 context。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            for flag in ("XE_TEST_NO_CONTEXT", "XE_TEST_OTHER_KIND"):
+                environment = {**os.environ, "XE_VA_STOP_BEFORE_SCHEDULE": "1", flag: "1"}
+                result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 77, result.stderr)
+                self.assertNotIn('"event":"frame-statistics-context"', result.stderr)
+                self.assertNotIn("unexpected-original-call", result.stderr)
+                if flag == "XE_TEST_OTHER_KIND":
+                    self.assertNotIn('"event":"frame-statistics"', result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

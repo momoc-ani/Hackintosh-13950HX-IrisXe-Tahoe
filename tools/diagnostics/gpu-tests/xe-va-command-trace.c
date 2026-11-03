@@ -33,6 +33,23 @@ static void trace_frame_fields(const unsigned char *frame, uint32_t root, unsign
     }
 }
 
+// 按 0x22236 的实际读取宽度采集统计任务；表面字段只记录数值，不解引用。
+static void trace_statistics_fields(const unsigned char *frame, const unsigned char *context,
+                                     uint32_t root, unsigned depth) {
+    fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics\",\"root\":%u,\"depth\":%u,\"current_surface\":\"0x%llx\",\"previous_surface\":\"0x%llx\",\"statistics_slot\":%u,\"blocks_before_schedule\":%u}\n",
+            root, depth, (unsigned long long)command_read64(frame),
+            (unsigned long long)command_read64(frame + 8),
+            command_read32(frame + 0x10), command_read32(frame + 0x14));
+    if (context) {
+        // 构造与初始化分别证实这些字段属于 0x4730 字节的 FrameStatisticsContext。
+        fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics-context\",\"root\":%u,\"depth\":%u,\"width\":%u,\"height\":%u,\"block_width\":%u,\"block_height\":%u,\"curbe_bytes\":%u,\"kernel_count\":%u,\"kernel_bytes\":%u}\n",
+                root, depth, command_read32(context + 0x138), command_read32(context + 0x13c),
+                command_read32(context + 0x150), command_read32(context + 0x158),
+                command_read32(context + 0x160), command_read32(context + 0x168),
+                command_read32(context + 0x4590));
+    }
+}
+
 // 保留默认调用行为；诊断开关启用时仅读取命令与帧字段，然后在原 VA 调度前退出。
 int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
                          XeVAScheduleFunction original) {
@@ -50,6 +67,7 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
     fprintf(stderr, "VA-COMMAND {\"event\":\"schedule\",\"roots\":%u}\n", count);
     for (uint32_t root = 0; root < count; root++) {
         unsigned depth = 0;
+        int statistics_output = 0;
         for (const unsigned char *node = roots[root]; node;
              node = (const unsigned char *)(uintptr_t)command_read64(node + 0x30)) {
             uint32_t kind = command_read32(node);
@@ -62,6 +80,14 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
             if (frame && kind == 0x20 && (capability == 0x400 || capability == 0x4000)) {
                 trace_frame_fields(frame, root, depth);
             }
+            if (frame && kind == 2 && capability == 0x1000) {
+                trace_statistics_fields(frame,
+                    (const unsigned char *)(uintptr_t)command_read64(node + 0x18), root, depth);
+            } else if (frame && statistics_output && kind == 16 && capability == 0x20) {
+                fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics-output\",\"root\":%u,\"depth\":%u,\"output_surface\":\"0x%llx\"}\n",
+                        root, depth, (unsigned long long)command_read64(frame + 8));
+            }
+            statistics_output = kind == 2 && capability == 0x1000;
             depth++;
         }
     }
