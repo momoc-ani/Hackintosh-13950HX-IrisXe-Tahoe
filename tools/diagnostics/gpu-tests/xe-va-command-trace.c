@@ -1,0 +1,72 @@
+// VA 帧命令诊断：只读取请求字段，在原调度入口前结束进程，不提交 GPU 命令。
+#include "xe-va-command-trace.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+// 从 VA 的已核对字段读取 32 位数值，避免未对齐访问。
+static uint32_t command_read32(const unsigned char *source) {
+    uint32_t value;
+    memcpy(&value, source, sizeof(value));
+    return value;
+}
+
+// 读取 64 位字段本身，不解引用字段中保存的指针。
+static uint64_t command_read64(const unsigned char *source) {
+    uint64_t value;
+    memcpy(&value, source, sizeof(value));
+    return value;
+}
+
+// 只记录 VDENC 已使用的帧参数槽，用于比较普通编码与低延迟编码的实际数据布局。
+static void trace_frame_fields(const unsigned char *frame, uint32_t root, unsigned depth) {
+    static const uint32_t offsets[] = {
+        0x8, 0x410, 0x418, 0x420, 0x428, 0x430, 0x438, 0x440, 0x448,
+        0x450, 0x458, 0x460, 0x468, 0x470, 0x478, 0x480, 0x488,
+        0x490, 0x498, 0x4a0
+    };
+    for (size_t i = 0; i < sizeof(offsets) / sizeof(offsets[0]); i++) {
+        uint32_t offset = offsets[i];
+        fprintf(stderr, "VA-COMMAND {\"event\":\"frame-field\",\"root\":%u,\"depth\":%u,\"offset\":\"0x%x\",\"value\":\"0x%llx\"}\n",
+                root, depth, offset, (unsigned long long)command_read64(frame + offset));
+    }
+}
+
+// 保留默认调用行为；诊断开关启用时仅读取命令与帧字段，然后在原 VA 调度前退出。
+int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
+                         XeVAScheduleFunction original) {
+    const char *enabled = getenv("XE_VA_STOP_BEFORE_SCHEDULE");
+    const char *remapped = getenv("XE_USAGE0_REMAP");
+    // 该映射已实测导致 RCS 重置和段错误，启用映射即强制截停，避免重走失败路径。
+    if ((!enabled || strcmp(enabled, "1")) && (!remapped || strcmp(remapped, "1"))) {
+        return original(accelerator, request, output);
+    }
+
+    const unsigned char *header = (const unsigned char *)request;
+    uint32_t count = command_read32(header);
+    const unsigned char *const *roots =
+        (const unsigned char *const *)(uintptr_t)command_read64(header + 8);
+    fprintf(stderr, "VA-COMMAND {\"event\":\"schedule\",\"roots\":%u}\n", count);
+    for (uint32_t root = 0; root < count; root++) {
+        unsigned depth = 0;
+        for (const unsigned char *node = roots[root]; node;
+             node = (const unsigned char *)(uintptr_t)command_read64(node + 0x30)) {
+            uint32_t kind = command_read32(node);
+            uint64_t capability = command_read64(node + 8);
+            const unsigned char *frame =
+                (const unsigned char *)(uintptr_t)command_read64(node + 0x20);
+            fprintf(stderr, "VA-COMMAND {\"event\":\"node\",\"root\":%u,\"depth\":%u,\"kind\":%u,\"capability\":\"0x%llx\",\"context_present\":%s,\"frame_present\":%s}\n",
+                    root, depth, kind, (unsigned long long)capability,
+                    command_read64(node + 0x18) ? "true" : "false", frame ? "true" : "false");
+            if (frame && kind == 0x20 && (capability == 0x400 || capability == 0x4000)) {
+                trace_frame_fields(frame, root, depth);
+            }
+            depth++;
+        }
+    }
+    // 退出点先于原 ScheduleAVDCommands，采集模式绝不继续执行该请求。
+    fprintf(stderr, "VA-COMMAND {\"event\":\"stop-before-original\",\"exit_code\":77}\n");
+    fflush(stderr);
+    _exit(77);
+}
