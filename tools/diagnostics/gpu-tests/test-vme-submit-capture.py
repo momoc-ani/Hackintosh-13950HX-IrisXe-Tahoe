@@ -114,6 +114,131 @@ static int test_cached_class_count_is_not_range_limited(void) {
     return 0;
 }
 
+// 验证 VA 传入的命令区和 sideband 区按当前游标分别截取。
+static int test_submit_buffer_ranges_are_captured(void) {
+    static const unsigned char command[] = {0x10, 0x20, 0x30, 0x40, 0x50};
+    static const unsigned char sideband[] = {0xa1, 0xb2, 0xc3, 0xd4};
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    unsigned char storage[XE_VME_MANAGER_PREFIX_BYTES + sizeof(command) + 2] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t command_start = (uintptr_t)command;
+    uintptr_t command_current = command_start + sizeof(command);
+    uintptr_t command_end = command_current + 1;
+    uintptr_t sideband_start = (uintptr_t)sideband;
+    uintptr_t sideband_current = sideband_start + 2;
+    uintptr_t sideband_end = sideband_start + sizeof(sideband);
+    memcpy(prefix + 0x10, &command_start, sizeof(command_start));
+    memcpy(prefix + 0x18, &command_end, sizeof(command_end));
+    memcpy(prefix + 0x20, &command_current, sizeof(command_current));
+    memcpy(prefix + 0x60, &sideband_current, sizeof(sideband_current));
+    memcpy(prefix + 0x68, &sideband_end, sizeof(sideband_end));
+    memcpy(prefix + 0x80, &sideband_start, sizeof(sideband_start));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 9, 1, 0,
+        &snapshot, error, sizeof(error)) != 0) return 85;
+    if (snapshot.command_buffer.address != command_start ||
+        snapshot.command_buffer.size != sizeof(command) ||
+        snapshot.sideband_buffer.address != sideband_start ||
+        snapshot.sideband_buffer.size != 2 ||
+        snapshot.sideband_buffer.storage_offset !=
+            XE_VME_MANAGER_PREFIX_BYTES + sizeof(command) ||
+        snapshot.captured_bytes != XE_VME_MANAGER_PREFIX_BYTES +
+            sizeof(command) + 2) return 86;
+    if (!xe_vme_submit_has_data(&snapshot)) return 89;
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 87;
+    if (memcmp(storage, prefix, sizeof(prefix)) != 0 ||
+        memcmp(storage + snapshot.command_buffer.storage_offset, command,
+               sizeof(command)) != 0 ||
+        memcmp(storage + snapshot.sideband_buffer.storage_offset, sideband, 2) != 0)
+        return 88;
+    return 0;
+}
+
+// 验证初始化时只有 sideband 基址、没有游标的空提交可被识别。
+static int test_empty_submit_buffer_ranges(void) {
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t sideband_start = 0x12340000;
+    memcpy(prefix + 0x80, &sideband_start, sizeof(sideband_start));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 89;
+    if (snapshot.cached_class_count != 0 || snapshot.command_buffer.size != 0 ||
+        snapshot.sideband_buffer.size != 0 ||
+        snapshot.captured_bytes != XE_VME_MANAGER_PREFIX_BYTES) return 90;
+    if (xe_vme_submit_has_data(&snapshot)) return 95;
+    return 0;
+}
+
+// VA 每次 flush 会先追加 8 字节 type-2 sideband 记录；它本身不表示编码命令。
+static int test_sideband_control_record_alone_is_empty(void) {
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t command = 0x1000;
+    uintptr_t sideband = 0x2000;
+    uintptr_t sideband_current = sideband + 8;
+    uintptr_t sideband_end = sideband + 64;
+    memcpy(prefix + 0x10, &command, sizeof(command));
+    memcpy(prefix + 0x18, &command, sizeof(command));
+    memcpy(prefix + 0x20, &command, sizeof(command));
+    memcpy(prefix + 0x60, &sideband_current, sizeof(sideband_current));
+    memcpy(prefix + 0x68, &sideband_end, sizeof(sideband_end));
+    memcpy(prefix + 0x80, &sideband, sizeof(sideband));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 2, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 96;
+    if (snapshot.sideband_buffer.size != 8 ||
+        xe_vme_submit_has_data(&snapshot)) return 97;
+    return 0;
+}
+
+// 验证反向游标和超过总预算的命令范围都会被拒绝。
+static int test_invalid_submit_buffer_ranges_rejected(void) {
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t base = 0x1000;
+    uintptr_t current = base + 8;
+    uintptr_t end = base + 4;
+    memcpy(prefix + 0x10, &base, sizeof(base));
+    memcpy(prefix + 0x18, &end, sizeof(end));
+    memcpy(prefix + 0x20, &current, sizeof(current));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) == 0) return 91;
+
+    current = base + XE_VME_CAPTURE_MAX_TOTAL_BYTES + 1;
+    end = current;
+    memcpy(prefix + 0x18, &end, sizeof(end));
+    memcpy(prefix + 0x20, &current, sizeof(current));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) == 0) return 92;
+    return 0;
+}
+
+// 验证 command 或 sideband 的部分复制不会被当作完整快照接受。
+static int test_submit_buffer_partial_copy_rejected(void) {
+    static const unsigned char command[] = {1, 2, 3, 4};
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    unsigned char storage[XE_VME_MANAGER_PREFIX_BYTES + sizeof(command)] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t base = (uintptr_t)command;
+    uintptr_t current = base + sizeof(command);
+    uintptr_t end = current;
+    memcpy(prefix + 0x10, &base, sizeof(base));
+    memcpy(prefix + 0x18, &end, sizeof(end));
+    memcpy(prefix + 0x20, &current, sizeof(current));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 93;
+    partial_copy = 1;
+    int result = xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy,
+        storage, sizeof(storage), error, sizeof(error));
+    partial_copy = 0;
+    if (result == 0) return 94;
+    return 0;
+}
+
 // 验证 helper、目标和调用点策略均未知时拒绝，并保留非目标转发。
 static int test_unknown_manager_and_callers_rejected(void) {
     unsigned char storage[XE_VME_MANAGER_PREFIX_BYTES] = {0};
@@ -141,6 +266,16 @@ int main(void) {
     result = test_zero_cached_count_keeps_opaque_pointer();
     if (result) return result;
     result = test_cached_class_count_is_not_range_limited();
+    if (result) return result;
+    result = test_submit_buffer_ranges_are_captured();
+    if (result) return result;
+    result = test_empty_submit_buffer_ranges();
+    if (result) return result;
+    result = test_sideband_control_record_alone_is_empty();
+    if (result) return result;
+    result = test_invalid_submit_buffer_ranges_rejected();
+    if (result) return result;
+    result = test_submit_buffer_partial_copy_rejected();
     if (result) return result;
     return test_unknown_manager_and_callers_rejected();
 }
@@ -224,6 +359,7 @@ int main(void) {
             environment = os.environ.copy()
             environment.pop("XE_VME_CAPTURE_DIR", None)
             environment.pop("XE_VME_STOP_BEFORE_SUBMIT", None)
+            environment.pop("XE_VME_CAPTURE_NONEMPTY_SUBMIT", None)
             environment["DYLD_INSERT_LIBRARIES"] = str(interposer)
             environment["DYLD_LIBRARY_PATH"] = str(root)
             result = subprocess.run([str(app)], env=environment,
@@ -238,6 +374,22 @@ int main(void) {
             self.assertEqual(result.returncode, 78, result.stderr)
             self.assertIn("capture directory is required",
                           result.stderr)
+
+            conflicting_modes = environment.copy()
+            conflicting_modes["XE_VME_CAPTURE_DIR"] = str(root)
+            conflicting_modes["XE_VME_STOP_BEFORE_SUBMIT"] = "1"
+            conflicting_modes["XE_VME_CAPTURE_NONEMPTY_SUBMIT"] = "1"
+            result = subprocess.run([str(app)], env=conflicting_modes,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 78, result.stderr)
+            self.assertIn("exactly one capture mode", result.stderr)
+
+            missing_mode = environment.copy()
+            missing_mode["XE_VME_CAPTURE_DIR"] = str(root)
+            result = subprocess.run([str(app)], env=missing_mode,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 78, result.stderr)
+            self.assertIn("exactly one capture mode", result.stderr)
 
 
 if __name__ == "__main__":

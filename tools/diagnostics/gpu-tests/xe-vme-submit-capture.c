@@ -68,7 +68,116 @@ int xe_vme_capture_manager_snapshot(const void *manager, uint32_t request,
     snapshot->request = request;
     snapshot->flags = flags;
     snapshot->fault = fault;
+    snapshot->manager_prefix_bytes = XE_VME_MANAGER_PREFIX_BYTES;
     snapshot->captured_bytes = XE_VME_MANAGER_PREFIX_BYTES;
+    return 0;
+}
+
+/* 解析 VA 写游标与边界，仅测量当前提交涉及的已用区间。 */
+static int xe_vme_measure_buffer_range(const unsigned char *prefix,
+                                       size_t base_offset,
+                                       size_t current_offset,
+                                       size_t end_offset,
+                                       XeVMEBufferSnapshot *buffer,
+                                       uint64_t *total,
+                                       char *error, size_t error_size) {
+    uintptr_t base = 0;
+    uintptr_t current = 0;
+    uintptr_t end = 0;
+    memcpy(&base, prefix + base_offset, sizeof(base));
+    memcpy(&current, prefix + current_offset, sizeof(current));
+    memcpy(&end, prefix + end_offset, sizeof(end));
+    buffer->address = base;
+    buffer->size = 0;
+    buffer->storage_offset = XE_VME_MANAGER_PREFIX_BYTES + *total;
+
+    if (current == 0 && end == 0) return 0;
+    if (!base || !current || !end || base > current || current > end) {
+        xe_vme_error(error, error_size, "submit buffer pointer range is invalid");
+        return -1;
+    }
+    uint64_t used = (uint64_t)(current - base);
+    if (used > XE_VME_CAPTURE_MAX_TOTAL_BYTES ||
+        *total > XE_VME_CAPTURE_MAX_TOTAL_BYTES - used) {
+        xe_vme_error(error, error_size, "submit buffers exceed capture budget");
+        return -1;
+    }
+    buffer->size = used;
+    *total += used;
+    return 0;
+}
+
+/* 根据 manager 前缀校验 command/sideband 游标，并计算快照布局。 */
+int xe_vme_measure_submit_buffers(const void *manager,
+                                  const unsigned char *manager_prefix,
+                                  uint32_t request, uint32_t flags,
+                                  uint32_t fault,
+                                  XeVMEManagerSnapshot *snapshot,
+                                  char *error, size_t error_size) {
+    if (!manager || !manager_prefix || !snapshot) {
+        xe_vme_error(error, error_size, "submit buffer measurement inputs are invalid");
+        return -1;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+    memcpy(&snapshot->cached_class_count, manager_prefix + 0x58,
+           sizeof(snapshot->cached_class_count));
+    snapshot->manager = (uintptr_t)manager;
+    snapshot->request = request;
+    snapshot->flags = flags;
+    snapshot->fault = fault;
+    snapshot->manager_prefix_bytes = XE_VME_MANAGER_PREFIX_BYTES;
+
+    uint64_t total = 0;
+    if (xe_vme_measure_buffer_range(manager_prefix, 0x10, 0x20, 0x18,
+            &snapshot->command_buffer, &total, error, error_size) != 0 ||
+        xe_vme_measure_buffer_range(manager_prefix, 0x80, 0x60, 0x68,
+            &snapshot->sideband_buffer, &total, error, error_size) != 0)
+        return -1;
+    snapshot->captured_bytes = XE_VME_MANAGER_PREFIX_BYTES + total;
+    return 0;
+}
+
+/* 识别空的初始化提交，供显式首个非空截停模式安全放行。 */
+int xe_vme_submit_has_data(const XeVMEManagerSnapshot *snapshot) {
+    if (!snapshot) return 0;
+    return snapshot->cached_class_count != 0 ||
+        snapshot->command_buffer.size != 0;
+}
+
+/* 复制已测量的 VA command/sideband 字节，确认输出布局仍在分配范围内。 */
+int xe_vme_copy_submit_buffers(const unsigned char *manager_prefix,
+                               const XeVMEManagerSnapshot *snapshot,
+                               XeVMECopyBytes copy_bytes,
+                               unsigned char *storage, size_t storage_size,
+                               char *error, size_t error_size) {
+    if (!manager_prefix || !snapshot || !copy_bytes || !storage ||
+        snapshot->manager_prefix_bytes != XE_VME_MANAGER_PREFIX_BYTES ||
+        snapshot->captured_bytes > storage_size ||
+        snapshot->captured_bytes < XE_VME_MANAGER_PREFIX_BYTES) {
+        xe_vme_error(error, error_size, "submit buffer storage is invalid");
+        return -1;
+    }
+    memcpy(storage, manager_prefix, XE_VME_MANAGER_PREFIX_BYTES);
+    const XeVMEBufferSnapshot *buffers[] = {
+        &snapshot->command_buffer, &snapshot->sideband_buffer
+    };
+    for (size_t index = 0; index < sizeof(buffers) / sizeof(buffers[0]); ++index) {
+        const XeVMEBufferSnapshot *buffer = buffers[index];
+        if (buffer->storage_offset > snapshot->captured_bytes ||
+            buffer->size > snapshot->captured_bytes - buffer->storage_offset ||
+            buffer->size > SIZE_MAX ||
+            (buffer->size && (!buffer->address ||
+             buffer->address > UINTPTR_MAX - buffer->size))) {
+            xe_vme_error(error, error_size, "submit buffer copy range is invalid");
+            return -1;
+        }
+        if (buffer->size && copy_bytes(storage + buffer->storage_offset,
+                (const void *)buffer->address, (size_t)buffer->size) !=
+                (size_t)buffer->size) {
+            xe_vme_error(error, error_size, "submit buffer copy was incomplete");
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -96,13 +205,15 @@ static void xe_vme_write_all(int fd, const void *bytes, size_t size) {
     }
 }
 
-/* 写出固定 helper 前缀及已观察的 request/class-count 元数据。 */
+/* 写出 manager 前缀及本次提交前的 VA command/sideband 元数据。 */
 static void xe_vme_write_manager_snapshot(const char *root,
                                           const XeVMEManagerSnapshot *snapshot,
-                                          const unsigned char *storage) {
+                                          const unsigned char *storage,
+                                          int buffers_captured) {
     char path[PATH_MAX];
-    int length = snprintf(path, sizeof(path), "%s/manager-%ld.bin",
-                          root, (long)getpid());
+    int length = snprintf(path, sizeof(path), "%s/%s-%ld.bin", root,
+                          buffers_captured ? "submit" : "manager",
+                          (long)getpid());
     if (length < 0 || (size_t)length >= sizeof(path)) _exit(86);
     int fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0600);
     if (fd < 0) _exit(86);
@@ -114,10 +225,23 @@ static void xe_vme_write_manager_snapshot(const char *root,
     if (length < 0 || (size_t)length >= sizeof(path)) _exit(86);
     fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0600);
     if (fd < 0) _exit(86);
-    if (dprintf(fd, "{\"event\":\"manager-prefix-before-original\",\"manager\":\"0x%llx\",\"request\":%u,\"flags\":%u,\"fault\":%u,\"cached_class_count\":%u,\"captured_bytes\":%u,\"command_payload\":\"not-captured\",\"sideband\":\"not-captured\",\"used_lengths\":\"unknown\"}\n",
-                (unsigned long long)snapshot->manager, snapshot->request,
-                snapshot->flags, snapshot->fault, snapshot->cached_class_count,
-                snapshot->captured_bytes) < 0) _exit(86);
+    const char *event = buffers_captured ? "submit-buffers-before-original" :
+                                           "manager-prefix-before-original";
+    const char *payload_state = buffers_captured ? "captured" : "not-captured";
+    const char *sideband_state = buffers_captured ? "captured" : "not-captured";
+    if (dprintf(fd, "{\"event\":\"%s\",\"manager\":\"0x%llx\",\"request\":%u,\"flags\":%u,\"fault\":%u,\"cached_class_count\":%u,\"captured_bytes\":%llu,\"command_buffer_address\":\"0x%llx\",\"command_buffer_bytes\":%llu,\"command_buffer_offset\":%llu,\"command_payload\":\"%s\",\"sideband_buffer_address\":\"0x%llx\",\"sideband_buffer_bytes\":%llu,\"sideband_buffer_offset\":%llu,\"sideband\":\"%s\",\"used_lengths\":\"unknown\"}\n",
+                event, (unsigned long long)snapshot->manager,
+                snapshot->request, snapshot->flags, snapshot->fault,
+                snapshot->cached_class_count,
+                (unsigned long long)snapshot->captured_bytes,
+                (unsigned long long)snapshot->command_buffer.address,
+                (unsigned long long)snapshot->command_buffer.size,
+                (unsigned long long)snapshot->command_buffer.storage_offset,
+                payload_state,
+                (unsigned long long)snapshot->sideband_buffer.address,
+                (unsigned long long)snapshot->sideband_buffer.size,
+                (unsigned long long)snapshot->sideband_buffer.storage_offset,
+                sideband_state) < 0) _exit(86);
     if (fsync(fd) != 0 || close(fd) != 0) _exit(86);
 }
 
@@ -177,12 +301,13 @@ static void xe_vme_image_added(const struct mach_header *header, intptr_t slide)
     }
 }
 
-/* 在提交入口捕获 VA helper 前缀；截停开关开启时不调用原始提交。 */
+/* 在目标入口跳过空初始化提交，或截停首个非空提交缓冲区。 */
 __attribute__((used, noinline)) static int xe_vme_submit_dispatch(
     void *context, uint32_t request, uint32_t *flags, uint32_t *fault,
     const void *manager) {
     const char *root = getenv("XE_VME_CAPTURE_DIR");
     const char *stop = getenv("XE_VME_STOP_BEFORE_SUBMIT");
+    const char *nonempty = getenv("XE_VME_CAPTURE_NONEMPTY_SUBMIT");
     uintptr_t caller = (uintptr_t)__builtin_return_address(0);
     Dl_info caller_info;
     int caller_resolved = dladdr((const void *)caller, &caller_info) != 0;
@@ -192,36 +317,60 @@ __attribute__((used, noinline)) static int xe_vme_submit_dispatch(
     int callsite_verified = xe_vme_driver_base && caller >= xe_vme_driver_base &&
         caller - xe_vme_driver_base == 0xa8fb;
     int stop_enabled = root && *root && stop && strcmp(stop, "1") == 0;
+    int nonempty_enabled = root && *root && nonempty && strcmp(nonempty, "1") == 0;
+    int capture_mode_enabled = stop_enabled || nonempty_enabled;
     int action = xe_vme_submit_action(xe_vme_capture_enabled, caller_resolved,
                                       caller_is_va, callsite_verified,
-                                      stop_enabled);
+                                      capture_mode_enabled);
     if (action == XE_VME_ACTION_REJECT) {
         dprintf(STDERR_FILENO,
-                caller_is_va && !stop_enabled ?
-                    "XE-VME stop-before-submit switch is required\n" :
+                caller_is_va && !capture_mode_enabled ?
+                    "XE-VME capture mode switch is required\n" :
                     "XE-VME submit caller or callsite is not verified\n");
-        _exit(caller_is_va && !stop_enabled ? 78 : 79);
+        _exit(caller_is_va && !capture_mode_enabled ? 78 : 79);
     }
     if (action == XE_VME_ACTION_FORWARD) {
         // dyld 不对 interposer 自身的原导出引用重复应用同一替换。
         return IOAccelVideoContextSubmitDataBuffers(context, request, flags, fault);
     }
 
-    unsigned char *storage = malloc(XE_VME_MANAGER_PREFIX_BYTES);
-    if (!storage) _exit(86);
-    XeVMEManagerSnapshot snapshot;
     char error[128] = {0};
     uint32_t flag_value = flags ? *flags : 0;
     uint32_t fault_value = fault ? *fault : 0;
-    int status = xe_vme_capture_manager_snapshot(manager, request, flag_value,
-        fault_value, xe_vme_copy_current_task, &snapshot, storage,
-        XE_VME_MANAGER_PREFIX_BYTES, error, sizeof(error));
-    if (status != 0) {
-        dprintf(STDERR_FILENO, "XE-VME capture rejected: %s\n", error);
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES];
+    if (xe_vme_copy_current_task(prefix, manager,
+                                 XE_VME_MANAGER_PREFIX_BYTES) !=
+        XE_VME_MANAGER_PREFIX_BYTES) {
+        dprintf(STDERR_FILENO, "XE-VME manager prefix read was incomplete\n");
+        _exit(87);
+    }
+    XeVMEManagerSnapshot snapshot;
+    if (xe_vme_measure_submit_buffers(manager, prefix, request, flag_value,
+            fault_value, &snapshot, error, sizeof(error)) != 0) {
+        dprintf(STDERR_FILENO, "XE-VME buffer range rejected: %s\n", error);
+        _exit(87);
+    }
+    int has_submit_data = xe_vme_submit_has_data(&snapshot);
+    if (nonempty_enabled && !stop_enabled && !has_submit_data) {
+        dprintf(STDERR_FILENO,
+                "XE-VME empty submit allowed; no cached classes or used buffer bytes\n");
+        return IOAccelVideoContextSubmitDataBuffers(context, request,
+                                                    flags, fault);
+    }
+    if (snapshot.captured_bytes > SIZE_MAX) _exit(86);
+    size_t storage_size = (size_t)snapshot.captured_bytes;
+    unsigned char *storage = malloc(storage_size);
+    if (!storage) _exit(86);
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, xe_vme_copy_current_task,
+            storage, storage_size, error, sizeof(error)) != 0) {
+        dprintf(STDERR_FILENO, "XE-VME buffer copy rejected: %s\n", error);
         free(storage);
         _exit(87);
     }
-    xe_vme_write_manager_snapshot(xe_vme_capture_root, &snapshot, storage);
+    int buffers_captured = snapshot.command_buffer.size != 0 ||
+                           snapshot.sideband_buffer.size != 0;
+    xe_vme_write_manager_snapshot(xe_vme_capture_root, &snapshot, storage,
+                                  buffers_captured);
     free(storage);
     _exit(77);
 }
@@ -242,20 +391,28 @@ __attribute__((naked)) static int xe_vme_submit_adapter(
 __attribute__((constructor)) static void xe_vme_capture_init(void) {
     const char *root = getenv("XE_VME_CAPTURE_DIR");
     const char *stop = getenv("XE_VME_STOP_BEFORE_SUBMIT");
-    if ((!root || !*root) && stop && strcmp(stop, "1") == 0) {
+    const char *nonempty = getenv("XE_VME_CAPTURE_NONEMPTY_SUBMIT");
+    int stop_enabled = stop && strcmp(stop, "1") == 0;
+    int nonempty_enabled = nonempty && strcmp(nonempty, "1") == 0;
+    if ((!root || !*root) && (stop_enabled || nonempty_enabled)) {
         dprintf(STDERR_FILENO,
-                "XE-VME capture directory is required with stop-before-submit\n");
+                "XE-VME capture directory is required with an explicit mode\n");
         _exit(78);
     }
     if (!root || !*root) return;
+    if (stop_enabled == nonempty_enabled) {
+        dprintf(STDERR_FILENO,
+                "XE-VME exactly one capture mode must be enabled\n");
+        _exit(78);
+    }
     if (strlen(root) >= sizeof(xe_vme_capture_root)) {
         dprintf(STDERR_FILENO, "XE-VME capture directory path is too long\n");
         _exit(78);
     }
     strcpy(xe_vme_capture_root, root);
     xe_vme_capture_enabled = 1;
-    dprintf(STDERR_FILENO,
-            "XE-VME manager-prefix capture armed; stop-before-submit is mandatory; command payload and sideband remain uncaptured\n");
+    dprintf(STDERR_FILENO, "XE-VME %s capture armed\n",
+            stop_enabled ? "manager-prefix" : "first-nonempty-submit-buffer");
     _dyld_register_func_for_add_image(xe_vme_image_added);
 }
 

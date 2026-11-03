@@ -1,36 +1,40 @@
-# VA 提交前 manager 前缀取证（2026-11-03）
+# VA 提交边界与缓冲区取证（2026-11-03）
 
-## 当前结论
+## 结论
 
-已在受控 `Usage=1` 单帧运行中命中 VA 的 `IOAccelVideoContextSubmitDataBuffers` 调用点，并在原始提交 API 执行前保存 0x88 字节的 VA manager 前缀。捕获分支按设计以退出码 77 结束进程；原始 GPU 提交没有执行。
+已核对候选 `AppleIntelTGLGraphicsVADriver` 的提交前 manager 布局，并扩展进程内诊断 interpose：默认保持原行为；`XE_VME_STOP_BEFORE_SUBMIT=1` 在提交前保存 manager 与已用缓冲区并退出；`XE_VME_CAPTURE_NONEMPTY_SUBMIT=1` 放行空初始化提交，在遇到缓存 class 或非空 command 区时保存快照并以退出码 77 停止。两种模式必须且只能启用一种。
 
-该结果验证了进程内 interpose 和调用点守卫，但没有捕获本帧 data-buffer class、GPU 命令 payload、sideband 或实际已用长度，不能作为普通 VME/PAK 编码成功的证据。没有修改系统 VA、EFI、NootedGreen、NootRX 或安装目录，无需重启。
+本次只完成静态字段核对、CPU 夹具和严格编译，没有启动新的硬件编码探针。此前 `Usage=1` 捕获文件验证了 VA 调用点 interpose 和 manager 前缀读取；新增的 command/sideband 实际字节读取尚无新的运行时快照。Usage=0 普通 VME/PAK 编码仍未修复或验收。系统 VA、EFI、NootedGreen、NootRX 和安装目录均未修改。
 
-## 静态依据
+## 已核对字段
 
-检查对象为 `build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver`，使用 Ghidra 12.1.4 函数分析和 `otool` 反汇编核对 `0xA893` 至 `0xA9DB`：
+检查对象为 `build/validation-encode-and-kext-icons-20261102/va-gen12-native/AppleIntelTGLGraphicsVADriver`。Ghidra 12.1.4 与 `otool` 的反汇编共同确认：`0xA8F6` 调用 `_IOAccelVideoContextSubmitDataBuffers`，返回地址 `0xA8FB`；`0xA893` 的首参数是 manager，进入时保存在 `R14`。
 
-- `0xA8A1` 将函数首参数（manager）保存到 `R14`；`0xA8F6` 是对 `_IOAccelVideoContextSubmitDataBuffers` 的直接调用，返回地址为 `0xA8FB`，调用指令字节为 `e8 15 38 23 00`。
-- 提交调用前，函数读取 `manager+0x58`。若非零，会遍历先前缓存的 class 记录、更新 used-bytes 状态并清理记录。
-- 原始提交返回成功且错误标志为空后，函数才在 `0xA918` 调用 `_IOAccelVideoContextGetDataBufferClassCount`，并把新计数写入 `manager+0x58`；随后才逐项获取 resource、data bytes、capacity 和 client-shared 信息。
-- 同一成功路径随后读取 `manager+0x80` 指针并访问其指向的数据。静态代码只证明该指针在提交成功后被使用；该状态的准确类型和它与 GPU 命令 payload 的关系仍未知。
+`0x22708`、`0xA9DC` 与 `0xA893` 的字段访问对应如下：
 
-因此，提交前快照中的 `manager+0x58=0` 只说明入口处没有已缓存的 class 记录，不能推出本次提交没有 class 或命令数据。此前在同一边界调用 getter 得到空资源，与“新 class 列表在提交成功后才读取并保存”的调用顺序一致。
+| manager 偏移 | 观察到的用途 |
+|---|---|
+| `+0x10` | command buffer 起始地址 |
+| `+0x18` | command buffer 结束地址 |
+| `+0x20` | command buffer 当前写入游标 |
+| `+0x58` | 上次提交后缓存的 data-buffer class 数量 |
+| `+0x60` | sideband 当前写入游标 |
+| `+0x68` | sideband 结束地址 |
+| `+0x80` | `IOAccelVideoContextGetSidebandBuffer` 返回的 sideband 基址指针 |
 
-## 捕获范围
+`0xA9DC` 每次 flush 会先向 sideband 写入一个 8 字节控制记录。因此 sideband 有已用字节本身不作为“存在编码命令”的判据；显式首个非空模式只在 class 数非零或 command 游标超过 command 基址时停止。停止快照会同时复制 command 与 sideband 已用区间。总复制上限为 64 MiB，指针次序无效、长度越界或复制不完整都会拒绝快照。`+0x80` 指针被读取作为 sideband 数据基址；不再把它所指对象当作未知结构解析。
 
-实现位于 `tools/diagnostics/gpu-tests/xe-vme-submit-capture.c` 和同目录头文件。interpose 只在目标 VA image 的 `__TEXT` 段、`0xA8F6` 调用字节和返回地址均与已分析位置匹配，并且显式设置 `XE_VME_CAPTURE_DIR` 与 `XE_VME_STOP_BEFORE_SUBMIT=1` 时捕获。
+调用顺序仍是关键限制：`0xA893` 在提交前使用已缓存 class 数；只有原始提交成功后才重新取得新 class/resource 并更新 `+0x58`。所以快照记录的是提交时 VA 暴露的 command 和 sideband 已用范围，不保证涵盖提交返回后才产生的所有 kernel 资源状态。
 
-捕获器从调用者保留的 `R14` 读取 manager 地址，使用 `mach_vm_read_overwrite` 复制固定 0x88 字节。`manager+0x80` 的内容只作为快照字节保存，不在捕获路径中解引用。`+0x58` 计数仅按原值记录；捕获器不根据该字段遍历内存或限制其取值。内存复制不完整或输入范围无效时拒绝采集。输出文件使用 `O_EXCL`，避免覆盖已有结果。
+## Usage=0 风险边界
 
-## 运行时证据
+现有 Usage=0 证据在普通路径的首次 `FrameStatisticsContext` 调度前截停时观察到 command 构建槽尚为零；这表示命令尚未由原调度函数构造。继续该调度后，已有一次 Usage=0 探针发生 RCS GPU reset，详见 `docs/evidence/20261103-usage0-remap-diagnostic.md` 及 `docs/evidence/20261103-usage0-frame-statistics-validation.json`。
 
-- 本次 `Usage=1` 单帧探针命中目标 VA 调用点，捕获文件为 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin`，元数据为同目录的 `submit-events-15298.jsonl`。
-- 元数据记录 `request=0`、`flags=0`、`fault=0`、`cached_class_count=0`、`captured_bytes=136`。原始前缀的 `+0x80` 位置包含非空指针值；该值未被解引用或解释。
-- 受控停止发生在原始提交 API 之前，所以本次运行没有实际提交 GPU 编码命令。`Usage=1` 仅作为当前证据中的 VDENC 路径对照，不代表 `Usage=0` 普通 VME/PAK 路径已验证。
-- CPU 夹具覆盖部分复制拒绝、零缓存数、超范围原始计数保留、原始前缀不变和不透明指针原样保留；合成 dylib 夹具覆盖非目标调用转发。
-- 2026-11-03 重跑 `tools/diagnostics/gpu-tests/test-*.py` 的 11 个脚本，共 50 项测试全部通过；捕获器与 interpose 使用 `-Wall -Wextra -Werror` 编译。
+本提交拦截点位于 VA 原调度之内的 IOAccel 提交边界。若仍启用 `XE_VA_STOP_BEFORE_SCHEDULE=1`，执行会先在更早的调度入口退出，因而到不了本 interpose；若移除该保护，原调度和可能导致 reset 的前置任务会先运行。故本轮没有把 Usage=0 探针放行到这个钩子。继续硬件采集前，需要先让 schedule-level 观察器能在经过已验证的单一前置任务后，于后续危险调度前停止；否则该提交钩子不能单独作为 Usage=0 的保护边界。
 
-## 后续证据缺口
+## 验证
 
-当前入口位于原始提交之前，而新 class/resource 信息在该提交成功后才由 VA 读取。要获取 `Usage=0` 的实际 VME/PAK 资源及 payload，需要另行确定能够观测提交结果的边界；在此之前，不从 `manager+0x80` 推断命令格式，也不制作编码补丁。
+- 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
+- 新增 CPU 夹具覆盖 command 与 sideband 范围、仅有 sideband 控制记录、空初始化提交、反向游标、超预算、部分复制、原始前缀不变和两种互斥模式。
+- `tools/diagnostics/gpu-tests/test-*.py` 的 11 个脚本、50 项测试全部通过。
+- 捕获 interpose 与 VA 诊断源码使用 `clang -arch x86_64 -mmacosx-version-min=15.0 -dynamiclib -O2 -Wall -Wextra -Werror -undefined dynamic_lookup` 严格编译通过；产物位于 `build/validation-encode-and-kext-icons-20261102/xe-va-vme-submit-capture-nonempty-lab.dylib`，`__DATA_CONST,__interpose` 段存在。
