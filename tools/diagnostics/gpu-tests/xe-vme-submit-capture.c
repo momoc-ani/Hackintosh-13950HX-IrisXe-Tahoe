@@ -1,4 +1,4 @@
-/* VA 提交边界诊断：只捕获 manager 前缀，不修改系统 VA 或 GPU 命令。 */
+/* VA 提交边界诊断：仅捕获进程内 manager 与缓冲区，不修改驱动文件。 */
 #include "xe-vme-submit-capture.h"
 
 #include <limits.h>

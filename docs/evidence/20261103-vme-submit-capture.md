@@ -32,9 +32,14 @@
 
 本提交拦截点位于 VA 原调度之内的 IOAccel 提交边界。若仍启用 `XE_VA_STOP_BEFORE_SCHEDULE=1`，执行会先在更早的调度入口退出，因而到不了本 interpose；若移除该保护，原调度和可能导致 reset 的前置任务会先运行。故本轮没有把 Usage=0 探针放行到这个钩子。继续硬件采集前，需要先让 schedule-level 观察器能在经过已验证的单一前置任务后，于后续危险调度前停止；否则该提交钩子不能单独作为 Usage=0 的保护边界。
 
+为使后续受控探针能到达提交钩子，`xe-va-context-trace.c` 增加了默认关闭的 `XE_VA_SKIP_SCHEDULE_TRACE=1`。该选项只阻止诊断库替换 VA 函数表的 schedule 表项；context 与参数追踪、显式 Usage=0 映射仍独立运行。组合方式是启用 `XE_VME_CAPTURE_NONEMPTY_SUBMIT=1` 和 `XE_VA_SKIP_SCHEDULE_TRACE=1`，不设置 `XE_VA_STOP_BEFORE_SCHEDULE`；首个有 command 字节或缓存 class 的提交会在调用原 IOAccel submit 前保存并退出。空 command 的 sideband 控制记录会被转发，以允许 VA 完成初始化。
+
+REA 在当前 VA 中观察到 `_IOAccelVideoContextSubmitDataBuffers` 的一个直接调用点 `0xA8F6`，但 `all_runtime_submission_paths_proven=false`。因此，即使此组合把已知调用点截在原提交前，也还没有静态证明不存在其他调度/提交入口；本次只编译和做 CPU 测试，不据此宣称硬件执行绝对不会发生，也不运行它。
+
 ## 验证
 
 - 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
 - 新增 CPU 夹具覆盖 command 与 sideband 范围、仅有 sideband 控制记录、空初始化提交、反向游标、超预算、部分复制、原始前缀不变和两种互斥模式。
+- `test-va-context-trace.py` 覆盖 schedule 包装默认启用、设为 `0` 仍启用、设为 `1` 才跳过；跳过选项尚未在真实 VA 函数表上做运行时验证。
 - `tools/diagnostics/gpu-tests/test-*.py` 的 11 个脚本、50 项测试全部通过。
 - 捕获 interpose 与 VA 诊断源码使用 `clang -arch x86_64 -mmacosx-version-min=15.0 -dynamiclib -O2 -Wall -Wextra -Werror -undefined dynamic_lookup` 严格编译通过；产物位于 `build/validation-encode-and-kext-icons-20261102/xe-va-vme-submit-capture-nonempty-lab.dylib`，`__DATA_CONST,__interpose` 段存在。

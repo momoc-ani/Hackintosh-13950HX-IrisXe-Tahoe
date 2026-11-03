@@ -41,6 +41,14 @@ static int parameter_original(void *accelerator, uint32_t *request) {
 // 构造一条可用能力和不匹配请求，检查诊断保留所有输入字节。
 // 以默认和显式启用环境分别运行，确认映射只影响 opt-in 请求。
 int main(void) {
+    // 默认包裹调度表项；显式 skip 开关时保留原表项供下游提交截停。
+    unsetenv("XE_VA_SKIP_SCHEDULE_TRACE");
+    if (!schedule_trace_enabled()) return 91;
+    if (setenv("XE_VA_SKIP_SCHEDULE_TRACE", "0", 1) ||
+        !schedule_trace_enabled()) return 92;
+    if (setenv("XE_VA_SKIP_SCHEDULE_TRACE", "1", 1) ||
+        schedule_trace_enabled()) return 93;
+    unsetenv("XE_VA_SKIP_SCHEDULE_TRACE");
     unsigned char node[0x438]={0}, header[0x20]={0}, request_node[0x40]={0};
     unsigned char *nodes[]={node}, *requested[]={request_node};
     uint32_t count=1,kind=0x20;uint64_t available=0x400,wanted=0x4000;

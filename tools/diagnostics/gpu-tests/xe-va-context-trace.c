@@ -14,6 +14,12 @@ static unsigned sequence;
 int xe_usage0_remap_chain(unsigned char *node);
 int xe_usage0_remap_parameter_entries(unsigned char *entries,uint32_t count);
 
+// 默认保留 schedule 诊断 hook；仅在组合提交截停时显式跳过该 hook。
+static int schedule_trace_enabled(void){
+    const char *skip=getenv("XE_VA_SKIP_SCHEDULE_TRACE");
+    return !skip||strcmp(skip,"1");
+}
+
 // 读取已核对的整数/指针字段，避免从可能未对齐节点直接强转解引用。
 static uint64_t read64(const unsigned char *source){uint64_t value;memcpy(&value,source,8);return value;}
 // 读取节点类型、数量或用途字段，仅服务诊断输出。
@@ -124,7 +130,11 @@ static int trace_create(void **accelerator,const void *configuration,void *info)
     if(!status&&accelerator&&*accelerator){
         void **table=*accelerator;original_contexts=(void *)table[3];table[3]=(void *)trace_contexts;
         original_parameters=(void *)table[13];table[13]=(void *)trace_parameters;
-        original_schedule=(void *)table[11];table[11]=(void *)trace_schedule;
+        if(schedule_trace_enabled()){
+            original_schedule=(void *)table[11];table[11]=(void *)trace_schedule;
+        }else{
+            fprintf(stderr,"VA-CONTEXT {\"event\":\"schedule-hook\",\"state\":\"skipped-for-submit-capture\"}\n");
+        }
         trace_capabilities((const unsigned char *)(uintptr_t)read64((const unsigned char *)info+8));
     }
     return status;
