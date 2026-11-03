@@ -101,13 +101,14 @@ int main(void) {
         source.write_text('#include "' + str(SOURCE) + '"\n' + r'''
 #include <sys/mman.h>
 
-// 将帧尾紧贴不可访问页，字段宽度错误或误套 VDENC 大结构会直接使测试失败。
+// 将对象尾紧贴不可访问页，字段宽度错误或误套 VDENC 大结构会直接使测试失败。
 static unsigned char *guarded_frame(size_t bytes) {
     size_t page = (size_t)sysconf(_SC_PAGESIZE);
-    unsigned char *memory = mmap(NULL, page * 2, PROT_READ | PROT_WRITE,
+    size_t accessible = (bytes + page - 1) / page * page;
+    unsigned char *memory = mmap(NULL, accessible + page, PROT_READ | PROT_WRITE,
                                  MAP_PRIVATE | MAP_ANON, -1, 0);
-    if (memory == MAP_FAILED || mprotect(memory + page, page, PROT_NONE)) exit(93);
-    return memory + page - bytes;
+    if (memory == MAP_FAILED || mprotect(memory + accessible, page, PROT_NONE)) exit(93);
+    return memory + accessible - bytes;
 }
 
 // 一旦调用原调度便返回失败标记，统计采集必须先于这个入口退出。
@@ -122,6 +123,11 @@ int main(void) {
     unsigned char header[16] = {0}, first[0x38] = {0}, second[0x38] = {0};
     unsigned char *frame = guarded_frame(0x18), *output = guarded_frame(0x10);
     unsigned char *context = calloc(1, 0x4730), *commands[] = {first};
+    unsigned char *accelerator = guarded_frame(0xa86c);
+    uint32_t hardware_threads = 112;
+    if (getenv("XE_TEST_ZERO_THREADS")) hardware_threads = 0;
+    memcpy(accelerator + 0xa868, &hardware_threads, 4);
+    if (getenv("XE_TEST_NO_ACCELERATOR")) accelerator = NULL;
     uint32_t count = 1, kind = 2, output_kind = 16;
     uint64_t capability = 0x1000, output_capability = 0x20;
     uint64_t surfaces[] = {0x1020304050607080ULL, 0x8877665544332211ULL};
@@ -131,6 +137,9 @@ int main(void) {
     uint32_t curbe_bytes = 32, kernel_count = 1, kernel_bytes = 0x2050;
     uint32_t kernel_storage_capacity = 0x4000, kernel_storage_used = 0x2080;
     uint64_t kernel_storage_base = 0x12340000, kernel_copy = 0x12342000;
+    uint32_t vfe_state[9] = {0x70000007, 0, 0, 0x12341000, 0, 0, 0, 0, 0};
+    uint32_t curbe_load[4] = {0x70010002, 0, 32, 0x400};
+    uint32_t descriptor_load[4] = {0x70020002, 0, 64, 0};
     if (getenv("XE_TEST_NO_CONTEXT")) context = NULL;
     if (getenv("XE_TEST_OTHER_KIND")) {
         kind = 4;
@@ -148,6 +157,7 @@ int main(void) {
     memcpy(frame + 0x10, &slot, 4); memcpy(frame + 0x14, &blocks, 4);
     memcpy(output + 8, &output_surface, 8);
     if (context && !getenv("XE_TEST_OTHER_KIND")) {
+        memcpy(context + 8, &accelerator, 8);
         memcpy(context + 0x138, &width, 4); memcpy(context + 0x13c, &height, 4);
         memcpy(context + 0x150, &block_width, 4); memcpy(context + 0x158, &block_height, 4);
         memcpy(context + 0x160, &curbe_bytes, 4); memcpy(context + 0x168, &kernel_count, 4);
@@ -156,6 +166,9 @@ int main(void) {
         memcpy(context + 0x198, &kernel_storage_base, 8);
         memcpy(context + 0x4390, &kernel_copy, 8);
         memcpy(context + 0x4590, &kernel_bytes, 4);
+        memcpy(context + 0x427c, vfe_state, sizeof(vfe_state));
+        memcpy(context + 0x42c4, curbe_load, sizeof(curbe_load));
+        memcpy(context + 0x42e4, descriptor_load, sizeof(descriptor_load));
     }
     if (getenv("XE_TEST_ALLOW_STATS")) {
         int first_result = xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
@@ -205,6 +218,60 @@ int main(void) {
             self.assertFalse(any(event["event"] == "frame-field" for event in events))
             self.assertNotIn("unexpected-original-call", result.stderr)
 
+    def test_statistics_threads_follow_context_accelerator_and_read_only_32_bits(self):
+        """从 context+8 对象读取 +0xa868 的 32 位字段，不能使用调度入口参数或越界。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ, "XE_VA_STOP_BEFORE_SCHEDULE": "1"}
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            events = [json.loads(line.removeprefix("VA-COMMAND "))
+                      for line in result.stderr.splitlines() if line.startswith("VA-COMMAND ")]
+            threads = [event for event in events if event["event"] == "frame-statistics-threads"]
+            self.assertEqual(len(threads), 1, result.stderr)
+            self.assertNotEqual(threads[0]["accelerator"], "0x0")
+            self.assertEqual(threads[0]["hardware_threads"], 112)
+            self.assertEqual(threads[0]["field_offset"], "0xa868")
+            self.assertEqual(events[-1]["event"], "stop-before-original")
+            self.assertNotIn("unexpected-original-call", result.stderr)
+
+    def test_statistics_command_state_reports_only_bounded_context_words(self):
+        """VFE、CURBE-load 与 descriptor-load 只读各自的已核对 DWORD 范围。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ, "XE_VA_STOP_BEFORE_SCHEDULE": "1"}
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            events = [json.loads(line.removeprefix("VA-COMMAND "))
+                      for line in result.stderr.splitlines() if line.startswith("VA-COMMAND ")]
+            states = [event for event in events if event["event"] == "frame-statistics-command-state"]
+            self.assertEqual(len(states), 1, result.stderr)
+            self.assertEqual(states[0]["capture_phase"], "before-original-schedule")
+            self.assertEqual(states[0]["vfe_dwords"], [
+                0x70000007, 0, 0, 0x12341000, 0, 0, 0, 0, 0,
+            ])
+            self.assertEqual(states[0]["curbe_load_dwords"], [0x70010002, 0, 32, 0x400])
+            self.assertEqual(states[0]["descriptor_load_dwords"], [0x70020002, 0, 64, 0])
+            self.assertEqual(events[-1]["event"], "stop-before-original")
+            self.assertNotIn("unexpected-original-call", result.stderr)
+
+    def test_missing_accelerator_is_unknown_but_zero_threads_is_a_read_value(self):
+        """缺失对象记录 null，实测零保留零，不把两种状态混为一谈。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            for flag, expected in (("XE_TEST_NO_ACCELERATOR", None), ("XE_TEST_ZERO_THREADS", 0)):
+                environment = {**os.environ, "XE_VA_STOP_BEFORE_SCHEDULE": "1", flag: "1"}
+                result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 77, result.stderr)
+                events = [json.loads(line.removeprefix("VA-COMMAND "))
+                          for line in result.stderr.splitlines() if line.startswith("VA-COMMAND ")]
+                threads = [event for event in events if event["event"] == "frame-statistics-threads"]
+                self.assertEqual(len(threads), 1, result.stderr)
+                self.assertEqual(threads[0]["hardware_threads"], expected)
+                self.assertEqual(threads[0]["accelerator"] == "0x0", expected is None)
+                self.assertEqual(events[-1]["event"], "stop-before-original")
+                self.assertNotIn("unexpected-original-call", result.stderr)
+
     def test_statistics_context_is_optional_and_unknown_kinds_are_not_read(self):
         """空 context 仍可采集帧；其他 kind 不解引用其不可访问的 context。"""
         with tempfile.TemporaryDirectory() as temporary:
@@ -214,6 +281,8 @@ int main(void) {
                 result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 77, result.stderr)
                 self.assertNotIn('"event":"frame-statistics-context"', result.stderr)
+                self.assertNotIn('"event":"frame-statistics-threads"', result.stderr)
+                self.assertNotIn('"event":"frame-statistics-command-state"', result.stderr)
                 self.assertNotIn("unexpected-original-call", result.stderr)
                 if flag == "XE_TEST_OTHER_KIND":
                     self.assertNotIn('"event":"frame-statistics"', result.stderr)

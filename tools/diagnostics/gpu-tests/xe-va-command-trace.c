@@ -53,6 +53,33 @@ static void trace_statistics_fields(const unsigned char *frame, const unsigned c
                 (unsigned long long)command_read64(context + 0x198),
                 (unsigned long long)command_read64(context + 0x4390),
                 command_read32(context + 0x4590));
+        // 0x2c84a 从 context+8 指向的对象读取该 32 位线程字段；不使用调度入口参数。
+        const unsigned char *statistics_accelerator =
+            (const unsigned char *)(uintptr_t)command_read64(context + 8);
+        fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics-threads\",\"root\":%u,\"depth\":%u,\"accelerator\":\"0x%llx\",\"field_offset\":\"0xa868\",\"hardware_threads\":",
+                root, depth, (unsigned long long)(uintptr_t)statistics_accelerator);
+        if (statistics_accelerator) {
+            fprintf(stderr, "%u", command_read32(statistics_accelerator + 0xa868));
+        } else {
+            fputs("null", stderr);
+        }
+        fputs("}\n", stderr);
+
+        // 这些是原调度前的存储槽；全零表示此处尚无命令头，不能当作最终 GPU 命令。
+        fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics-command-state\",\"root\":%u,\"depth\":%u,\"capture_phase\":\"before-original-schedule\",\"vfe_dwords\":[",
+                root, depth);
+        for (size_t i = 0; i < 9; i++) {
+            fprintf(stderr, "%s%u", i ? "," : "", command_read32(context + 0x427c + i * 4));
+        }
+        fputs("],\"curbe_load_dwords\":[", stderr);
+        for (size_t i = 0; i < 4; i++) {
+            fprintf(stderr, "%s%u", i ? "," : "", command_read32(context + 0x42c4 + i * 4));
+        }
+        fputs("],\"descriptor_load_dwords\":[", stderr);
+        for (size_t i = 0; i < 4; i++) {
+            fprintf(stderr, "%s%u", i ? "," : "", command_read32(context + 0x42e4 + i * 4));
+        }
+        fputs("]}\n", stderr);
     }
 }
 

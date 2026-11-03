@@ -46,7 +46,7 @@ Usage=0 的首条链仍为 `kind=2/cap=0x1000 → kind=16/cap=0x20`，实际 con
 
 ## 主机 CPU 夹具与历史重置的关联
 
-新增 `tools/diagnostics/gpu-tests/inspect-frame-statistics-cpu.py`，只映射已分析 VA 的 `__TEXT`，在普通内存夹具中执行 `0x2c84a`、`0x2cc16` 及其三个 CPU 辅助函数。它不加载 bundle，不调用 VA 调度、IOKit 或表面绑定函数。线程数是调用者明确提供的夹具参数，不代表本次实机线程采集。
+新增 `tools/diagnostics/gpu-tests/inspect-frame-statistics-cpu.py`，只映射已分析 VA 的 `__TEXT`，在普通内存夹具中执行 `0x2c84a`、`0x2cc16` 及其三个 CPU 辅助函数。它不加载 bundle，不调用 VA 调度、IOKit 或表面绑定函数。下表中的线程数是显式夹具参数；本节后续另列实机只读采集。
 
 720p / 224 线程 CPU 夹具生成。224 是显式传给分析脚本的数值，不是从实机读取的 CPU 线程数：
 
@@ -61,9 +61,19 @@ Usage=0 的首条链仍为 `kind=2/cap=0x1000 → kind=16/cap=0x20`，实际 con
 
 1080p / 112 线程夹具另确认网格向上取整为 120×68；线程参数只改变对应的 VFE 字段。
 
+## 实机线程数与命令构建边界
+
+2026-11-03 17:10 的 Usage=0 截停运行读取 `FrameStatisticsContext + 8` 指向 accelerator 对象的 `+0xA868` 32 位字段，实测为 224。该路径与静态代码一致：初始化查询返回后，驱动按 accelerator `+0xA884 × 7` 填入 `+0xA868`。将实测 224 传入 CPU 构建器后，`MEDIA_VFE_STATE.DW3` 为 `0x00DF1000`，其中最大线程数编码为 223，即 224。它验证了线程字段读取及 CPU 构建结果相符，不能单独证明 GPU 执行正确。
+
+17:20 和 17:29 的只读截停复测记录到同一 224 值，但 VFE、CURBE-load 和 interface-descriptor-load 的上下文存储槽均为零。Ghidra 对全局入口 `0x159A4` 的静态观察表明，它完成请求校验后才通过 context vtable `+0x28` 分派到 `0x2190A`；因此本探针在这些命令由调度回调构建之前就退出了。零值表示尚未构建，不能当作最终硬件命令。17:29 运行的末尾事件仍为 `stop-before-original-schedule`、退出码 77，原调度和 GPU 命令均未执行；运行期间没有新增 GPU restart 报告。
+
+不带 `XE_USAGE0_REMAP=1` 的同一命令未创建 VideoToolbox 会话，返回 `-12915`，没有进入调度；成功截停复测使用了映射与强制截停变量。其目的只是复现并在 VA 调度前记录请求，不代表映射有效。
+
 历史失败报告 `Kernel_2026-11-03-101651_Mac-Pro.gpuRestart` 中，IPEHR 为 `0x7103000f`，batch 基址为 `0x40010000`，ACTHD 为 `0x400100f0`。其相对偏移 `0xF0` 与本次 CPU 构建的 walker 终点相符。这将调查收敛到统计任务的媒体 walker / 执行状态边界，但没有同次完整 GPU batch，不能仅凭偏移相符宣称已唯一证明卡死节点或内核根因。
 
-2026-11-03 13:23:14 启动的受控探针使用 VFE legacy 副本。日志记录统计调度返回 `status=0`，并在后续 PAK 请求的原调度入口前退出 77；日志文件修改时间为 13:23:23，单条事件没有精确墙钟时间。系统于 13:23:24 生成 `Kernel_2026-11-03-132324_Mac-Pro.gpuRestart`，Application 为 `xe-h264-encode-m`，Signature 813、IPEHR 为 `0x7103000f`、ACTHD 为 `0x400100f0`。统计任务已提交但返回 0 不等于 GPU 完成；reset 与探针同进程、时间相邻，但没有完整硬件 batch 或可配对的 submission trace ID，因此不能宣称已唯一证明统计 kernel 根因。后续严格截停复测没有调用原调度，截至复查未观察到更新的 GPU reset 报告。
+2026-11-03 13:23:14 启动的受控探针使用 VFE legacy 副本。日志记录统计调度返回 `status=0`，并在后续 PAK 请求的原调度入口前退出 77；日志文件修改时间为 13:23:23，单条事件没有精确墙钟时间。系统于 13:23:24 生成 `Kernel_2026-11-03-132324_Mac-Pro.gpuRestart`，Application 为 `xe-h264-encode-m`，Signature 813、IPEHR 为 `0x7103000f`、ACTHD 为 `0x400100f0`。统计任务已提交但返回 0 不等于 GPU 完成；reset 与探针同进程、时间相邻，但没有完整硬件 batch 或可配对的 submission trace ID，因此不能宣称已唯一证明统计 kernel 根因。
+
+另发现 2026-11-03 16:10:33 的 `Kernel_2026-11-03-161033_Mac-Pro.gpuRestart`：Application 为 `mediaanalysisd`、Signature 1000、IPEHR 和 ACTHD 均为 0，报告称部分 main engines 未完成。它早于 17:10/17:20/17:29 的 VA 探针，不能归因于这些探针；当前材料也无法确定它自身的根因。17:29 检查时它仍是日志目录中最新的 GPU restart 报告。
 
 Intel Gen12 定义中的该 RCS walker 本身也是 17 DWORD；此前 VDENC 的 27 DWORD 修补针对另一种命令 `0x7087…`，不能照搬到这里。
 
@@ -100,7 +110,9 @@ python3 tools/diagnostics/gpu-tests/test-frame-statistics-cpu.py
 python3 tools/diagnostics/gpu-tests/test-va-command-trace.py
 ```
 
-主机 CPU 夹具测试需要上述已构建的独立 VA，不以缺失输入或 0 项发现作为通过。先前一轮历史验证运行过 12 个测试文件、57 项测试；本轮诊断门控修改后重跑整个 `tools/diagnostics/gpu-tests/test-*.py` 集合，10 个测试文件全部通过，诊断库严格编译、JSON 解析和 `git diff --check` 均通过。测试案例总数没有从 runner 输出汇总。完整 Usage=0 编码仍未通过；早前 RCS reset 的统计任务归因仍不唯一。
+主机 CPU 夹具测试需要上述已构建的独立 VA，不以缺失输入或 0 项发现作为通过。先前一轮历史验证运行过 12 个测试文件、57 项测试；本轮重跑整个 `tools/diagnostics/gpu-tests/test-*.py` 集合，10 个测试文件、48 项测试全部通过，诊断库严格编译、证据 JSON 解析和 `git diff --check` 均通过。完整 Usage=0 编码仍未通过；统计任务和 GPU reset 之间的归因仍不唯一。
+
+下一步先沿 `0x2190A` 的 context 回调继续静态追踪命令构建与低层提交边界，再确定能否在命令生成后、提交前安全截获完整 batch。当前截停点太早，不能用全零字段验证最终 VFE、CURBE、descriptor 或表面状态，也没有理由据此改 GPU 命令。
 
 下一步需基于 RPL-S/A788 的权威 ISA 与消息定义，重新建立统计 kernel 各读写操作的格式和同步语义，并继续还原普通 VME/PAK context 与帧接口。context 容量为 12 KiB，单个 8,824 字节候选若能被证明等价，可替换唯一原 kernel；追加到已有原 kernel 后则不够容量。当前诊断库删除了允许首条调度通过的两个环境变量，Usage=0 映射开启时一律在原调度前退出。系统 VA、EFI 与安装目录未修改。
 

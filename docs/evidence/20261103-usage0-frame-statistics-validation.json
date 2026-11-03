@@ -544,7 +544,7 @@
     "reset_time": "2026-11-03T13:23:24+08:00",
     "signature": 813,
     "association": "same probe process; status 0 returned, then a PAK request was captured and stopped before its original schedule; reset report followed within 1 second; unique guilty batch attribution remains unknown",
-    "strict_preschedule_followup": "exit 77 before original schedule; no new reset observed",
+    "strict_preschedule_followup": "The 16:03 capture exited before original schedule. A separate mediaanalysisd GPU restart report is dated 16:10:33.",
     "probe_start_time": "2026-11-03T13:23:14+08:00",
     "probe_log_mtime": "2026-11-03T13:23:23+08:00",
     "only_one_original_schedule_allowed": true,
@@ -565,8 +565,11 @@
       "test_files": 10,
       "test_files_passed": 10,
       "test_files_failed": 0,
-      "test_case_total": null,
-      "test_case_total_note": "Not aggregated by the suite runner.",
+      "test_case_total": 48,
+      "test_cases_passed": 48,
+      "test_cases_failed": 0,
+      "test_cases_errored": 0,
+      "test_cases_skipped": 0,
       "files": [
         "test-frame-statistics-cpu.py",
         "test-h264-encode-options.py",
@@ -702,5 +705,88 @@
       }
     ]
   },
-  "updated_at": "2026-11-03T16:10:00+08:00"
+  "updated_at": "2026-11-03T17:29:57+08:00",
+  "runtime_thread_field_capture": {
+    "log": "build/validation-encode-and-kext-icons-20261102/usage0-thread-count-20261103/run.log",
+    "log_mtime": "2026-11-03T17:10:20+08:00",
+    "process": "xe-h264-encode-modes-lab",
+    "requested_usage": 0,
+    "resolution": [
+      1280,
+      720
+    ],
+    "field_source": "FrameStatisticsContext+8 accelerator object +0xa868 (uint32)",
+    "hardware_threads": 224,
+    "original_schedule_called": false,
+    "stop_event": {
+      "event": "stop-before-original",
+      "exit_code": 77
+    },
+    "cpu_builder": {
+      "log": "build/validation-encode-and-kext-icons-20261102/usage0-thread-count-20261103/cpu-builder-observed-threads.json",
+      "same_va_image": true,
+      "batch_bytes": 288,
+      "vfe_dw3": "0x00df1000",
+      "maximum_threads_field_decoded": 224,
+      "gpu_commands_executed": false
+    }
+  },
+  "runtime_command_state_capture": {
+    "started_at": "2026-11-03T17:29:57.737824+08:00",
+    "finished_at": "2026-11-03T17:29:57.916419+08:00",
+    "log": "build/validation-encode-and-kext-icons-20261102/usage0-command-state-remap-20261103/final-run.log",
+    "process": "xe-h264-encode-modes-lab",
+    "requested_usage": 0,
+    "width": 1280,
+    "height": 720,
+    "hardware_threads": 224,
+    "capture_phase": "before-original-schedule",
+    "vfe_dwords": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "curbe_load_dwords": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "descriptor_load_dwords": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "interpretation": "The hook runs before original schedule. Static Ghidra evidence shows schedule 0x159a4 dispatches each command context only after request validation; zero slots therefore mean not built yet and do not represent the final GPU batch.",
+    "stop_event": {
+      "event": "stop-before-original",
+      "exit_code": 77
+    },
+    "original_schedule_called": false,
+    "gpu_commands_executed": false,
+    "new_gpu_restart_reports_at_exit": [],
+    "comparison_without_usage0_remap": {
+      "log": "build/validation-encode-and-kext-icons-20261102/usage0-command-state-20261103/run.log",
+      "video_toolbox_create_status": -12915,
+      "schedule_reached": false
+    }
+  },
+  "latest_existing_gpu_reset_review": {
+    "report": "/Library/Logs/DiagnosticReports/Kernel_2026-11-03-161033_Mac-Pro.gpuRestart",
+    "date_time": "2026-11-03T16:10:33+08:00",
+    "application": "mediaanalysisd",
+    "signature": 1000,
+    "ipehr": "0x00000000",
+    "acthd": "0x00000000",
+    "some_main_engines_not_done": true,
+    "relation_to_thread_probe": "The report predates the 17:10, 17:20, and 17:29 probes; it does not establish their cause.",
+    "latest_report_checked_at": "2026-11-03T17:29:57+08:00"
+  }
 }
