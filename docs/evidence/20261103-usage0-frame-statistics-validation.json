@@ -788,5 +788,34 @@
     "some_main_engines_not_done": true,
     "relation_to_thread_probe": "The report predates the 17:10, 17:20, and 17:29 probes; it does not establish their cause.",
     "latest_report_checked_at": "2026-11-03T17:29:57+08:00"
+  },
+  "scheduler_capture_boundary_static": {
+    "authority": "Ghidra decompilation of the selected AppleIntelTGLGraphicsVADriver artifact",
+    "global_schedule_entry": "0x159a4",
+    "context_dispatch": "after request validation, through context vtable +0x28 to 0x2190a",
+    "context_vtable_entries": {
+      "+0x60": "0x2c6f6 command-record wrapper",
+      "+0x70": "0x22236 frame-statistics parameter builder",
+      "+0x80": "0x2c84a walker-state builder",
+      "+0x88": "0x21d22 surface-state builder"
+    },
+    "pre_builder_buffer_path": {
+      "allocator": "0x22708",
+      "conditional": "calls 0xa9dc when the data buffer lacks required command or auxiliary space",
+      "shared_path": "0xa9dc calls 0xa893",
+      "submit_api_call": "0xa8f6 to _IOAccelVideoContextSubmitDataBuffers"
+    },
+    "end_of_callback_path": {
+      "completion_helper": "0x227e0",
+      "shared_path": "calls 0xa9dc after event check"
+    },
+    "direct_call_xrefs_to_submit_api": [
+      "0xa8f6"
+    ],
+    "interpose_implemented": false,
+    "all_runtime_submission_paths_proven": false,
+    "host_buffer_capture_proven": false,
+    "gpu_test_run": false,
+    "conclusion": "Do not enter the original schedule until a pre-submit intercept is independently validated; an end-of-schedule exit may be too late."
   }
 }

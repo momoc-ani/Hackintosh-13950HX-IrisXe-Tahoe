@@ -19,7 +19,8 @@ Ghidra 对独立 `va-gen12-native` 的观察如下：
 | 构造器 `0x21a9a` | 设置 vtable `0x7549b0`，块宽和块高各 16 |
 | RTTI 名称 `0x31f51c` | `26AVD_FrameStatisticsContext` |
 | vtable `+0x28` | 通用调度入口 `0x2190a` |
-| vtable `+0x60` | 统计参数构建入口 `0x22236` |
+| vtable `+0x60` | 命令记录包装器 `0x2c6f6`，随后通过 `+0x70` 转入统计参数构建 |
+| vtable `+0x70` | 统计参数构建入口 `0x22236` |
 | vtable `+0x88` | 表面状态构建入口 `0x21d22` |
 | 帧参数 `+0x00/+0x08` | 当前表面和前一帧表面，各 8 字节 |
 | 帧参数 `+0x10/+0x14` | 统计槽与块数，各 4 字节 |
@@ -65,7 +66,7 @@ Usage=0 的首条链仍为 `kind=2/cap=0x1000 → kind=16/cap=0x20`，实际 con
 
 2026-11-03 17:10 的 Usage=0 截停运行读取 `FrameStatisticsContext + 8` 指向 accelerator 对象的 `+0xA868` 32 位字段，实测为 224。该路径与静态代码一致：初始化查询返回后，驱动按 accelerator `+0xA884 × 7` 填入 `+0xA868`。将实测 224 传入 CPU 构建器后，`MEDIA_VFE_STATE.DW3` 为 `0x00DF1000`，其中最大线程数编码为 223，即 224。它验证了线程字段读取及 CPU 构建结果相符，不能单独证明 GPU 执行正确。
 
-17:20 和 17:29 的只读截停复测记录到同一 224 值，但 VFE、CURBE-load 和 interface-descriptor-load 的上下文存储槽均为零。Ghidra 对全局入口 `0x159A4` 的静态观察表明，它完成请求校验后才通过 context vtable `+0x28` 分派到 `0x2190A`；因此本探针在这些命令由调度回调构建之前就退出了。零值表示尚未构建，不能当作最终硬件命令。17:29 运行的末尾事件仍为 `stop-before-original-schedule`、退出码 77，原调度和 GPU 命令均未执行；运行期间没有新增 GPU restart 报告。
+17:20 和 17:29 的只读截停复测记录到同一 224 值，但 VFE、CURBE-load 和 interface-descriptor-load 的上下文存储槽均为零。Ghidra 对全局入口 `0x159A4` 的静态观察表明，它完成请求校验后才通过 context vtable `+0x28` 分派到 `0x2190A`；因此本探针在这些命令由调度回调构建之前就退出了。零值表示尚未构建，不能当作最终硬件命令。17:29 运行的末尾事件仍为 `stop-before-original`、退出码 77，没有进入原调度或提交这条统计帧任务；截至该次运行退出检查，没有新增 GPU restart 报告。
 
 不带 `XE_USAGE0_REMAP=1` 的同一命令未创建 VideoToolbox 会话，返回 `-12915`，没有进入调度；成功截停复测使用了映射与强制截停变量。其目的只是复现并在 VA 调度前记录请求，不代表映射有效。
 
@@ -112,8 +113,10 @@ python3 tools/diagnostics/gpu-tests/test-va-command-trace.py
 
 主机 CPU 夹具测试需要上述已构建的独立 VA，不以缺失输入或 0 项发现作为通过。先前一轮历史验证运行过 12 个测试文件、57 项测试；本轮重跑整个 `tools/diagnostics/gpu-tests/test-*.py` 集合，10 个测试文件、48 项测试全部通过，诊断库严格编译、证据 JSON 解析和 `git diff --check` 均通过。完整 Usage=0 编码仍未通过；统计任务和 GPU reset 之间的归因仍不唯一。
 
-下一步先沿 `0x2190A` 的 context 回调继续静态追踪命令构建与低层提交边界，再确定能否在命令生成后、提交前安全截获完整 batch。当前截停点太早，不能用全零字段验证最终 VFE、CURBE、descriptor 或表面状态，也没有理由据此改 GPU 命令。
+REA 静态分析已定位到一个明确的 VA 提交调用点：`0xA893` 调用导入的 `_IOAccelVideoContextSubmitDataBuffers`（调用点 `0xA8F6`）。在 `0x2190A` 的路径中，缓冲分配器 `0x22708` 容量不足时会调用 `0xA9DC`，而调度尾部的 `0x227E0` 也会调用 `0xA9DC`；`0xA9DC` 随后进入 `0xA893`。因此，继续运行原调度到末尾再退出可能已经提交了早先构建的 batch。
 
-下一步需基于 RPL-S/A788 的权威 ISA 与消息定义，重新建立统计 kernel 各读写操作的格式和同步语义，并继续还原普通 VME/PAK context 与帧接口。context 容量为 12 KiB，单个 8,824 字节候选若能被证明等价，可替换唯一原 kernel；追加到已有原 kernel 后则不够容量。当前诊断库删除了允许首条调度通过的两个环境变量，Usage=0 映射开启时一律在原调度前退出。系统 VA、EFI 与安装目录未修改。
+当前探针仍只在全局 `0x159A4` 调度入口之前读取状态并退出。下一步候选是开发独立的提交前截停探针：确认它能拦截上述导入 API、记录待提交的真实数据缓冲区，并在不调用原提交函数时结束；还要核对该流程的所有提交路径及缓冲区读取边界。REA 只找到一个对此导入符号的直接调用点，但尚未证明运行时不存在其他间接路径，也未实现或验证 interpose，因此本轮没有进入原调度或尝试该钩子。
+
+确认该截停边界后，再依据 RPL-S/A788 的权威 ISA 与消息定义核对统计 kernel 的读写格式和同步语义，并继续还原普通 VME/PAK context 与帧接口。context 容量为 12 KiB，单个 8,824 字节候选只有在语义证明并通过硬件验证后才可考虑替换；追加到已有 kernel 后容量不足。当前诊断库仍强制在原调度前截停，系统 VA、EFI 与安装目录均未修改。
 
 参考源码来自 Intel 官方 `intel/media-driver`，2026-11-03 下载到同一验证目录：`mhw_render_hwcmd_g12_X.h:701`、`:1026`，`mhw_render_g12_X.cpp:32`，`codechal_encode_avc_g12.cpp:5271` 和 `codechal_vdenc_avc_g12.cpp:2158`。参考仓库为 `https://github.com/intel/media-driver`。
