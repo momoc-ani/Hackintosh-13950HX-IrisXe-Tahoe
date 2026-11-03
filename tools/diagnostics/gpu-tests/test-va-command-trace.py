@@ -129,6 +129,8 @@ int main(void) {
     uint32_t slot = 3, blocks = 0x87654321;
     uint32_t width = 1280, height = 720, block_width = 16, block_height = 16;
     uint32_t curbe_bytes = 32, kernel_count = 1, kernel_bytes = 0x2050;
+    uint32_t kernel_storage_capacity = 0x4000, kernel_storage_used = 0x2080;
+    uint64_t kernel_storage_base = 0x12340000, kernel_copy = 0x12342000;
     if (getenv("XE_TEST_NO_CONTEXT")) context = NULL;
     if (getenv("XE_TEST_OTHER_KIND")) {
         kind = 4;
@@ -149,7 +151,15 @@ int main(void) {
         memcpy(context + 0x138, &width, 4); memcpy(context + 0x13c, &height, 4);
         memcpy(context + 0x150, &block_width, 4); memcpy(context + 0x158, &block_height, 4);
         memcpy(context + 0x160, &curbe_bytes, 4); memcpy(context + 0x168, &kernel_count, 4);
+        memcpy(context + 0x16c, &kernel_storage_used, 4);
+        memcpy(context + 0x190, &kernel_storage_capacity, 4);
+        memcpy(context + 0x198, &kernel_storage_base, 8);
+        memcpy(context + 0x4390, &kernel_copy, 8);
         memcpy(context + 0x4590, &kernel_bytes, 4);
+    }
+    if (getenv("XE_TEST_ALLOW_STATS")) {
+        int first_result = xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
+        if (first_result != 91) return 92;
     }
     return xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
 }
@@ -183,6 +193,12 @@ int main(void) {
                                    "block_height": 16, "curbe_bytes": 32, "kernel_count": 1,
                                    "kernel_bytes": 0x2050}.items():
                 self.assertEqual(contexts[0][name], expected)
+            storage = [event for event in events if event["event"] == "frame-statistics-storage"]
+            self.assertEqual(len(storage), 1, result.stderr)
+            for name, expected in {"capacity": 0x4000, "used_bytes": 0x2080,
+                                   "storage_base": "0x12340000",
+                                   "kernel_copy": "0x12342000", "kernel_bytes": 0x2050}.items():
+                self.assertEqual(storage[0][name], expected)
             outputs = [event for event in events if event["event"] == "frame-statistics-output"]
             self.assertEqual(len(outputs), 1, result.stderr)
             self.assertEqual(outputs[0]["output_surface"], "0x1122334455667788")
@@ -201,6 +217,21 @@ int main(void) {
                 self.assertNotIn("unexpected-original-call", result.stderr)
                 if flag == "XE_TEST_OTHER_KIND":
                     self.assertNotIn('"event":"frame-statistics"', result.stderr)
+
+    def test_legacy_allow_statistics_switch_cannot_bypass_remap_stop(self):
+        """已废弃的放行变量不能让统计任务调用存在 RCS reset 的原调度。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ, "XE_USAGE0_REMAP": "1",
+                           "XE_VA_ALLOW_STATISTICS_ONLY": "1",
+                           "XE_VA_ALLOW_FIRST_SCHEDULE": "1",
+                           "XE_TEST_ALLOW_STATS": "1"}
+            environment.pop("XE_VA_STOP_BEFORE_SCHEDULE", None)
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            self.assertNotIn("unexpected-original-call", result.stderr)
+            self.assertNotIn('"event":"allow-statistics-only"', result.stderr)
+            self.assertEqual(result.stderr.count('"event":"stop-before-original"'), 1, result.stderr)
 
 
 if __name__ == "__main__":

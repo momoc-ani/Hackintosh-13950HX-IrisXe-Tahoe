@@ -47,6 +47,12 @@ static void trace_statistics_fields(const unsigned char *frame, const unsigned c
                 command_read32(context + 0x150), command_read32(context + 0x158),
                 command_read32(context + 0x160), command_read32(context + 0x168),
                 command_read32(context + 0x4590));
+        // 只记录容量、占用和地址数值，不解引用 kernel buffer 指针。
+        fprintf(stderr, "VA-COMMAND {\"event\":\"frame-statistics-storage\",\"root\":%u,\"depth\":%u,\"capacity\":%u,\"used_bytes\":%u,\"storage_base\":\"0x%llx\",\"kernel_copy\":\"0x%llx\",\"kernel_bytes\":%u}\n",
+                root, depth, command_read32(context + 0x190), command_read32(context + 0x16c),
+                (unsigned long long)command_read64(context + 0x198),
+                (unsigned long long)command_read64(context + 0x4390),
+                command_read32(context + 0x4590));
     }
 }
 
@@ -72,11 +78,12 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
              node = (const unsigned char *)(uintptr_t)command_read64(node + 0x30)) {
             uint32_t kind = command_read32(node);
             uint64_t capability = command_read64(node + 8);
+            int context_present = command_read64(node + 0x18) != 0;
             const unsigned char *frame =
                 (const unsigned char *)(uintptr_t)command_read64(node + 0x20);
             fprintf(stderr, "VA-COMMAND {\"event\":\"node\",\"root\":%u,\"depth\":%u,\"kind\":%u,\"capability\":\"0x%llx\",\"context_present\":%s,\"frame_present\":%s}\n",
                     root, depth, kind, (unsigned long long)capability,
-                    command_read64(node + 0x18) ? "true" : "false", frame ? "true" : "false");
+                    context_present ? "true" : "false", frame ? "true" : "false");
             if (frame && kind == 0x20 && (capability == 0x400 || capability == 0x4000)) {
                 trace_frame_fields(frame, root, depth);
             }
@@ -91,7 +98,7 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
             depth++;
         }
     }
-    // 退出点先于原 ScheduleAVDCommands，采集模式绝不继续执行该请求。
+    // 诊断和已知不兼容映射均在调用原 ScheduleAVDCommands 前退出。
     fprintf(stderr, "VA-COMMAND {\"event\":\"stop-before-original\",\"exit_code\":77}\n");
     fflush(stderr);
     _exit(77);
