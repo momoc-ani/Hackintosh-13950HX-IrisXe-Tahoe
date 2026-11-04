@@ -4,7 +4,7 @@
 
 已核对候选 `AppleIntelTGLGraphicsVADriver` 的提交前 manager 布局，并扩展进程内诊断 interpose：默认保持原行为；`XE_VME_STOP_BEFORE_SUBMIT=1` 在提交前保存 manager 与已用缓冲区并退出；`XE_VME_CAPTURE_NONEMPTY_SUBMIT=1` 放行空初始化提交及严格识别的空 control flush，在遇到非零 submit 控制字段、缓存 class、command 字节或未知 sideband 时保存快照并以退出码 77 停止。两种模式必须且只能启用一种。
 
-本次只完成静态字段核对、CPU 夹具和严格编译，没有启动新的硬件编码探针。此前 `Usage=1` 捕获文件验证了 VA 调用点 interpose 和 manager 前缀读取；新增的 command/sideband 实际字节读取尚无新的运行时快照。Usage=0 普通 VME/PAK 编码仍未修复或验收。系统 VA、EFI、NootedGreen、NootRX 和安装目录均未修改。
+本轮先完成静态字段复核、CPU 夹具和严格编译；随后已有一次受控 Usage=0 捕获，结果记录在 `build/validation-encode-and-kext-icons-20261102/vme-submit-usage0-nonempty-20261104/`。该次只截取提交前快照，未调用被截获的原 IOAccel submit，因此不能算普通 VME/PAK 硬编码通过。系统 VA、EFI、NootedGreen、NootRX 和安装目录均未修改。
 
 ## 已核对字段
 
@@ -34,11 +34,19 @@ REA 的直接引用显示该导入函数唯一已解析的指令调用点为 `0x
 
 现有 Usage=0 证据在普通路径的首次 `FrameStatisticsContext` 调度前截停时观察到 command 构建槽尚为零；这表示命令尚未由原调度函数构造。继续该调度后，已有一次 Usage=0 探针发生 RCS GPU reset，详见 `docs/evidence/20261103-usage0-remap-diagnostic.md` 及 `docs/evidence/20261103-usage0-frame-statistics-validation.json`。
 
-本提交拦截点位于 VA 原调度之内的 IOAccel 提交边界。若仍启用 `XE_VA_STOP_BEFORE_SCHEDULE=1`，执行会先在更早的调度入口退出，因而到不了本 interpose；若移除该保护，原调度和可能导致 reset 的前置任务会先运行。故本轮没有把 Usage=0 探针放行到这个钩子。继续硬件采集前，需要先让 schedule-level 观察器能在经过已验证的单一前置任务后，于后续危险调度前停止；否则该提交钩子不能单独作为 Usage=0 的保护边界。
+本提交拦截点位于 VA 原调度之内的 IOAccel 提交边界。若启用 `XE_VA_STOP_BEFORE_SCHEDULE=1`，执行会先在更早的调度入口退出，因而到不了本 interpose；本次受控运行跳过该诊断 wrapper，VA 构建执行到提交点。日志记录了三个空 submit 被转发，随后首个有 class/command/sideband 的提交被保存并在原 IOAccel submit 前退出。它验证的是该次运行的已知提交边界，不涵盖其他尚未解析的间接提交路径，也不能单独解释既往 RCS reset 的原因。
 
 为使后续受控探针能到达提交钩子，`xe-va-context-trace.c` 增加了默认关闭的 `XE_VA_SKIP_SCHEDULE_TRACE=1`。该选项只阻止诊断库替换 VA 函数表的 schedule 表项；context 与参数追踪、显式 Usage=0 映射仍独立运行。组合方式是启用 `XE_VME_CAPTURE_NONEMPTY_SUBMIT=1` 和 `XE_VA_SKIP_SCHEDULE_TRACE=1`，不设置 `XE_VA_STOP_BEFORE_SCHEDULE`；精确识别的空 control flush 会转发，其后的首个未知或非空提交会在调用原 IOAccel submit 前保存并退出。
 
-REA 在当前 VA 中观察到 `_IOAccelVideoContextSubmitDataBuffers` 的一个直接调用点 `0xA8F6`，但 `all_runtime_submission_paths_proven=false`。因此，即使此组合把已知调用点截在原提交前，也还没有静态证明不存在其他调度/提交入口；本次只编译和做 CPU 测试，不据此宣称硬件执行绝对不会发生，也不运行它。
+REA 在当前 VA 中观察到 `_IOAccelVideoContextSubmitDataBuffers` 的一个直接调用点 `0xA8F6`，但 `all_runtime_submission_paths_proven=false`。本次已有捕获证明这个已知调用点可以在原提交前截停，不证明不存在其他调度或提交入口；不能据此声称所有硬件执行路径都被拦截。
+
+## 2026-11-04 Usage=0 捕获
+
+现有目录包含 `submit-events-48718.jsonl` 与 `submit-48718.bin`。事件记录显示 interpose 命中已校验的 VA 调用点，当前提交为 `request=0`、`flags=0`、`fault=0`、`cached_class_count=1`；快照共 632 字节，其中 manager 前缀 136 字节、command 296 字节、sideband 200 字节。stderr 先记录了 3 次无缓存 class、无已用缓冲区的空 submit 放行，之后捕获该非空提交。
+
+stderr 还显示 Usage=0 请求中的 `kind=32, capability=0x4000` 被映射到 `0x400`，其 context 请求返回 0；同一映射下 `parameter=11` 返回状态 5，后续参数 5、7 返回 0。提交快照发生在第一个非空 submit 调用内，捕获器写文件后以退出码 77 结束进程，所以该 296 字节 command 与 200 字节 sideband 没有提交给原 IOAccel API。它证明了当前已知拦截点能取得一份真实待提交缓冲区，不证明该缓冲区对应的完整编码阶段，也没有产出或验证 bitstream。
+
+快照中的 class 资源长度/容量仍未知，command dword 与 sideband 记录语义尚未解码；3 次空 submit 已被原样转发，其内核侧处理结果也未单独观测。下一步应先离线解析这份快照并与 VA 函数字段及 Gen12 命令定义对照，再判断后续硬件试验所需的保护条件。`all_runtime_submission_paths_proven=false` 仍然成立。
 
 ## 验证
 
