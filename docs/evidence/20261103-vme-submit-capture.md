@@ -84,7 +84,7 @@ REA/Ghidra 对 `0x2C84A` 的静态结果与 CPU batch 及真实捕获的 dword �
 
 `0x1C40` 从静态模板 `0x31D744` 复制 17 个 dword（68 字节），模板首 dword 为 `0x7103000f`，随后按输入几何参数改写 Walker 字段。其已解析 caller `0x2C84A` 将结果写到 context `+0x42F4`，每个实例步长 `0x44`；`0x2CC16` 在对应路径复制这 17 个 dword。真实 batch 的 Walker 位于 dword 43–59，即相对偏移 172–239、结束偏移 240，与该构造器的 68 字节长度一致。这确认了 CPU 侧 walker 构造与捕获命令的结构对应，但不能把 GPU reset 报告唯一配对到这个资源实例。
 
-捕获中的 `MEDIA_CURBE_LOAD` 仍只确认了长度 32 字节、相对起始地址 `0x400`；这 32 字节的 CPU 来源与 GPU 映射尚未建立。统计 kernel 的已识别 DataPort 消息引用 BTI 0–4，但 interface descriptor、binding-table 条目及对应 surface state 仍未解出；`0x2CC16` 中从 context `+0x427C` 起按 `0x24` 字节步长复制的记录，现阶段没有足够类型或映射证据可认定为这些表项。以上为静态复核，未再提交 GPU 工作负载，也未修改系统 VA、EFI 或已安装驱动。
+捕获中的 `MEDIA_CURBE_LOAD` 长度为 32 字节，相对起始地址为 `0x400`。在 `0x22236` 路径中，驱动把 context `+0x8E1` 的 32 字节传给 `0x2C7A0`；该函数将其复制到 context 当前 resource 的 CPU 映射 `+0x400 + curbe_index * 0x100`。这把该路径的 CPU 输入和 CURBE 命令偏移对上了，但没有给出该 resource 的 GPUVA，也没有证明其 GPU 映射状态。统计 kernel 的已识别 DataPort 消息引用 BTI 0–4，但 interface descriptor、binding-table 条目及对应 surface state 的最终 GPU 映射仍未解出；`0x2CC16` 中从 context `+0x427C` 起按 `0x24` 字节步长复制的记录，现阶段没有足够类型或映射证据可认定为这些表项。以上为静态复核，未再提交 GPU 工作负载，也未修改系统 VA、EFI 或已安装驱动。
 
 另沿 `AVD error: FrameStatistics: Fail in findding Prev` 的代码引用追到 `0x21D22`。它从 context `+0x21B8 + kernel_index * 0x20` 取一个 CPU 指针，并写入 `+0x40`、`+0x80`、`+0xC0`、`+0x100`、`+0x140` 五个相隔 `0x40` 的状态块：首块使用当前 IOSurface 的格式、宽高和行跨度；第二块使用前一 IOSurface，若没有前一帧则清零；中间两块在对应像素格式分支下读取另一 IOSurface 的 plane 0/1；最后一块读取 `+0x4700` 下资源对象的字段。五块的数量与 kernel 已识别的 BTI 0–4 相同，构成了可核查的 surface 候选布局；但绑定表内容未恢复，不能据数量和顺序断言它们分别对应 BTI 0–4，也不能把 CPU 指针当作 GPU 地址。之前运行记录中的 `previous_surface=0` 与该函数清零前一帧状态的分支一致，但不证明该分支导致 RCS reset。
 
