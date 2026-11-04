@@ -68,11 +68,11 @@ command resource 大小和 sideband 的 VA 可用跨度已由 manager 字段恢�
 
 ### 2026-11-04 单次统计放行
 
-在 macOS 26.4.1（build 25E253）上，以项目内未修补的 `va-gen12-native/AppleIntelTGLGraphicsVADriver` 运行 1280×720、1 帧、Usage=0。门控配置为只允许匹配的 `FrameStatisticsContext` 调度通过，并在捕获首个非空 command/sideband 后放行一次；第二个非空 submit 会在原调用前停止，其他 schedule 也不放行。REA 进程捕获从 2026-11-04 12:56:23.147 到 12:56:32.058（+08:00）结束，未触发超时；本地 VME 事件文件只写有“原调用前捕获”，未持久化 API 返回行或 PAK stop 事件。
+在 macOS 26.4.1（build 25E253）上，以项目内未修补的 `va-gen12-native/AppleIntelTGLGraphicsVADriver` 运行 1280×720、1 帧、Usage=0。门控配置为只允许匹配的 `FrameStatisticsContext` 调度通过，并在捕获首个非空 command/sideband 后放行一次；第二个非空 submit 会在原调用前停止，其他 schedule 也不放行。REA 进程捕获从 2026-11-04 12:56:23.147 到 12:56:32.058（+08:00）结束，未触发超时。
 
-快照位于 `build/validation-encode-and-kext-icons-20261102/vme-submit-forward-20261104/submit-68190.bin`，manager 前缀 136 字节、command 296 字节、sideband 200 字节；事件记录为 `request=0, flags=0, fault=0, cached_class_count=1`。296 字节 command 与 `vme-submit-usage0-nonempty-20261104/submit-48718.bin` 中的 command 段逐字节相同。sidecar 的 event 名称仍是 `submit-buffers-before-original`，它本身只记录调用前快照；后续 API 返回与 resource getter 结果保留在 REA 进程捕获的终端观察中，未另存到本地 VME sidecar，因此不能单凭 sidecar 断言返回码或 GPU 虚拟地址。
+快照位于 `build/validation-encode-and-kext-icons-20261102/vme-submit-forward-20261104/submit-68190.bin`，manager 前缀 136 字节、command 296 字节、sideband 200 字节；事件记录为 `request=0, flags=0, fault=0, cached_class_count=1`。296 字节 command 与 `vme-submit-usage0-nonempty-20261104/submit-48718.bin` 中的 command 段逐字节相同。REA 留存的进程日志显示：首个非空 VME submit 被转发后返回 `status=0`、`flags=0`、`fault=0`；resource class count 为 1，`IOAccelResourceGetDataSize` 为 65,536 字节，`GetDataBytes` 与 `ClientShared` 指针均被记录。`ClientShared+0x100=108`、`+0x1c=0`；这些 CPU 可读字段没有给出 GPUVA。统计 schedule 返回 0，VideoToolbox 随后报告 `submit=0 status=0 flags=1`。下一条 `kind=0x20/capability=0x400` 的 PAK schedule 在原调度前以 77 截停。VME sidecar event 名称仍为 `submit-buffers-before-original`，所以 API 返回、resource getter 和 PAK 截停证据来自 REA 留存日志，而非该 sidecar。
 
-同一测试时间段新生成 `/Library/Logs/DiagnosticReports/Kernel_2026-11-04-125631_Mac-Pro.gpuRestart`：Application 为 `xe-h264-encode-m`、Signature 813，RCS busy in batch；`IPEHR=0x7103000f`、`ACTHD=0x400100f0`、`BB_ADDR` 偏移 `0x400100f0`，`INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告没有非零 `IPEIR/EIR/ESR` 或 command fault register。这个原始 VA 版本再次复现同一 walker 停点，和 2026-11-03 单变量 VFE bit6 版本的复位位置一致；统计 batch 与 hang 的直接归因仍需完整提交返回/资源映射观察，GPUVA 仍未知。
+测试进程运行期间新生成 `/Library/Logs/DiagnosticReports/Kernel_2026-11-04-125631_Mac-Pro.gpuRestart`：Application 为 `xe-h264-encode-m`、Signature 813，RCS busy in batch；`IPEHR=0x7103000f`、`ACTHD=0x400100f0`、`BB_ADDR` 偏移 `0x400100f0`，`INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告没有非零 `IPEIR/EIR/ESR` 或 command fault register。进程日志证明本轮只有统计 schedule 被原样调用，而 PAK 原调度已被拦截；因此该 GPU reset 与放行的统计工作相关性显著增强，但报告中的 hardware context 没有映射到具体 VME command，仍不能作出唯一 batch 归因。它与 2026-11-03 单变量 VFE bit6 版本一样停在 walker 偏移。GPUVA 仍未知。
 
 ## 验证
 
