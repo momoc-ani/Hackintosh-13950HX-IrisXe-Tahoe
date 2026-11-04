@@ -19,9 +19,19 @@ class VmeSubmitCaptureTests(unittest.TestCase):
         source = root / "harness.c"
         source.write_text(
             '#define XE_VME_CAPTURE_TEST 1\n'
-            '#include "' + str(SOURCE) + '"\n'
+            '#include "' + str(SOURCE.with_name("xe-vme-submit-capture.h")) + '"\n'
             r'''
 #include <string.h>
+#include <dlfcn.h>
+
+typedef int (*XeVMEEmptyFlushCheck)(const XeVMEManagerSnapshot *,
+    const unsigned char *, size_t);
+
+// 动态查找新判据，使其尚未实现时由行为断言失败而非编译失败。
+static XeVMEEmptyFlushCheck empty_flush_checker(void) {
+    return (XeVMEEmptyFlushCheck)dlsym(RTLD_DEFAULT,
+                                      "xe_vme_is_empty_control_flush");
+}
 
 static int partial_copy;
 
@@ -171,25 +181,129 @@ static int test_empty_submit_buffer_ranges(void) {
     return 0;
 }
 
-// VA 每次 flush 会先追加 8 字节 type-2 sideband 记录；它本身不表示编码命令。
-static int test_sideband_control_record_alone_is_empty(void) {
+// 未识别的 sideband 即使没有 command 字节也必须触发捕获。
+static int test_unclassified_sideband_is_data(void) {
     unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
     XeVMEManagerSnapshot snapshot = {0};
     char error[128] = {0};
-    uintptr_t command = 0x1000;
     uintptr_t sideband = 0x2000;
     uintptr_t sideband_current = sideband + 8;
     uintptr_t sideband_end = sideband + 64;
-    memcpy(prefix + 0x10, &command, sizeof(command));
-    memcpy(prefix + 0x18, &command, sizeof(command));
-    memcpy(prefix + 0x20, &command, sizeof(command));
     memcpy(prefix + 0x60, &sideband_current, sizeof(sideband_current));
     memcpy(prefix + 0x68, &sideband_end, sizeof(sideband_end));
     memcpy(prefix + 0x80, &sideband, sizeof(sideband));
     if (xe_vme_measure_submit_buffers(prefix, prefix, 2, 0, 0,
         &snapshot, error, sizeof(error)) != 0) return 96;
-    if (snapshot.sideband_buffer.size != 8 ||
-        xe_vme_submit_has_data(&snapshot)) return 97;
+    if (snapshot.command_buffer.size != 0 || snapshot.sideband_buffer.size != 8 ||
+        !xe_vme_submit_has_data(&snapshot)) return 97;
+    return 0;
+}
+
+// 验证任何非零 submit 控制字段都不会被当作空初始化提交放行。
+static int test_submit_control_fields_are_data(void) {
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 1, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 119;
+    if (!xe_vme_submit_has_data(&snapshot)) return 120;
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 1, 0,
+        &snapshot, error, sizeof(error)) != 0) return 121;
+    if (!xe_vme_submit_has_data(&snapshot)) return 122;
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 1,
+        &snapshot, error, sizeof(error)) != 0) return 123;
+    if (!xe_vme_submit_has_data(&snapshot)) return 124;
+    return 0;
+}
+
+// 仅精确匹配的零尾标和单条 type-2 记录可视为空 flush。
+static int test_empty_control_flush_signature(void) {
+    _Alignas(8) unsigned char command_bytes[32] = {0};
+    _Alignas(8) unsigned char sideband_bytes[64] = {0};
+    unsigned char prefix[XE_VME_MANAGER_PREFIX_BYTES] = {0};
+    unsigned char storage[XE_VME_MANAGER_PREFIX_BYTES + 12 + 32] = {0};
+    XeVMEManagerSnapshot snapshot = {0};
+    char error[128] = {0};
+    uintptr_t command = (uintptr_t)(command_bytes + 4);
+    uintptr_t command_current = command + 12;
+    uintptr_t command_end = command_current;
+    uintptr_t sideband = (uintptr_t)sideband_bytes;
+    uintptr_t sideband_current = sideband + 32;
+    uintptr_t sideband_end = sideband + 64;
+    uint32_t sideband_used_dwords = 4;
+    uint64_t sideband_header = 0x20100;
+    uint16_t record_type = 0x200;
+    uint16_t record_flags = 0;
+    uint32_t command_dwords = 3;
+    XeVMEEmptyFlushCheck is_empty_flush = empty_flush_checker();
+    memcpy(sideband_bytes + 8, &sideband_used_dwords, sizeof(sideband_used_dwords));
+    memcpy(sideband_bytes + 16, &sideband_header, sizeof(sideband_header));
+    memcpy(sideband_bytes + 24, &record_type, sizeof(record_type));
+    memcpy(sideband_bytes + 26, &record_flags, sizeof(record_flags));
+    memcpy(sideband_bytes + 28, &command_dwords, sizeof(command_dwords));
+
+    uintptr_t aligned_command = (uintptr_t)command_bytes;
+    uintptr_t aligned_current = aligned_command + 8;
+    uintptr_t aligned_end = aligned_current;
+    uint32_t aligned_command_dwords = 2;
+    memcpy(sideband_bytes + 28, &aligned_command_dwords,
+           sizeof(aligned_command_dwords));
+    memcpy(prefix + 0x10, &aligned_command, sizeof(aligned_command));
+    memcpy(prefix + 0x18, &aligned_end, sizeof(aligned_end));
+    memcpy(prefix + 0x20, &aligned_current, sizeof(aligned_current));
+    memcpy(prefix + 0x60, &sideband_current, sizeof(sideband_current));
+    memcpy(prefix + 0x68, &sideband_end, sizeof(sideband_end));
+    memcpy(prefix + 0x80, &sideband, sizeof(sideband));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 115;
+    if (snapshot.command_buffer.size != 8) return 116;
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 117;
+    if (!is_empty_flush || !is_empty_flush(&snapshot, storage,
+        (size_t)snapshot.captured_bytes)) return 118;
+
+    memcpy(sideband_bytes + 28, &command_dwords, sizeof(command_dwords));
+    memcpy(prefix + 0x10, &command, sizeof(command));
+    memcpy(prefix + 0x18, &command_end, sizeof(command_end));
+    memcpy(prefix + 0x20, &command_current, sizeof(command_current));
+    memcpy(prefix + 0x60, &sideband_current, sizeof(sideband_current));
+    memcpy(prefix + 0x68, &sideband_end, sizeof(sideband_end));
+    memcpy(prefix + 0x80, &sideband, sizeof(sideband));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 102;
+    if (!xe_vme_submit_has_data(&snapshot)) return 103;
+    if (!is_empty_flush) return 104;
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 105;
+    if (!is_empty_flush(&snapshot, storage,
+        (size_t)snapshot.captured_bytes)) return 106;
+
+    uint32_t classes = 1;
+    memcpy(prefix + 0x58, &classes, sizeof(classes));
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 2, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 107;
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 108;
+    if (is_empty_flush(&snapshot, storage,
+        (size_t)snapshot.captured_bytes)) return 109;
+
+    classes = 0;
+    memcpy(prefix + 0x58, &classes, sizeof(classes));
+    command_bytes[4] = 1;
+    if (xe_vme_measure_submit_buffers(prefix, prefix, 0, 0, 0,
+        &snapshot, error, sizeof(error)) != 0) return 110;
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 111;
+    if (is_empty_flush(&snapshot, storage,
+        (size_t)snapshot.captured_bytes)) return 112;
+
+    command_bytes[4] = 0;
+    record_type = 0x300;
+    memcpy(sideband_bytes + 24, &record_type, sizeof(record_type));
+    if (xe_vme_copy_submit_buffers(prefix, &snapshot, mock_copy, storage,
+        sizeof(storage), error, sizeof(error)) != 0) return 113;
+    if (is_empty_flush(&snapshot, storage,
+        (size_t)snapshot.captured_bytes)) return 114;
     return 0;
 }
 
@@ -271,7 +385,11 @@ int main(void) {
     if (result) return result;
     result = test_empty_submit_buffer_ranges();
     if (result) return result;
-    result = test_sideband_control_record_alone_is_empty();
+    result = test_unclassified_sideband_is_data();
+    if (result) return result;
+    result = test_submit_control_fields_are_data();
+    if (result) return result;
+    result = test_empty_control_flush_signature();
     if (result) return result;
     result = test_invalid_submit_buffer_ranges_rejected();
     if (result) return result;
@@ -284,7 +402,9 @@ int main(void) {
         )
         executable = root / "harness"
         result = subprocess.run(
-            ["clang", "-std=c11", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(executable)],
+            ["clang", "-std=c11", "-Wall", "-Wextra", "-Werror",
+             "-DXE_VME_CAPTURE_TEST", "-Wl,-export_dynamic", str(source),
+             str(SOURCE), "-o", str(executable)],
             capture_output=True,
             text=True,
         )

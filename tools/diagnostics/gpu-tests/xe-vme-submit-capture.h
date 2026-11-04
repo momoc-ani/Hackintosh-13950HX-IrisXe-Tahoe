@@ -64,8 +64,13 @@ int xe_vme_measure_submit_buffers(const void *manager,
                                   XeVMEManagerSnapshot *snapshot,
                                   char *error, size_t error_size);
 
-/* 判断 VA 提交是否已包含 class 或实际 command/sideband 字节。 */
+/* 判断 submit 控制字段、缓存 class 或任一 command/sideband 字节是否非空。 */
 int xe_vme_submit_has_data(const XeVMEManagerSnapshot *snapshot);
+
+/* 识别 A9DC 单独追加的零 command 尾标与一条 type-2 sideband 控制记录。 */
+int xe_vme_is_empty_control_flush(const XeVMEManagerSnapshot *snapshot,
+                                  const unsigned char *storage,
+                                  size_t storage_size);
 
 /* 将 manager 前缀及已校验的 command/sideband 范围复制到一个文件缓冲区。 */
 int xe_vme_copy_submit_buffers(const unsigned char *manager_prefix,

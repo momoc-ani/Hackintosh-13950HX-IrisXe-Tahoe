@@ -137,11 +137,56 @@ int xe_vme_measure_submit_buffers(const void *manager,
     return 0;
 }
 
-/* 识别空的初始化提交，供显式首个非空截停模式安全放行。 */
+/* 判断 submit 控制字段与缓冲区是否包含待捕获数据。 */
 int xe_vme_submit_has_data(const XeVMEManagerSnapshot *snapshot) {
     if (!snapshot) return 0;
-    return snapshot->cached_class_count != 0 ||
-        snapshot->command_buffer.size != 0;
+    return snapshot->request != 0 || snapshot->flags != 0 || snapshot->fault != 0 ||
+        snapshot->cached_class_count != 0 ||
+        snapshot->command_buffer.size != 0 ||
+        snapshot->sideband_buffer.size != 0;
+}
+
+/* 仅把静态确认的 A9DC 单条空 flush 标记视为无负载。 */
+int xe_vme_is_empty_control_flush(const XeVMEManagerSnapshot *snapshot,
+                                  const unsigned char *storage,
+                                  size_t storage_size) {
+    if (!snapshot || !storage || snapshot->cached_class_count != 0 ||
+        snapshot->request != 0 || snapshot->flags != 0 || snapshot->fault != 0 ||
+        (snapshot->command_buffer.size != 8 &&
+         snapshot->command_buffer.size != 12) ||
+        snapshot->sideband_buffer.size != 0x20 ||
+        snapshot->manager_prefix_bytes != XE_VME_MANAGER_PREFIX_BYTES ||
+        snapshot->captured_bytes > storage_size ||
+        snapshot->captured_bytes < XE_VME_MANAGER_PREFIX_BYTES) return 0;
+
+    if (snapshot->command_buffer.storage_offset > snapshot->captured_bytes ||
+        snapshot->command_buffer.size > snapshot->captured_bytes -
+            snapshot->command_buffer.storage_offset ||
+        snapshot->sideband_buffer.storage_offset > snapshot->captured_bytes ||
+        snapshot->sideband_buffer.size > snapshot->captured_bytes -
+            snapshot->sideband_buffer.storage_offset) return 0;
+
+    const unsigned char *command =
+        storage + snapshot->command_buffer.storage_offset;
+    for (uint64_t index = 0; index < snapshot->command_buffer.size; ++index) {
+        if (command[index] != 0) return 0;
+    }
+
+    const unsigned char *sideband =
+        storage + snapshot->sideband_buffer.storage_offset;
+    uint32_t used_dwords = 0;
+    uint64_t header = 0;
+    uint16_t record_type = 0;
+    uint16_t record_flags = 0;
+    uint32_t command_dwords = 0;
+    memcpy(&used_dwords, sideband + 8, sizeof(used_dwords));
+    memcpy(&header, sideband + 0x10, sizeof(header));
+    memcpy(&record_type, sideband + 0x18, sizeof(record_type));
+    memcpy(&record_flags, sideband + 0x1a, sizeof(record_flags));
+    memcpy(&command_dwords, sideband + 0x1c, sizeof(command_dwords));
+
+    return used_dwords == 4 && header == 0x20100 && record_type == 0x200 &&
+        record_flags == 0 && command_dwords == snapshot->command_buffer.size / 4;
 }
 
 /* 复制已测量的 VA command/sideband 字节，确认输出布局仍在分配范围内。 */
@@ -229,7 +274,7 @@ static void xe_vme_write_manager_snapshot(const char *root,
                                            "manager-prefix-before-original";
     const char *payload_state = buffers_captured ? "captured" : "not-captured";
     const char *sideband_state = buffers_captured ? "captured" : "not-captured";
-    if (dprintf(fd, "{\"event\":\"%s\",\"manager\":\"0x%llx\",\"request\":%u,\"flags\":%u,\"fault\":%u,\"cached_class_count\":%u,\"captured_bytes\":%llu,\"command_buffer_address\":\"0x%llx\",\"command_buffer_bytes\":%llu,\"command_buffer_offset\":%llu,\"command_payload\":\"%s\",\"sideband_buffer_address\":\"0x%llx\",\"sideband_buffer_bytes\":%llu,\"sideband_buffer_offset\":%llu,\"sideband\":\"%s\",\"used_lengths\":\"unknown\"}\n",
+    if (dprintf(fd, "{\"event\":\"%s\",\"manager\":\"0x%llx\",\"request\":%u,\"flags\":%u,\"fault\":%u,\"cached_class_count\":%u,\"captured_bytes\":%llu,\"command_buffer_address\":\"0x%llx\",\"command_buffer_bytes\":%llu,\"command_buffer_offset\":%llu,\"command_payload\":\"%s\",\"sideband_buffer_address\":\"0x%llx\",\"sideband_buffer_bytes\":%llu,\"sideband_buffer_offset\":%llu,\"sideband\":\"%s\",\"used_lengths\":\"captured\",\"capacity\":\"unknown\"}\n",
                 event, (unsigned long long)snapshot->manager,
                 snapshot->request, snapshot->flags, snapshot->fault,
                 snapshot->cached_class_count,
@@ -366,6 +411,14 @@ __attribute__((used, noinline)) static int xe_vme_submit_dispatch(
         dprintf(STDERR_FILENO, "XE-VME buffer copy rejected: %s\n", error);
         free(storage);
         _exit(87);
+    }
+    if (nonempty_enabled && !stop_enabled &&
+        xe_vme_is_empty_control_flush(&snapshot, storage, storage_size)) {
+        dprintf(STDERR_FILENO,
+                "XE-VME empty control flush allowed; forwarding original submit\n");
+        free(storage);
+        return IOAccelVideoContextSubmitDataBuffers(context, request,
+                                                    flags, fault);
     }
     int buffers_captured = snapshot.command_buffer.size != 0 ||
                            snapshot.sideband_buffer.size != 0;
