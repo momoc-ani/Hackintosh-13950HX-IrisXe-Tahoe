@@ -48,11 +48,11 @@ stderr 还显示 Usage=0 请求中的 `kind=32, capability=0x4000` 被映射到 
 
 离线读取 sideband 尾部最后六个 dword 得到 `0, 0x38000, 0, 1, 0x200, 0x4a`。VA 的 `0x227E0` 在调用 `0xA9DC` 前按顺序写入 `0x38000`、计数字段和 event slot；`0xA9DC` 随后追加 type-2 控制记录与 command dword 数。`0x22604` 的静态逻辑是在 `_IOAccelDeviceTestEvent` 成功后返回 event slot；捕获中的 slot 值为 1。因此该尾部与 `0x227E0` 事件 flush 的结构一致，推测这次命中了该路径。捕获器未记录 `0xA9DC` 的调用者栈，这仍是结构相关推断，不能当作直接运行时 caller 观测。
 
-再把捕获文件中 296 字节 command 与 `usage0-command-state-remap-20261103/final-cpu-builder.json` 的 288 字节 CPU 统计 batch 按 little-endian dword 比较：72 个构造 dword 中 70 个逐项相同，差异仅在 dword 23（CPU 夹具 `1`、捕获 `0x1001`）和 dword 25（CPU 夹具 `1`、捕获 `0x3001`）；末尾多出的 8 字节全零与 `0xA9DC` 的对齐/零尾标记相符。VFE、CURBE、interface descriptor 和 17-dword walker 均匹配，实测 `VFE.DW3=0x00DF1000`（224 线程）、walker 网格为 80×45，walker 结束相对偏移为 `0xF0`。两个差异 dword 与 CPU fixture 中的资源字段数值有关，但其运行时字段语义仍未确认。
+再把捕获文件中 296 字节 command 与 `usage0-command-state-remap-20261103/final-cpu-builder.json` 的 288 字节 CPU 统计 batch 按 little-endian dword 比较：72 个构造 dword 中 70 个逐项相同，差异仅在 dword 23（CPU 夹具 `1`、捕获 `0x1001`）和 dword 25（CPU 夹具 `1`、捕获 `0x3001`）；末尾多出的 8 字节全零与 `0xA9DC` 的对齐/零尾标记相符。Intel Gen12 命令头文件 `mhw_render_hwcmd_g12_X.h` 对照确认，batch 中 dword 26–34 为 9-dword `MEDIA_VFE_STATE`，35–38 为 `MEDIA_CURBE_LOAD`，39–42 为 `MEDIA_INTERFACE_DESCRIPTOR_LOAD`，43–59 为 17-dword `MEDIA_OBJECT_WALKER`；随后 dword 60–65 和 66–71 各为一条 6-dword `PIPE_CONTROL`。实测 `VFE.DW3=0x00DF1000`（224 线程）、walker 网格为 80×45，walker 结束相对偏移为 `0xF0`。dword 0–2 解码为 3-dword `MI_LOAD_REGISTER_IMM`，其寄存器偏移字段为 0、写入值为 `0x80000040`；该寄存器写入对当前执行引擎的许可语义尚未核验。dword 3–8 是 `PIPE_CONTROL`，DW1=`0x001010a0`（DC flush、PIPE_CONTROL flush、render-target cache flush、command-streamer stall）；dword 9–25 与 CPU 统计 batch 前置段逐项相同但尚未逐字段命名。dword 23/25 的捕获值分别为 `0x1001`、`0x3001`，与 CPU fixture 使用的资源标签不同，具体运行时资源字段语义仍未知。
 
-这批数据与 `AVD_FrameStatisticsContext` 的静态构造器输出高度一致，因此可将本次 Usage=0 首个非空提交归类为**统计任务 batch 的提交前捕获**，而不是 PAK 帧码流提交。历史 Signature 813 报告记录 `IPEHR=0x7103000f`、`ACTHD=0x400100f0`，与 walker 头和结束偏移相符；但历史 reset 没有可配对的完整硬件 batch/submission trace，本次又在原 submit 前截停，所以该相关性不能证明唯一故障根因。
+这批数据与 `AVD_FrameStatisticsContext` 的静态构造器输出高度一致，因此可将本次 Usage=0 首个非空提交归类为**统计任务 batch 的提交前捕获**，而不是 PAK 帧码流提交。历史 Signature 813 报告记录 `IPEHR=0x7103000f`、`ACTHD=0x400100f0`，与 walker 头和结束偏移相符；但历史 reset 没有可配对的完整硬件 batch/submission trace，本次又在原 submit 前截停，所以该相关性不能证明唯一故障根因，也不证明本次捕获的 batch 已被 GPU 接受或执行。
 
-class 资源长度/容量仍未知，dword 23/25 的运行时资源语义和 event flush 的内核处理结果尚未确认；3 次空 submit 已被原样转发，但其内核侧处理结果也未单独观测。下一步应继续核对这两个资源字段、清点 sideband 中的 event/控制记录，并保持既有 RCS reset 根因未唯一确定的结论。`all_runtime_submission_paths_proven=false` 仍然成立。
+class 资源长度/容量仍未知，dword 9–25 的逐字段语义、dword 0 中寄存器偏移 0 的引擎许可、dword 23/25 的运行时资源语义和 event flush 的内核处理结果尚未确认；3 次空 submit 已被原样转发，但其内核侧处理结果也未单独观测。下一步应继续核对这些字段、清点 sideband 中的 event/控制记录，并保持既有 RCS reset 根因未唯一确定的结论。`all_runtime_submission_paths_proven=false` 仍然成立。
 
 ## 验证
 
