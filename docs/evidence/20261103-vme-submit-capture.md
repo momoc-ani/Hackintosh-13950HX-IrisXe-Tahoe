@@ -58,6 +58,8 @@ Intel Gen12 头文件 `mhw_render_hwcmd_g12_X.h` 的字段布局与捕获序列�
 
 manager 前缀还能补充缓冲区范围：捕获的 command 已用长度为 296 字节；`0xA893` 在成功 submit 后将 command limit 设为 `IOAccelResourceGetDataBytes - 0x80 + IOAccelResourceGetDataSize`，本快照的 base/limit 差为 `0xFF80`，据此反推该 command resource 的 `GetDataSize` 为 `0x10000`（64 KiB）。sideband base/current/limit 给出的已用长度为 200 字节、VA 可用跨度为 `0x1FF80`；sideband 头部的 dword 0=`0x7FFC` 与 `0xA893` 的 limit 计算一致，dword 2=`0x2E` 表示 46 个 payload dword，另有 16 字节头部。manager 显示一个 cached data-buffer class，且其 data-bytes 起点与 command base 相同；这确认了 class 与命令缓冲区的边界关系，但没有确定 kernel 指令在 GPU 地址空间中的映射。
 
+REA 继续追踪分配链：`0x9710` 对资源表中的每个条目按记录长度调用 `vm_allocate`，随后调用 `0x9628`；`0x9628` 将该 CPU backing 地址和长度传给 `_IOAccelResourceCreate`，再取得 `ClientShared` 并设置其标志。`+0x11A0` 与 `+0x190` 因此同时参与 CPU backing 的分配长度和 `STATE_BASE_ADDRESS` 的大小字段。该链没有观察到 GPU 虚拟地址或最终页表映射，CPU 地址与 `ClientShared` 指针不能替代这一缺失证据。
+
 这批数据与 `AVD_FrameStatisticsContext` 的静态构造器输出高度一致，因此可将本次 Usage=0 首个非空提交归类为**统计任务 batch 的提交前捕获**，而不是 PAK 帧码流提交。历史 Signature 813 报告记录 `IPEHR=0x7103000f`、`ACTHD=0x400100f0`，与 walker 头和结束偏移相符；但历史 reset 没有可配对的完整硬件 batch/submission trace，本次又在原 submit 前截停，所以该相关性不能证明唯一故障根因，也不证明本次捕获的 batch 已被 GPU 接受或执行。
 
 对照 2026-11-03 10:16:51 与 13:23:24 的 GPU restart 报告，两者都显示 RCS busy in batch，`RING_HEAD=0x30`、`RING_TAIL=0x68`、有效 `BB_ADDR=0x400100f1`（偏移 `0x400100f0`）、`ACTHD=0x400100f0`、`IPEHR=0x7103000f` 及 `INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告记录的 `IPEIR`、`EIR`、`ESR` 和 command fault register 为零，没有显式页故障标志。13:23:24 报告来自单变量 VFE DW3 bit 6 试验：统计调度返回 0 后，日志记录 PAK 请求在原调度前被截停，GPU reset 报告约一秒内生成；该报告仍停在同一 walker 指令/偏移。因此 bit 6 修改单独不足以消除这次 hang。由于没有将完整硬件提交 trace 配对到报告，且记录只能证明该进程的调度顺序，统计 batch 与 reset 的直接归因仍未完成。
