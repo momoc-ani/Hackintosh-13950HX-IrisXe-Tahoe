@@ -76,6 +76,18 @@ command resource 大小和 sideband 的 VA 可用跨度已由 manager 字段恢�
 
 测试进程运行期间新生成 `/Library/Logs/DiagnosticReports/Kernel_2026-11-04-125631_Mac-Pro.gpuRestart`：Application 为 `xe-h264-encode-m`、Signature 813，RCS busy in batch；`IPEHR=0x7103000f`、`ACTHD=0x400100f0`、`BB_ADDR` 偏移 `0x400100f0`，`INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告没有非零 `IPEIR/EIR/ESR` 或 command fault register。进程日志证明本轮只有统计 schedule 被原样调用，而 PAK 原调度已被拦截；因此该 GPU reset 与放行的统计工作相关性显著增强，但报告中的 hardware context 没有映射到具体 VME command，仍不能作出唯一 batch 归因。它与 2026-11-03 单变量 VFE bit6 版本一样停在 walker 偏移。GPUVA 仍未知。
 
+### 2026-11-04 命令构造与 Context 偏移复核
+
+REA/Ghidra 对 `0x2C84A` 的静态结果与 CPU batch 及真实捕获的 dword 位置相互吻合：context `+0x4238` 写入 `0x69041301`（`PIPELINE_SELECT`）；`+0x423C` 开始 16-dword `STATE_BASE_ADDRESS`（首 dword `0x6101000e`）。因此 `+0x423C` 是 SBA 命令，不是 interface descriptor 数据。
+
+`0x2C84A` 在 context `+0x42E4` 构造 4-dword `MEDIA_INTERFACE_DESCRIPTOR_LOAD`，字段为 `DW0=0x70020002`、`DW2=0x40`、`DW3=0`；这表示命令请求从其相对起始地址 0 加载 64 字节 interface descriptor。该命令所读取的 64 字节内容及其 CPU 来源目前尚未定位。`0x2CC16` 会读取并组织这组命令字段，但现有调用证据没有证明对应字节最终落在 GPU dynamic-state 地址 0。
+
+`0x1C40` 从静态模板 `0x31D744` 复制 17 个 dword（68 字节），模板首 dword 为 `0x7103000f`，随后按输入几何参数改写 Walker 字段。其已解析 caller `0x2C84A` 将结果写到 context `+0x42F4`，每个实例步长 `0x44`；`0x2CC16` 在对应路径复制这 17 个 dword。真实 batch 的 Walker 位于 dword 43–59，即相对偏移 172–239、结束偏移 240，与该构造器的 68 字节长度一致。这确认了 CPU 侧 walker 构造与捕获命令的结构对应，但不能把 GPU reset 报告唯一配对到这个资源实例。
+
+捕获中的 `MEDIA_CURBE_LOAD` 仍只确认了长度 32 字节、相对起始地址 `0x400`；这 32 字节的 CPU 来源与 GPU 映射尚未建立。统计 kernel 的已识别 DataPort 消息引用 BTI 0–4，但 interface descriptor、binding-table 条目及对应 surface state 仍未解出；`0x2CC16` 中从 context `+0x427C` 起按 `0x24` 字节步长复制的记录，现阶段没有足够类型或映射证据可认定为这些表项。以上为静态复核，未再提交 GPU 工作负载，也未修改系统 VA、EFI 或已安装驱动。
+
+另沿 `AVD error: FrameStatistics: Fail in findding Prev` 的代码引用追到 `0x21D22`。它从 context `+0x21B8 + kernel_index * 0x20` 取一个 CPU 指针，并写入 `+0x40`、`+0x80`、`+0xC0`、`+0x100`、`+0x140` 五个相隔 `0x40` 的状态块：首块使用当前 IOSurface 的格式、宽高和行跨度；第二块使用前一 IOSurface，若没有前一帧则清零；中间两块在对应像素格式分支下读取另一 IOSurface 的 plane 0/1；最后一块读取 `+0x4700` 下资源对象的字段。五块的数量与 kernel 已识别的 BTI 0–4 相同，构成了可核查的 surface 候选布局；但绑定表内容未恢复，不能据数量和顺序断言它们分别对应 BTI 0–4，也不能把 CPU 指针当作 GPU 地址。之前运行记录中的 `previous_surface=0` 与该函数清零前一帧状态的分支一致，但不证明该分支导致 RCS reset。
+
 ## 验证
 
 - 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
