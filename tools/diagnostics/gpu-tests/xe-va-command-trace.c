@@ -19,6 +19,35 @@ static uint64_t command_read64(const unsigned char *source) {
     return value;
 }
 
+static unsigned xe_va_statistics_schedules_forwarded;
+
+// 仅匹配已经核对过的单节点 1280x720 FrameStatisticsContext 调度。
+static int xe_va_is_single_statistics_request(const unsigned char *header) {
+    if (command_read32(header) != 1) return 0;
+    const unsigned char *const *roots =
+        (const unsigned char *const *)(uintptr_t)command_read64(header + 8);
+    if (!roots || !roots[0]) return 0;
+
+    const unsigned char *root = roots[0];
+    if (command_read32(root) != 2 || command_read64(root + 8) != 0x1000 ||
+        !command_read64(root + 0x18) || !command_read64(root + 0x20)) return 0;
+    const unsigned char *context =
+        (const unsigned char *)(uintptr_t)command_read64(root + 0x18);
+    const unsigned char *output =
+        (const unsigned char *)(uintptr_t)command_read64(root + 0x30);
+    if (command_read32(context + 0x138) != 1280 ||
+        command_read32(context + 0x13c) != 720 ||
+        command_read32(context + 0x150) != 16 ||
+        command_read32(context + 0x158) != 16 ||
+        command_read32(context + 0x168) != 1 ||
+        command_read32(context + 0x4590) != 0x2050 || !output) return 0;
+    return command_read32(output) == 16 &&
+        command_read64(output + 8) == 0x20 &&
+        command_read64(output + 0x18) == 0 &&
+        command_read64(output + 0x20) != 0 &&
+        command_read64(output + 0x30) == 0;
+}
+
 // 只记录 VDENC 已使用的帧参数槽，用于比较普通编码与低延迟编码的实际数据布局。
 static void trace_frame_fields(const unsigned char *frame, uint32_t root, unsigned depth) {
     static const uint32_t offsets[] = {
@@ -88,8 +117,13 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
                          XeVAScheduleFunction original) {
     const char *enabled = getenv("XE_VA_STOP_BEFORE_SCHEDULE");
     const char *remapped = getenv("XE_USAGE0_REMAP");
+    const char *allow_statistics = getenv("XE_VA_ALLOW_ONE_FRAME_STATISTICS");
+    int stop_enabled = enabled && strcmp(enabled, "1") == 0;
+    int remap_enabled = remapped && strcmp(remapped, "1") == 0;
+    int allow_statistics_enabled = allow_statistics &&
+        strcmp(allow_statistics, "1") == 0;
     // 该映射已实测导致 RCS 重置和段错误，启用映射即强制截停，避免重走失败路径。
-    if ((!enabled || strcmp(enabled, "1")) && (!remapped || strcmp(remapped, "1"))) {
+    if (!stop_enabled && !remap_enabled && !allow_statistics_enabled) {
         return original(accelerator, request, output);
     }
 
@@ -125,6 +159,18 @@ int xe_va_trace_schedule(void *accelerator, uint32_t *request, void *output,
             depth++;
         }
     }
+
+    if (!stop_enabled && remap_enabled && allow_statistics_enabled &&
+        xe_va_statistics_schedules_forwarded == 0 &&
+        xe_va_is_single_statistics_request(header)) {
+        xe_va_statistics_schedules_forwarded = 1;
+        fprintf(stderr, "VA-COMMAND {\"event\":\"allow-one-statistics-only\",\"count\":1}\n");
+        int status = original(accelerator, request, output);
+        fprintf(stderr, "VA-COMMAND {\"event\":\"statistics-only-result\",\"status\":%d}\n",
+                status);
+        return status;
+    }
+
     // 诊断和已知不兼容映射均在调用原 ScheduleAVDCommands 前退出。
     fprintf(stderr, "VA-COMMAND {\"event\":\"stop-before-original\",\"exit_code\":77}\n");
     fflush(stderr);

@@ -38,12 +38,23 @@ enum {
     XE_VME_ACTION_FORWARD = 0,
     XE_VME_ACTION_CAPTURE = 1,
     XE_VME_ACTION_REJECT = 2,
+    XE_VME_ACTION_CAPTURE_FORWARD = 3,
+    XE_VME_ACTION_CAPTURE_STOP = 4,
 };
 
 /* 根据调用者身份和显式截停开关选择转发、捕获或拒绝。 */
 int xe_vme_submit_action(int capture_enabled, int caller_resolved,
                          int caller_is_va, int callsite_verified,
                          int stop_enabled);
+
+/* 捕获并单次放行非空 submit；后续非空 submit 必须在原调用前停止。 */
+int xe_vme_forward_nonempty_action(int forward_enabled, int has_data,
+                                   uint32_t forwarded_nonempty_count);
+
+/* 读取 VA 已使用的 ClientShared 字段；这些字段不是 GPU 地址。 */
+int xe_vme_read_client_shared_values(const void *client_shared,
+                                     uint32_t *value_0x100,
+                                     uint8_t *value_0x1c);
 
 /* 验证目标 VA image 的提交调用点指令字节。 */
 int xe_vme_callsite_matches(const unsigned char *image, size_t image_size);

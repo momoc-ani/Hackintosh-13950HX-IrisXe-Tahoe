@@ -114,7 +114,8 @@ static unsigned char *guarded_frame(size_t bytes) {
 // 一旦调用原调度便返回失败标记，统计采集必须先于这个入口退出。
 static int original(void *accelerator, uint32_t *request, void *output) {
     (void)accelerator; (void)request; (void)output;
-    fputs("unexpected-original-call\n", stderr);
+    fputs(getenv("XE_TEST_EXPECT_ORIGINAL") ? "original-called\n" :
+          "unexpected-original-call\n", stderr);
     return 91;
 }
 
@@ -122,6 +123,7 @@ static int original(void *accelerator, uint32_t *request, void *output) {
 int main(void) {
     unsigned char header[16] = {0}, first[0x38] = {0}, second[0x38] = {0};
     unsigned char *frame = guarded_frame(0x18), *output = guarded_frame(0x10);
+    unsigned char pak_frame[0x4a8] = {0};
     unsigned char *context = calloc(1, 0x4730), *commands[] = {first};
     unsigned char *accelerator = guarded_frame(0xa86c);
     uint32_t hardware_threads = 112;
@@ -173,6 +175,16 @@ int main(void) {
     if (getenv("XE_TEST_ALLOW_STATS")) {
         int first_result = xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
         if (first_result != 91) return 92;
+        if (getenv("XE_TEST_PAK_AFTER_STATS")) {
+            kind = 0x20;
+            capability = 0x400;
+            next = NULL;
+            memcpy(first, &kind, 4);
+            memcpy(first + 8, &capability, 8);
+            unsigned char *pak_frame_pointer = pak_frame;
+            memcpy(first + 0x20, &pak_frame_pointer, 8);
+            memcpy(first + 0x30, &next, 8);
+        }
     }
     return xe_va_trace_schedule(NULL, (uint32_t *)header, NULL, original);
 }
@@ -301,6 +313,50 @@ int main(void) {
             self.assertNotIn("unexpected-original-call", result.stderr)
             self.assertNotIn('"event":"allow-statistics-only"', result.stderr)
             self.assertEqual(result.stderr.count('"event":"stop-before-original"'), 1, result.stderr)
+
+    def test_one_statistics_schedule_is_allowed_then_pak_is_stopped(self):
+        """仅精确统计请求可放行一次；随后的 PAK 请求必须在原调度前退出。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ,
+                           "XE_USAGE0_REMAP": "1",
+                           "XE_VA_ALLOW_ONE_FRAME_STATISTICS": "1",
+                           "XE_TEST_ALLOW_STATS": "1",
+                           "XE_TEST_PAK_AFTER_STATS": "1",
+                           "XE_TEST_EXPECT_ORIGINAL": "1"}
+            environment.pop("XE_VA_STOP_BEFORE_SCHEDULE", None)
+            result = subprocess.run([str(executable)], env=environment,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            self.assertEqual(result.stderr.count("original-called"), 1, result.stderr)
+            self.assertIn('"event":"allow-one-statistics-only"', result.stderr)
+            self.assertIn('"event":"statistics-only-result","status":91', result.stderr)
+            events = [json.loads(line.removeprefix("VA-COMMAND "))
+                      for line in result.stderr.splitlines() if line.startswith("VA-COMMAND ")]
+            pak_nodes = [event for event in events
+                         if event["event"] == "node" and event["depth"] == 0]
+            self.assertEqual(len(pak_nodes), 2, result.stderr)
+            self.assertEqual(pak_nodes[1]["kind"], 0x20)
+            self.assertEqual(pak_nodes[1]["capability"], "0x400")
+            self.assertEqual(events[-1]["event"], "stop-before-original")
+
+    def test_one_statistics_gate_rejects_unexpected_first_schedule(self):
+        """一次性放行门遇到非统计请求时立即截停，不调用原调度。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = self.build_statistics_harness(Path(temporary))
+            environment = {**os.environ,
+                           "XE_USAGE0_REMAP": "1",
+                           "XE_VA_ALLOW_ONE_FRAME_STATISTICS": "1",
+                           "XE_TEST_OTHER_KIND": "1",
+                           "XE_TEST_EXPECT_ORIGINAL": "1"}
+            environment.pop("XE_VA_STOP_BEFORE_SCHEDULE", None)
+            result = subprocess.run([str(executable)], env=environment,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 77, result.stderr)
+            self.assertNotIn("original-called", result.stderr)
+            self.assertNotIn('"event":"allow-one-statistics-only"', result.stderr)
+            self.assertEqual(result.stderr.count('"event":"stop-before-original"'), 1,
+                             result.stderr)
 
 
 if __name__ == "__main__":

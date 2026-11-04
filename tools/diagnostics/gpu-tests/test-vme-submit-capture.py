@@ -26,11 +26,25 @@ class VmeSubmitCaptureTests(unittest.TestCase):
 
 typedef int (*XeVMEEmptyFlushCheck)(const XeVMEManagerSnapshot *,
     const unsigned char *, size_t);
+typedef int (*XeVMEForwardDecision)(int, int, uint32_t);
+typedef int (*XeVMEReadSharedValues)(const void *, uint32_t *, uint8_t *);
 
 // 动态查找新判据，使其尚未实现时由行为断言失败而非编译失败。
 static XeVMEEmptyFlushCheck empty_flush_checker(void) {
     return (XeVMEEmptyFlushCheck)dlsym(RTLD_DEFAULT,
                                       "xe_vme_is_empty_control_flush");
+}
+
+// 新策略暂以行为查找，缺失实现应由断言失败而不是编译失败指出。
+static XeVMEForwardDecision forward_decision(void) {
+    return (XeVMEForwardDecision)dlsym(RTLD_DEFAULT,
+                                      "xe_vme_forward_nonempty_action");
+}
+
+// 按已核对偏移读取共享元数据，不把它解释为 GPU 虚拟地址。
+static XeVMEReadSharedValues shared_values_reader(void) {
+    return (XeVMEReadSharedValues)dlsym(RTLD_DEFAULT,
+                                       "xe_vme_read_client_shared_values");
 }
 
 static int partial_copy;
@@ -50,6 +64,36 @@ static int test_submit_intercept_policy(void) {
     if (xe_vme_submit_action(1, 0, 1, 1, 1) != XE_VME_ACTION_REJECT) return 53;
     if (xe_vme_submit_action(1, 1, 0, 0, 1) != XE_VME_ACTION_FORWARD) return 54;
     if (xe_vme_submit_action(0, 0, 0, 0, 0) != XE_VME_ACTION_FORWARD) return 55;
+    return 0;
+}
+
+// 转发模式只捕获并放行首个非空 submit。
+static int test_forward_nonempty_one_shot_policy(void) {
+    XeVMEForwardDecision decide = forward_decision();
+    if (!decide) return 125;
+    if (decide(0, 1, 0) != XE_VME_ACTION_FORWARD) return 126;
+    if (decide(1, 0, 0) != XE_VME_ACTION_FORWARD) return 127;
+    if (decide(1, 1, 0) != 3) return 128;
+    if (decide(1, 1, 1) != 4) return 129;
+    if (decide(1, 1, 7) != 4) return 130;
+    return 0;
+}
+
+// Test the exact client-shared fields emitted by the post-submit resource logger.
+static int test_client_shared_fields_are_read_at_known_offsets(void) {
+    XeVMEReadSharedValues read_values = shared_values_reader();
+    if (!read_values) return 131;
+    unsigned char shared[0x104] = {0};
+    uint32_t expected_word = 0x12345678, actual_word = 0;
+    uint8_t expected_flag = 0x5a, actual_flag = 0;
+    memcpy(shared + 0x100, &expected_word, sizeof(expected_word));
+    memcpy(shared + 0x1c, &expected_flag, sizeof(expected_flag));
+    if (!read_values(shared, &actual_word, &actual_flag)) return 132;
+    if (actual_word != expected_word || actual_flag != expected_flag) return 133;
+    actual_word = 1;
+    actual_flag = 1;
+    if (read_values(NULL, &actual_word, &actual_flag)) return 134;
+    if (actual_word != 0 || actual_flag != 0) return 135;
     return 0;
 }
 
@@ -373,6 +417,10 @@ static int test_unknown_manager_and_callers_rejected(void) {
 int main(void) {
     int result = test_submit_intercept_policy();
     if (result) return result;
+    result = test_forward_nonempty_one_shot_policy();
+    if (result) return result;
+    result = test_client_shared_fields_are_read_at_known_offsets();
+    if (result) return result;
     result = test_target_callsite_guard();
     if (result) return result;
     result = test_manager_prefix_snapshot();
@@ -495,11 +543,27 @@ int main(void) {
             self.assertIn("capture directory is required",
                           result.stderr)
 
+            forward_missing_directory = environment.copy()
+            forward_missing_directory["XE_VME_FORWARD_FIRST_NONEMPTY"] = "1"
+            result = subprocess.run([str(app)], env=forward_missing_directory,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 78, result.stderr)
+            self.assertIn("capture directory is required", result.stderr)
+
             conflicting_modes = environment.copy()
             conflicting_modes["XE_VME_CAPTURE_DIR"] = str(root)
             conflicting_modes["XE_VME_STOP_BEFORE_SUBMIT"] = "1"
             conflicting_modes["XE_VME_CAPTURE_NONEMPTY_SUBMIT"] = "1"
             result = subprocess.run([str(app)], env=conflicting_modes,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 78, result.stderr)
+            self.assertIn("exactly one capture mode", result.stderr)
+
+            conflicting_forward_mode = environment.copy()
+            conflicting_forward_mode["XE_VME_CAPTURE_DIR"] = str(root)
+            conflicting_forward_mode["XE_VME_STOP_BEFORE_SUBMIT"] = "1"
+            conflicting_forward_mode["XE_VME_FORWARD_FIRST_NONEMPTY"] = "1"
+            result = subprocess.run([str(app)], env=conflicting_forward_mode,
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 78, result.stderr)
             self.assertIn("exactly one capture mode", result.stderr)
