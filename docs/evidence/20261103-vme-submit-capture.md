@@ -88,6 +88,8 @@ REA/Ghidra 对 `0x2C84A` 的静态结果与 CPU batch 及真实捕获的 dword �
 
 另沿 `AVD error: FrameStatistics: Fail in findding Prev` 的代码引用追到 `0x21D22`。它从 context `+0x21B8 + kernel_index * 0x20` 取一个 CPU 指针，并写入 `+0x40`、`+0x80`、`+0xC0`、`+0x100`、`+0x140` 五个相隔 `0x40` 的状态块：首块使用当前 IOSurface 的格式、宽高和行跨度；第二块使用前一 IOSurface，若没有前一帧则清零；中间两块在对应像素格式分支下读取另一 IOSurface 的 plane 0/1；最后一块读取 `+0x4700` 下资源对象的字段。五块的数量与 kernel 已识别的 BTI 0–4 相同，构成了可核查的 surface 候选布局；但绑定表内容未恢复，不能据数量和顺序断言它们分别对应 BTI 0–4，也不能把 CPU 指针当作 GPU 地址。之前运行记录中的 `previous_surface=0` 与该函数清零前一帧状态的分支一致，但不证明该分支导致 RCS reset。
 
+继续向前追这些 CPU 指针的来源：`0x2C158` 以 `0x240` 调用 `0x2C314`；后者按 kernel 和资源索引建立 context `+0x21A8` 起的资源记录，并对该记录对应的 CPU 区域清零。它按页申请的分配跨度为 `0x1000`，逻辑状态长度仍是 `0x240`。随后 `0x2C41C` 对每个状态区初始化 8 个、每个 `0x40` 字节的 surface-state 候选记录，起始偏移依次为 `+0x40` 至 `+0x200`；FrameStatistics 的 `0x21D22` 会更新其中前五项。这解释了五个候选 surface 状态的分配来源与步长。状态区最前面的 `0x40` 字节没有被这两个初始化函数解释；它可能承载 binding-table 数据，但表项写入者、表项内容、Surface State Base Address 实际指向和 GPU 映射仍未确定。
+
 ## 验证
 
 - 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
