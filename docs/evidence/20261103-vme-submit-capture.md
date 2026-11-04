@@ -90,6 +90,8 @@ REA/Ghidra 对 `0x2C84A` 的静态结果与 CPU batch 及真实捕获的 dword �
 
 继续向前追这些 CPU 指针的来源：`0x2C158` 以 `0x240` 调用 `0x2C314`；后者按 kernel 和资源索引建立 context `+0x21A8` 起的资源记录，并对该记录对应的 CPU 区域清零。它按页申请的分配跨度为 `0x1000`，逻辑状态长度仍是 `0x240`。随后 `0x2C41C` 对每个状态区初始化 8 个、每个 `0x40` 字节的 surface-state 候选记录，起始偏移依次为 `+0x40` 至 `+0x200`；FrameStatistics 的 `0x21D22` 会更新其中前五项。这解释了五个候选 surface 状态的分配来源与步长。状态区最前面的 `0x40` 字节没有被这两个初始化函数解释；它可能承载 binding-table 数据，但表项写入者、表项内容、Surface State Base Address 实际指向和 GPU 映射仍未确定。
 
+保存的调度分派证据进一步确认这些构造器属于同一 FrameStatistics context vtable：全局 schedule `0x159A4` 完成请求校验后经 vtable `+0x28` 进入 `0x2190A`；该 context 的 `+0x60` 指向 `0x2C6F6` 命令记录包装器，`+0x70` 指向 `0x22236` 参数构造器，`+0x80` 指向 `0x2C84A` Walker 构造器，`+0x88` 指向 `0x21D22` surface-state 构造器。`0x22236` 写入 CURBE 后调用通用 `0x2CC16` 提交构造器。这一 vtable 映射来自已有的 `docs/evidence/20261103-usage0-frame-statistics-validation.json`；它确认了这些函数的业务关联，但没有补出 IDT/binding-table 数据或 GPUVA。
+
 ## 验证
 
 - 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
