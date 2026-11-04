@@ -64,7 +64,9 @@ REA 继续追踪分配链：`0x9710` 对资源表中的每个条目按记录长�
 
 对照 2026-11-03 10:16:51 与 13:23:24 的 GPU restart 报告，两者都显示 RCS busy in batch，`RING_HEAD=0x30`、`RING_TAIL=0x68`、有效 `BB_ADDR=0x400100f1`（偏移 `0x400100f0`）、`ACTHD=0x400100f0`、`IPEHR=0x7103000f` 及 `INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告记录的 `IPEIR`、`EIR`、`ESR` 和 command fault register 为零，没有显式页故障标志。13:23:24 报告来自单变量 VFE DW3 bit 6 试验：统计调度返回 0 后，日志记录 PAK 请求在原调度前被截停，GPU reset 报告约一秒内生成；该报告仍停在同一 walker 指令/偏移。因此 bit 6 修改单独不足以消除这次 hang。由于没有将完整硬件提交 trace 配对到报告，且记录只能证明该进程的调度顺序，统计 batch 与 reset 的直接归因仍未完成。
 
-command resource 大小和 sideband 的 VA 可用跨度已由 manager 字段恢复；cached class 与 command base 相同，但 kernel 代码、class 元数据与 GPU 虚拟地址之间的映射仍未知。16-dword `STATE_BASE_ADDRESS` 是否完全符合目标 Tiger Lake 变体、LRI 所写寄存器对白名单/引擎的具体约束、event flush 的内核处理结果也尚未确认。3 次空 submit 已被原样转发，但其内核侧处理结果未单独观测。该命令快照仍未交给 GPU 执行，既往 RCS reset 根因仍未唯一确定。`all_runtime_submission_paths_proven=false` 仍然成立。
+继续核对 `frame-statistics-kernel-11.asm` 中统计 kernel 的七条 DataPort 内存 send：Media Block Read descriptor 低字节为 BTI 0、1；Media Block Write descriptor 为 BTI 2、3；OWord Dual Block Write descriptor 为 BTI 4。Tiger Lake PRM 将 BTI `0x00..0xEF` 定义为 binding-table surface，stateless aliases 为 `0xFD/0xFF`。因此，这七条已识别的 kernel 消息使用 bindful surfaces；虽然 batch 中 General State Buffer Size 更新为零，但当前没有证据表明这些消息会访问该 stateless general-state 区域，不能据此归因 reset。Surface State Base Address 在该 SBA 中没有设置 modify-enable，故其有效来源仍依赖先前 context 状态；BTI 0–4 对应的表项内容、执行时的实际 GPU 映射和内核图像兼容性仍未知。
+
+command resource 大小和 sideband 的 VA 可用跨度已由 manager 字段恢复；cached class 与 command base 相同，但 kernel 代码、class 元数据与 GPU 虚拟地址之间的映射仍未知。16-dword `STATE_BASE_ADDRESS` 是否完全符合目标 Tiger Lake 变体、LRI 所写寄存器对白名单/引擎的具体约束、event flush 的内核处理结果也尚未确认。3 次空 submit 已被原样转发，但其内核侧处理结果未单独观测。2026-11-04 复测已将该统计 batch 交给原 IOAccel submit，API 返回 0；随后系统仍记录 RCS reset，尚未观察到 GPU 完成该 walker 或统计任务。reset 根因与具体资源映射仍未唯一确定。`all_runtime_submission_paths_proven=false` 仍然成立。
 
 ### 2026-11-04 单次统计放行
 
