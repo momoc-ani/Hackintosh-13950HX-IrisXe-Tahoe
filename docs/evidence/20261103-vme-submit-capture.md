@@ -66,6 +66,14 @@ REA 继续追踪分配链：`0x9710` 对资源表中的每个条目按记录长�
 
 command resource 大小和 sideband 的 VA 可用跨度已由 manager 字段恢复；cached class 与 command base 相同，但 kernel 代码、class 元数据与 GPU 虚拟地址之间的映射仍未知。16-dword `STATE_BASE_ADDRESS` 是否完全符合目标 Tiger Lake 变体、LRI 所写寄存器对白名单/引擎的具体约束、event flush 的内核处理结果也尚未确认。3 次空 submit 已被原样转发，但其内核侧处理结果未单独观测。该命令快照仍未交给 GPU 执行，既往 RCS reset 根因仍未唯一确定。`all_runtime_submission_paths_proven=false` 仍然成立。
 
+### 2026-11-04 单次统计放行
+
+在 macOS 26.4.1（build 25E253）上，以项目内未修补的 `va-gen12-native/AppleIntelTGLGraphicsVADriver` 运行 1280×720、1 帧、Usage=0。门控配置为只允许匹配的 `FrameStatisticsContext` 调度通过，并在捕获首个非空 command/sideband 后放行一次；第二个非空 submit 会在原调用前停止，其他 schedule 也不放行。REA 进程捕获从 2026-11-04 12:56:23.147 到 12:56:32.058（+08:00）结束，未触发超时；本地 VME 事件文件只写有“原调用前捕获”，未持久化 API 返回行或 PAK stop 事件。
+
+快照位于 `build/validation-encode-and-kext-icons-20261102/vme-submit-forward-20261104/submit-68190.bin`，manager 前缀 136 字节、command 296 字节、sideband 200 字节；事件记录为 `request=0, flags=0, fault=0, cached_class_count=1`。296 字节 command 与 `vme-submit-usage0-nonempty-20261104/submit-48718.bin` 中的 command 段逐字节相同。sidecar 的 event 名称仍是 `submit-buffers-before-original`，它本身只记录调用前快照；后续 API 返回与 resource getter 结果保留在 REA 进程捕获的终端观察中，未另存到本地 VME sidecar，因此不能单凭 sidecar 断言返回码或 GPU 虚拟地址。
+
+同一测试时间段新生成 `/Library/Logs/DiagnosticReports/Kernel_2026-11-04-125631_Mac-Pro.gpuRestart`：Application 为 `xe-h264-encode-m`、Signature 813，RCS busy in batch；`IPEHR=0x7103000f`、`ACTHD=0x400100f0`、`BB_ADDR` 偏移 `0x400100f0`，`INSTDONE=0xffdcffff`（VFE、TSG0、CS 未完成）。报告没有非零 `IPEIR/EIR/ESR` 或 command fault register。这个原始 VA 版本再次复现同一 walker 停点，和 2026-11-03 单变量 VFE bit6 版本的复位位置一致；统计 batch 与 hang 的直接归因仍需完整提交返回/资源映射观察，GPUVA 仍未知。
+
 ## 验证
 
 - 之前的受控 `Usage=1` 运行在 `0xA8F6` 命中，退出码 77，输出 `build/validation-encode-and-kext-icons-20261102/vme-submit-prefix-usage1-20261103/manager-15298.bin` 与 `submit-events-15298.jsonl`。它只验证旧版 manager 前缀捕获；不能证明本版 command/sideband 复制已在真实提交中运行。
