@@ -44,9 +44,11 @@ REA 在当前 VA 中观察到 `_IOAccelVideoContextSubmitDataBuffers` 的一个�
 
 现有目录包含 `submit-events-48718.jsonl` 与 `submit-48718.bin`。事件记录显示 interpose 命中已校验的 VA 调用点，当前提交为 `request=0`、`flags=0`、`fault=0`、`cached_class_count=1`；快照共 632 字节，其中 manager 前缀 136 字节、command 296 字节、sideband 200 字节。stderr 先记录了 3 次无缓存 class、无已用缓冲区的空 submit 放行，之后捕获该非空提交。
 
-stderr 还显示 Usage=0 请求中的 `kind=32, capability=0x4000` 被映射到 `0x400`，其 context 请求返回 0；同一映射下 `parameter=11` 返回状态 5，后续参数 5、7 返回 0。提交快照发生在第一个非空 submit 调用内，捕获器写文件后以退出码 77 结束进程，所以该 296 字节 command 与 200 字节 sideband 没有提交给原 IOAccel API。它证明了当前已知拦截点能取得一份真实待提交缓冲区，不证明该缓冲区对应的完整编码阶段，也没有产出或验证 bitstream。
+stderr 还显示 Usage=0 请求中的 `kind=32, capability=0x4000` 被映射到 `0x400`，其 context 请求返回 0；同一映射下 `parameter=11` 返回状态 5，后续参数 5、7 返回 0。提交快照发生在第一个非空 submit 调用内，捕获器写文件后以退出码 77 结束进程，所以该 296 字节 command 与 200 字节 sideband 没有提交给原 IOAccel API。stdout 到 `prepare=0` 为止，没有 `submit=0`、编码回调或码流报告；目录中也没有 `.h264` 或 `.nv12` 输出。它证明了当前已知拦截点能取得一份真实待提交缓冲区，不证明该缓冲区对应的完整编码阶段，也没有产出或验证 bitstream。
 
-快照中的 class 资源长度/容量仍未知，command dword 与 sideband 记录语义尚未解码；3 次空 submit 已被原样转发，其内核侧处理结果也未单独观测。下一步应先离线解析这份快照并与 VA 函数字段及 Gen12 命令定义对照，再判断后续硬件试验所需的保护条件。`all_runtime_submission_paths_proven=false` 仍然成立。
+离线读取 sideband 尾部最后六个 dword 得到 `0, 0x38000, 0, 1, 0x200, 0x4a`。VA 的 `0x227E0` 在调用 `0xA9DC` 前按顺序写入 `0x38000`、计数字段和 event slot；`0xA9DC` 随后追加 type-2 控制记录与 command dword 数。`0x22604` 的静态逻辑是在 `_IOAccelDeviceTestEvent` 成功后返回 event slot；捕获中的 slot 值为 1。因此该尾部与 `0x227E0` 事件 flush 的结构一致，推测这次命中了该路径。捕获器未记录 `0xA9DC` 的调用者栈，这仍是结构相关推断，不能当作直接运行时 caller 观测。
+
+class 资源长度/容量仍未知，296 字节 command dword 的语义尚未解码；3 次空 submit 已被原样转发，其内核侧处理结果也未单独观测。下一步应先离线解析 command 和 class 描述，并与 VA 函数字段及 Gen12 命令定义对照，再判断后续硬件试验所需的保护条件。`all_runtime_submission_paths_proven=false` 仍然成立。
 
 ## 验证
 
